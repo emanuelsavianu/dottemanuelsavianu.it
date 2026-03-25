@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Informativa Certificati di Malattia — Dott. Savianu</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="styles.css?v=11">
+
+    <style>
+        .doc-page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 20px 0 40px;
+        }
+
+        .doc-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .doc-intro {
+            background: var(--bg-gradient-1);
+            border-left: 5px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        body.dark-mode .doc-intro {
+            background: var(--primary);
+        }
+
+        .doc-section-title {
+            font-family: var(--font-sans);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--danger);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin: 28px 0 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        body.dark-mode .doc-section-title {
+            color: #ff7070;
+            border-bottom-color: var(--primary-light);
+        }
+
+        .doc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .doc-list li {
+            padding: 14px 18px;
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            line-height: 1.65;
+            font-size: 0.95rem;
+        }
+
+        body.dark-mode .doc-list li {
+            background: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        .doc-list li strong {
+            color: var(--primary-dark);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        body.dark-mode .doc-list li strong {
+            color: var(--accent);
+        }
+
+        .doc-law-ref {
+            margin-top: 32px;
+            padding: 14px 18px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            line-height: 1.8;
+        }
+
+        body.dark-mode .doc-law-ref {
+            border-top-color: var(--primary-light);
+        }
+
+        .doc-footer-text {
+            margin-top: 28px;
+            padding: 16px 20px;
+            background: var(--bg-gradient-1);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        body.dark-mode .doc-footer-text {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-print:hover {
+            background: var(--primary-light);
+        }
+
+        body.dark-mode .btn-print {
+            background: var(--accent);
+            color: var(--primary-dark);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: transparent;
+            color: var(--text-medium);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        @media print {
+            body { background: none !important; }
+            .doc-topbar { display: none !important; }
+            header, footer { display: none !important; }
+            .doc-list li {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .doc-topbar { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header role="banner">
+    <nav class="lang-switch" aria-label="Controlli pagina">
+        <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </nav>
+    <div class="header-content">
+        <h1 style="margin-bottom: 0;">Dott. Savianu Emanuel</h1>
+        <p style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px;">STUDIO MEDICO IPPOCRATE</p>
+        <p>Medico di Medicina Generale — Arezzo</p>
+    </div>
+</header>
+
+<div class="container">
+    <main class="doc-page" role="main">
+
+        <div class="doc-topbar">
+            <a href="index.html#facsimili" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Torna al Portale
+            </a>
+            <button class="btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> Stampa / Salva PDF
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-file-medical" aria-hidden="true"></i>
+                <h2 style="font-family: var(--font-serif); font-weight: 400;">Informativa all'Utenza</h2>
+            </div>
+            <p style="font-size: 1rem; color: var(--text-medium); margin-bottom: 20px;">
+                Rilascio Certificati di Malattia Telematici (INPS)
+            </p>
+
+            <div class="doc-intro">
+                <i class="fas fa-exclamation-triangle" style="color: var(--accent); margin-right: 8px;"></i>
+                Si informa la gentile utenza che, ai sensi della normativa vigente, il medico <strong>NON può rilasciare certificati di malattia</strong> senza aver preventivamente effettuato una visita medica di controllo.
+            </div>
+
+            <h3 class="doc-section-title"><i class="fas fa-balance-scale" style="margin-right: 8px;"></i>Cosa dice la legge</h3>
+            <ul class="doc-list">
+                <li>
+                    <strong>Obbligo di Visita</strong>
+                    La trasmissione telematica del certificato deve avvenire <strong>"all'atto della visita"</strong> (Circolare INPS n. 113 del 25/07/2013). Il medico che certifica il falso senza aver visitato il paziente incorre nel reato di <strong>Falso Ideologico</strong> (Art. 481 del Codice Penale).
+                </li>
+                <li>
+                    <strong>Decorrenza</strong>
+                    L'INPS riconosce la prestazione economica di malattia solo dalla data di rilascio del certificato. La legge <strong>non consente</strong> di coprire giorni precedenti alla visita (retrodatazione).
+                </li>
+                <li>
+                    <strong>Responsabilità</strong>
+                    Il certificato medico è un atto legale che attesta l'incapacità temporanea al lavoro constatata personalmente e direttamente dal medico.
+                </li>
+            </ul>
+
+            <h3 class="doc-section-title"><i class="fas fa-user-check" style="margin-right: 8px;"></i>Regole per il paziente</h3>
+            <ul class="doc-list">
+                <li>
+                    <strong>Presentarsi il primo giorno</strong>
+                    Il paziente deve presentarsi in studio (o richiedere visita domiciliare, se non trasportabile) il <strong>primo giorno di malattia</strong>.
+                </li>
+                <li>
+                    <strong>Nessuna richiesta a distanza</strong>
+                    Non è possibile richiedere certificati telefonicamente, tramite email o messaggistica per giorni già trascorsi o senza valutazione clinica.
+                </li>
+                <li>
+                    <strong>Festivi e prefestivi</strong>
+                    In caso di malattia insorta nei giorni festivi o prefestivi, il paziente deve rivolgersi al servizio di <strong>Continuità Assistenziale (Guardia Medica)</strong>.
+                </li>
+            </ul>
+
+            <div class="doc-footer-text">
+                Certi della vostra collaborazione, tuteliamo insieme la correttezza della professione medica e il diritto alla salute.
+            </div>
+
+            <div class="doc-law-ref">
+                <strong>Riferimenti normativi:</strong><br>
+                D.Lgs 165/2001 (Art. 55-septies) &ensp;·&ensp;
+                Circolare INPS n. 113/2013 &ensp;·&ensp;
+                Codice di Deontologia Medica (Art. 24)
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer role="contentinfo">
+    <div class="footer-content">
+        <p>© <span id="current-year">2026</span> — Dr. Savianu Emanuel · Studio Medico Ippocrate, Arezzo</p>
+    </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js?v=9"></script>
+
+</body>
+</html>
