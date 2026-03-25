@@ -132,6 +132,322 @@
         #area-colleghi {
             scroll-margin-top: 20px;
         }
+
+        /* Millewin Tips Accordion Styles */
+        .accordion-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: var(--white);
+        }
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: left;
+            transition: background 0.2s ease;
+        }
+        body.dark-mode .accordion-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+        }
+        .accordion-header:hover {
+            background: linear-gradient(135deg, var(--bg-gradient-2) 0%, var(--border-color) 100%);
+        }
+        body.dark-mode .accordion-header:hover {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+        }
+        .accordion-header i {
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .accordion-header .fa-chevron-down {
+            margin-left: auto;
+            font-size: 0.85rem;
+        }
+        .accordion-header.active .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .accordion-content {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: var(--white);
+        }
+        body.dark-mode .accordion-content {
+            background: var(--primary-dark);
+            border-top-color: var(--primary-light);
+        }
+        .accordion-content.active {
+            display: block;
+        }
+        .shortcut-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .shortcut-list li {
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-color);
+            line-height: 1.6;
+        }
+        body.dark-mode .shortcut-list li {
+            border-bottom-color: var(--primary-light);
+        }
+        .shortcut-list li:last-child {
+            border-bottom: none;
+        }
+        kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: var(--primary);
+            background: var(--bg-gradient-1);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 0 var(--border-color);
+        }
+        body.dark-mode kbd {
+            color: var(--accent);
+            background: var(--primary);
+            border-color: var(--primary-light);
+            box-shadow: 0 2px 0 var(--primary-light);
+        }
+        .tip-category {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px;
+        }
+        .tip-category:first-child {
+            margin-top: 0;
+        }
+        .troubleshoot-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .troubleshoot-item {
+            padding: 16px;
+            background: var(--bg-gradient-1);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--danger);
+        }
+        body.dark-mode .troubleshoot-item {
+            background: var(--primary);
+            border-left-color: #ff6b6b;
+        }
+        .troubleshoot-item h4 {
+            margin: 0 0 8px;
+            color: var(--danger);
+            font-size: 0.95rem;
+        }
+        body.dark-mode .troubleshoot-item h4 {
+            color: #ff6b6b;
+        }
+        .troubleshoot-item p {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .troubleshoot-item ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .troubleshoot-item li {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        /* RUAP/PIR Section Styles */
+        .expandable-card {
+            border: 2px solid var(--accent);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--white);
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+        }
+        .expandable-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .expandable-card.expanded {
+            box-shadow: 0 0 0 4px rgba(194, 155, 87, 0.15), var(--shadow-md);
+        }
+        .expandable-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+        }
+        body.dark-mode .expandable-card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        .expandable-card-header i {
+            font-size: 1.8rem;
+            color: var(--accent);
+        }
+        .expandable-card-header-content {
+            flex: 1;
+        }
+        .expandable-card-header-content h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        body.dark-mode .expandable-card-header-content h3 {
+            color: var(--white);
+        }
+        .expandable-card-header-content p {
+            margin: 4px 0 0;
+            font-size: 0.9rem;
+            color: var(--text-medium);
+        }
+        body.dark-mode .expandable-card-header-content p {
+            color: rgba(255,255,255,0.7);
+        }
+        .expandable-card-header .fa-chevron-down {
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+        .expandable-card.expanded .expandable-card-header .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .expandable-card-content {
+            display: none;
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+            background: var(--white);
+        }
+        body.dark-mode .expandable-card-content {
+            background: var(--primary-dark);
+            border-top-color: var(--primary-light);
+        }
+        .expandable-card-content.active {
+            display: block;
+        }
+        .pir-summary-box {
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+        }
+        .pir-summary-yes {
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid #28a745;
+        }
+        body.dark-mode .pir-summary-yes {
+            background: rgba(40, 167, 69, 0.15);
+        }
+        .pir-summary-no {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+        body.dark-mode .pir-summary-no {
+            background: rgba(220, 53, 69, 0.15);
+        }
+        .pir-summary-box h4 {
+            margin: 0 0 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pir-summary-yes h4 { color: #28a745; }
+        .pir-summary-no h4 { color: #dc3545; }
+        .pir-summary-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .pir-summary-box li {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .pir-caution-box {
+            background: rgba(255, 193, 7, 0.15);
+            border-left: 4px solid #ffc107;
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 20px 0;
+        }
+        .pir-caution-box h4 {
+            color: #856404;
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+        }
+        body.dark-mode .pir-caution-box h4 {
+            color: #ffc107;
+        }
+        .pir-caution-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .pir-caution-box li {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .pir-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.85rem;
+        }
+        .pir-table th, .pir-table td {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        body.dark-mode .pir-table th, body.dark-mode .pir-table td {
+            border-color: var(--primary-light);
+        }
+        .pir-table th {
+            background: var(--bg-gradient-2);
+            font-weight: 600;
+        }
+        body.dark-mode .pir-table th {
+            background: var(--primary);
+        }
+        .pir-table tr:nth-child(even) {
+            background: var(--bg-gradient-1);
+        }
+        body.dark-mode .pir-table tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+        .pir-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 24px 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent);
+        }
+        body.dark-mode .pir-section-title {
+            color: var(--accent);
+        }
+        .pir-section-title:first-of-type {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -197,6 +513,47 @@
             <div class="alert-box" role="note" aria-label="Avviso medico-legale">
                 <p><strong><i class="fas fa-balance-scale" aria-hidden="true"></i>&ensp;DISCLAIMER MEDICO-LEGALE:</strong></p>
                 <p>Le informazioni e i collegamenti in questa sezione sono destinati esclusivamente a personale medico e sanitario autorizzato. I contenuti hanno scopo puramente informativo e di supporto alla pratica clinica e non sostituiscono il giudizio diagnostico e terapeutico del medico. L'utilizzatore è l'unico responsabile delle decisioni cliniche intraprese.</p>
+            </div>
+
+            <!-- Calendario (in alto) -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    <h2>Organizzazione Eventi e Formazione</h2>
+                </div>
+                <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-medium);">
+                    Pianificazione eventi clinici, riunioni e formazione dello studio.
+                </p>
+                <div class="calendar-container">
+                    <iframe
+                        src="https://calendar.google.com/calendar/embed?src=c_b1cb83455dd147a9eed267ca93664b7b7e428369b1fd28c99775b94e29aada51%40group.calendar.google.com&ctz=Europe%2FRome"
+                        style="border: 0"
+                        width="100%"
+                        height="600"
+                        frameborder="0"
+                        scrolling="no"
+                        title="Calendario eventi e formazione medica"
+                        aria-label="Calendario Google per eventi e formazione">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Calcolatore Ferie e Coperture -->
+            <div class="card card-spotlight">
+                <div class="card-header">
+                    <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
+                    <h2>Calcolatore Ferie e Coperture</h2>
+                </div>
+                <p style="font-size: 1rem; color: var(--text-medium); max-width: 620px; margin: 0 auto; line-height: 1.7;">
+                    Pianifica le ferie del gruppo medico, verifica le coperture giornaliere e individua le scoperture. I dati vengono salvati localmente nel browser.
+                </p>
+                <a href="calcolatore-ferie.html"
+                   class="btn-prenota-large btn-assistente"
+                   aria-label="Apri il Calcolatore Ferie e Coperture">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    <span>Apri il Calcolatore Ferie</span>
+                    <small>Ferie · Coperture · Export Excel</small>
+                </a>
             </div>
 
             <!-- ★ CENTERPIECE — Assistente Burocratico ★ -->
@@ -327,26 +684,319 @@
                 </div>
             </div>
 
-            <!-- Calendario -->
+            <!-- Trucchi e Scorciatoie Millewin -->
             <div class="card">
                 <div class="card-header">
-                    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                    <h2>Organizzazione Eventi e Formazione</h2>
+                    <i class="fas fa-keyboard" aria-hidden="true"></i>
+                    <h2>Trucchi e Scorciatoie Millewin</h2>
                 </div>
                 <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-medium);">
-                    Pianificazione eventi clinici, riunioni e formazione dello studio.
+                    Combinazioni rapide per navigare velocemente senza usare continuamente il mouse.
                 </p>
-                <div class="calendar-container">
-                    <iframe
-                        src="https://calendar.google.com/calendar/embed?src=c_b1cb83455dd147a9eed267ca93664b7b7e428369b1fd28c99775b94e29aada51%40group.calendar.google.com&ctz=Europe%2FRome"
-                        style="border: 0"
-                        width="100%"
-                        height="600"
-                        frameborder="0"
-                        scrolling="no"
-                        title="Calendario eventi e formazione medica"
-                        aria-label="Calendario Google per eventi e formazione">
-                    </iframe>
+
+                <div class="accordion-container" id="millewin-accordion">
+                    
+                    <!-- Scorciatoie da Tastiera -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-keyboard"></i>
+                            <span>Scorciatoie da Tastiera</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <ul class="shortcut-list">
+                                <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Apre l'Agenda appuntamenti da qualsiasi schermata</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>F3</kbd> — Apre la Rubrica Telefonica per cercare rapidamente i recapiti di un paziente</li>
+                                <li><kbd>Alt</kbd> + <kbd>F</kbd> — Mostra i Familiari del paziente in visita, utilissimo per ripetere terapie continuative ai parenti senza uscire</li>
+                                <li><kbd>Alt</kbd> + <kbd>Q</kbd> — Apre le Informazioni Essenziali (Patient Summary), il quadro riassuntivo clinico fondamentale per sostituzioni e pronto soccorso</li>
+                                <li><kbd>Alt</kbd> + <kbd>H</kbd> — Apre la Pianificazione e Scadenze, raggruppando esami in scadenza, richiami vaccinali e protocolli attivi</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>R</kbd> — Apre la Cronologia Visite, per filtrare e vedere tutto lo storico di un singolo problema o accertamento</li>
+                                <li><kbd>F2</kbd> Monitoraggio — Posizionati su un farmaco o accertamento e premi <kbd>F2</kbd> per vedere istantaneamente tutto lo storico di prescrizione o i risultati nel tempo</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>O</kbd> Origine Spesa — Selezionando un accertamento appena prescritto, permette di marcare la prestazione come "Suggerita" dallo specialista</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>G</kbd> — Visualizza un'impegnativa dematerializzata direttamente dalla cartella del paziente (utile per ristamparla o rinviarla)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Trucchi per le Prescrizioni -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-pills"></i>
+                            <span>Trucchi per le Prescrizioni</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Codici Mnemonici per esami veloci</p>
+                            <p>Cerca l'esame in tabella, clicca su "Modifica" e assegnagli un codice breve di 2-3 lettere (es. "CT"). Digita "CT" nel campo accertamenti e premi <kbd>Invio</kbd> per prescriverlo istantaneamente.</p>
+                            
+                            <p class="tip-category">Gruppi di Accertamenti in un click</p>
+                            <p>Digitando un punto <kbd>.</kbd> nel campo di ricerca degli accertamenti, Millewin mostra i "Gruppi" (es. BASE, DIABETE, GRAVIDANZA) per prescrivere un intero pannello di esami in un colpo solo.</p>
+                            
+                            <p class="tip-category">Ripetere terapia modificando la posologia</p>
+                            <p>Seleziona un farmaco già prescritto e premi <kbd>Ctrl</kbd> + <kbd>F6</kbd> (o tasto destro > Copia). Puoi variare le quantità o la posologia prima di mandare in stampa.</p>
+                            
+                            <p class="tip-category">Farmaci non sostituibili</p>
+                            <p>Quando cerchi il farmaco, spunta la casella "Non sostituibile" in basso a sinistra; sulla ricetta apparirà l'apposita dicitura.</p>
+                            
+                            <p class="tip-category">Mettere in evidenza i farmaci cronici</p>
+                            <p>Clicca sul bottone grigio accanto al nome di un farmaco per farlo diventare <span style="color: #22c55e; font-weight: bold;">Verde</span>. Il farmaco "galleggerà" in cima alla lista come Terapia Continuativa.</p>
+                        </div>
+                    </div>
+
+                    <!-- Gestione Pazienti e GDPR -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Gestione Pazienti e GDPR</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Eliminare pazienti doppi, trasferiti o deceduti</p>
+                            <p>Per rispettare il GDPR, non usare funzioni generiche. Vai su <strong>Mille Utilità > Statistiche > Controllo revocati</strong>. Da qui potrai:</p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li><strong>Cancellare</strong> definitivamente (inclusi gli allegati)</li>
+                                <li><strong>Anonimizzare</strong> i pazienti, sostituendo il nome con "ZZZANONIMO" per mantenere lo storico clinico a fini statistici</li>
+                            </ul>
+                            
+                            <p class="tip-category">Analizzare i trend clinici (Grafici e Timeline)</p>
+                            <p>Per capire se una terapia sta funzionando (es. colesterolo o pressione):</p>
+                            <ol style="margin: 10px 0; padding-left: 20px;">
+                                <li>Premi <kbd>F2</kbd> sull'accertamento per aprire il monitoraggio</li>
+                                <li>Clicca su <strong>"F2 Timeline"</strong> per vedere l'andamento storico</li>
+                                <li>Oppure vai su <strong>Menu Viste > Grafici</strong> per una rappresentazione visiva dei valori sovrapposti ai farmaci prescritti</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Lavoro in Mobilità e MilleBook -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Lavoro in Mobilità, MilleBook e Segreteria</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Visite Domiciliari (Millelight)</p>
+                            <p>Non serve portare il PC. Tramite tablet o smartphone, collegati a <strong>millelight.millewin.it</strong> usando le credenziali Cloud. Potrai accedere alle cartelle, fare ricette rosse o dematerializzate. I dati si sincronizzano automaticamente.</p>
+                            
+                            <p class="tip-category">Spostarsi tra vari ambulatori (Profili Stampanti)</p>
+                            <p>Se lavori con un portatile su più studi, vai su <strong>Gestione Studio > Impostazioni > Stampanti</strong>, clicca "Rinomina" per salvare Studio A, poi "Crea nuova configurazione" per Studio B. All'avvio, Millewin chiederà dove ti trovi.</p>
+                            
+                            <p class="tip-category">Abilitare la Segretaria all'Agenda Cloud</p>
+                            <p>La segretaria deve essere iscritta a MilleBook con un'email diversa da quella del medico. Dalle impostazioni dell'Agenda Cloud del medico, invia l'invito formale all'account della segretaria.</p>
+                        </div>
+                    </div>
+
+                    <!-- Troubleshooting -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-wrench"></i>
+                            <span>Risoluzione Problemi Comuni</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="troubleshoot-grid">
+                                <div class="troubleshoot-item">
+                                    <h4>Errore "Controllo Iniziale Fallito" su nuovo PC</h4>
+                                    <p>Capita quando sposti Millewin su un nuovo computer e fai il "Restore" dei dati vecchi su un programma appena installato.</p>
+                                    <p><strong>Soluzione:</strong> Chiudi l'errore, avvia l'icona "Mille Live Update" nella barra di Windows, fai scaricare le ultime Patch e Tabelle, riavvia.</p>
+                                </div>
+                                <div class="troubleshoot-item">
+                                    <h4>Errore "ODBC Manager ERROR timeout expired"</h4>
+                                    <p>Indica che Millewin non riesce a comunicare con il database.</p>
+                                    <ul>
+                                        <li><strong>Rete Locale:</strong> Verifica che il computer principale (Server) sia acceso</li>
+                                        <li><strong>Cloud (RRS.net / Millelight):</strong> Controlla la connessione internet o vai in <strong>Medico > Dati Personali > Funzionalità Millecloud</strong> e verifica che l'indirizzo sia impostato su <code>https://api.millewin.it</code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RUAP / PIR Section -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-hospital-user" aria-hidden="true"></i>
+                    <h2>Ruolo Unico di Assistenza Primaria (RUAP)</h2>
+                </div>
+
+                <!-- Spiegazione PIR Expandable Card -->
+                <div class="expandable-card" id="pir-card" onclick="togglePirCard()">
+                    <div class="expandable-card-header">
+                        <i class="fas fa-book-open"></i>
+                        <div class="expandable-card-header-content">
+                            <h3>Spiegazione PIR — Punti di Intervento Rapido</h3>
+                            <p>Clicca per espandere la guida completa ai PIR</p>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="expandable-card-content" id="pir-content">
+                        
+                        <!-- Quick Summary -->
+                        <div class="pir-summary-box pir-summary-yes">
+                            <h4>SÌ — COSA POSSIAMO GESTIRE AL PIR</h4>
+                            <ul>
+                                <li><strong>Dolori acuti:</strong> Coliche sospette (renali o colecisti), dolore addominale da gastroenterite non complicata, lombalgie e sciatalgie acute.</li>
+                                <li><strong>Piccola Traumatologia:</strong> Traumi osteoarticolari senza frattura, contusioni, distorsioni, spalla dolorosa.</li>
+                                <li><strong>Problemi cutanei:</strong> Ferite superficiali, ascessi cutanei, orticaria, dermatiti, ustioni lievi (I grado &lt;5%, II grado &lt;1%).</li>
+                                <li><strong>Testa/Collo/Occhi:</strong> Cefalee o emicranie note, odontalgia, otalgia, vertigini periferiche, congiuntiviti.</li>
+                                <li><strong>Varie:</strong> Ritenzione urinaria acuta (>3h), edemi declivi, reazioni allergiche lievi, crisi ipertensive asintomatiche, febbre senza sepsi.</li>
+                            </ul>
+                        </div>
+
+                        <div class="pir-summary-box pir-summary-no">
+                            <h4>NO — RED FLAGS (Dritti in PS!)</h4>
+                            <ul>
+                                <li>Dolore toracico, dispnea acuta, cefalea intensa e inusuale, deficit neurologici acuti.</li>
+                                <li><strong>Sui Traumi:</strong> Impotenza funzionale totale, vasti ematomi tesi (TAO/NAO), ferite penetranti.</li>
+                                <li><strong>Sulla Febbre:</strong> Febbre >38°C con qSOFA positivo, meningismo, SpO2 &lt;92%, porpora.</li>
+                                <li><strong>Sul Dolore Lombare:</strong> Deficit sensitivo/motorio, incontinenza, aneurisma aortico.</li>
+                                <li><strong>Sulle Allergie:</strong> Difficoltà respiratoria, edema del volto/labbra, eruzione generalizzata.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Detailed Content -->
+                        <h3 class="pir-section-title">1. Definizione e Mission del Modello PIR</h3>
+                        <p>I Punti di Intervento Rapido (PIR) rappresentano la risposta organizzativa della Regione Toscana (DGR 223 del 02-03-2026 e DM 77/22) per la gestione delle urgenze differibili di bassa complessità clinico-assistenziale.</p>
+                        <p><strong>Obiettivi strategici:</strong></p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Copertura diurna AFT nelle Case della Comunità tramite i medici del ruolo unico</li>
+                            <li>Riduzione overcrowding PS — intercettare i codici minori (4 e 5)</li>
+                            <li>Continuità assistenziale — raccordo tra MMG/PLS e strutture territoriali</li>
+                            <li>Integrazione professionale — protocolli condivisi tra Medici RUAP, specialisti e infermieri</li>
+                            <li>Efficienza operativa — dimissione entro 90 minuti dall'accesso</li>
+                        </ul>
+
+                        <h3 class="pir-section-title">2. Modelli Operativi</h3>
+                        <table class="pir-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipologia</th>
+                                    <th>Contesto</th>
+                                    <th>Accesso</th>
+                                    <th>Classe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>PIR A</strong></td>
+                                    <td>Case della Comunità Hub/Spoke</td>
+                                    <td>Filtrato da MMG/PLS o 116117</td>
+                                    <td>Obbligatorio</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>PIR B</strong></td>
+                                    <td>Presidi territoriali (aree carenti)</td>
+                                    <td>Diretto o mediato</td>
+                                    <td>Buona pratica</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>PIR H</strong></td>
+                                    <td>Prossimità PS ad alto volume</td>
+                                    <td>Filtrato da infermiere triage PS</td>
+                                    <td>Buona pratica</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3 class="pir-section-title">3. Personale e Requisiti</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li><strong>Medici RUAP:</strong> Responsabili della valutazione clinica e gestione del percorso</li>
+                            <li><strong>Infermieri:</strong> IFC (Infermieri di Famiglia e Comunità) nelle CdC</li>
+                            <li><strong>Certificazione obbligatoria:</strong> Attestato BLSD in corso di validità</li>
+                            <li><strong>Articolazione Oraria:</strong> H6, H12 o H16 (H24 nelle CdC Hub)</li>
+                        </ul>
+
+                        <h3 class="pir-section-title">4. Compiti del Medico RUAP</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Apertura scheda clinica informatizzata con accesso alla scheda sanitaria</li>
+                            <li>Rilevazione parametri vitali: PA, SpO2, FC, FR</li>
+                            <li>Prestazioni: visita medica, terapie infusionali, procedure chirurgiche minori, POCT</li>
+                            <li>Prescrizione esami diagnostici di I livello con Priorità U</li>
+                            <li>Redazione relazione clinica PDF e alimentazione FSE 2.0</li>
+                        </ul>
+
+                        <h3 class="pir-section-title">5. Casistica Clinica Trattabile</h3>
+                        <table class="pir-table">
+                            <thead>
+                                <tr>
+                                    <th>Area</th>
+                                    <th>Indicazioni</th>
+                                    <th>Procedure</th>
+                                    <th>Esito</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Dolore Addominale</td>
+                                    <td>Gastroenterite non complicata, colica renale/colecisti</td>
+                                    <td>Gestione dolore, PCR, Eco addome</td>
+                                    <td>Invio II livello o PS</td>
+                                </tr>
+                                <tr>
+                                    <td>Rachialgia acuta</td>
+                                    <td>Lombosciatalgia senza red flags</td>
+                                    <td>Terapia EV, EO neurologico</td>
+                                    <td>Follow-up MMG</td>
+                                </tr>
+                                <tr>
+                                    <td>Ritenzione Urinaria</td>
+                                    <td>Incapacità minzione > 3h con globo</td>
+                                    <td>Eco ristagno, cateterismo</td>
+                                    <td>MMG</td>
+                                </tr>
+                                <tr>
+                                    <td>Reazione Allergica</td>
+                                    <td>Orticaria, eritemi lievi (senza urgenza)</td>
+                                    <td>Antistaminici/Corticosteroidi EV</td>
+                                    <td>MMG</td>
+                                </tr>
+                                <tr>
+                                    <td>Crisi Ipertensiva</td>
+                                    <td>Senza danno d'organo</td>
+                                    <td>ECG, Emogas, monitoraggio</td>
+                                    <td>Follow-up MMG</td>
+                                </tr>
+                                <tr>
+                                    <td>Ferita/Morso</td>
+                                    <td>Ferita semplice senza perdita di sostanza</td>
+                                    <td>Sutura, immunoglobuline</td>
+                                    <td>MMG/Centro vaccinale</td>
+                                </tr>
+                                <tr>
+                                    <td>Febbre/Influenza</td>
+                                    <td>QSOFA negativo</td>
+                                    <td>PCR, Eco torace, Tampone</td>
+                                    <td>MMG</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3 class="pir-section-title">6. Criteri di Esclusione Mandatori</h3>
+                        <div class="pir-caution-box">
+                            <h4>ATTENZIONE: CASI DA INVIARE IMMEDIATAMENTE IN PS</h4>
+                            <ul>
+                                <li>Dolore toracico (sospetta SCA)</li>
+                                <li>Dispnea acuta o grave difficoltà respiratoria</li>
+                                <li>Cefalea intensa e inusuale (insorgenza improvvisa/violenta)</li>
+                                <li>Deficit neurologici acuti (motori, sensitivi, alterazione coscienza)</li>
+                                <li>Febbre con SpO2 &lt;92%, meningismo, porpora</li>
+                                <li>Ferite al volto, sospette lesioni tendinee/nervose</li>
+                            </ul>
+                        </div>
+
+                        <h3 class="pir-section-title">7. Monitoraggio e Indicatori</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Percentuale pazienti dimessi entro 90 minuti</li>
+                            <li>Rapporto invii II livello / Totale dimessi</li>
+                            <li>Tasso re-accessi nelle 48h (indicatore di appropriatezza)</li>
+                            <li>Volume invii filtrati da MMG tramite ZeroCode</li>
+                        </ul>
+
+                    </div>
                 </div>
             </div>
 
@@ -375,6 +1025,31 @@
                 console.log('ServiceWorker registration failed:', error);
             });
         });
+    }
+
+    function toggleAccordion(header) {
+        const content = header.nextElementSibling;
+        const isActive = header.classList.contains('active');
+        const allHeaders = document.querySelectorAll('.accordion-header');
+        const allContents = document.querySelectorAll('.accordion-content');
+
+        allHeaders.forEach(h => h.classList.remove('active'));
+        allContents.forEach(c => c.classList.remove('active'));
+
+        if (!isActive) {
+            header.classList.add('active');
+            content.classList.add('active');
+            header.setAttribute('aria-expanded', 'true');
+        } else {
+            header.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function togglePirCard() {
+        const card = document.getElementById('pir-card');
+        const content = document.getElementById('pir-content');
+        card.classList.toggle('expanded');
+        content.classList.toggle('active');
     }
 </script>
 </body>
