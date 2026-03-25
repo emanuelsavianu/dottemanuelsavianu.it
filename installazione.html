@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Installazione Studio Ippocrate — Windows</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root { --primary:#0f2a3a; --accent:#007c68; --warm:#b45309; --bg:#f4f6f8; }
+  * { box-sizing:border-box; }
+  body { background:var(--bg); font-family:'DM Sans',sans-serif; color:#1c1917; margin:0; padding:0; }
+  .cover {
+    background:var(--primary);
+    color:white;
+    padding:52px 60px 44px;
+    border-bottom:6px solid var(--accent);
+  }
+  .cover h1 { font-family:'DM Serif Display',serif; font-size:2.8rem; margin:0 0 8px; }
+  .cover .sub { font-size:1.1rem; color:rgba(255,255,255,.6); margin:0; }
+  .cover .badges { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; }
+  .badge { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); border-radius:20px; padding:5px 14px; font-size:.8rem; font-weight:700; color:rgba(255,255,255,.8); }
+
+  .page { max-width:860px; margin:0 auto; padding:40px 40px 60px; }
+
+  h2 { font-family:'DM Serif Display',serif; font-size:1.7rem; color:var(--primary); margin:40px 0 16px; padding-bottom:10px; border-bottom:2px solid #e5e7eb; }
+  h3 { font-size:1.1rem; font-weight:900; color:#374151; margin:24px 0 10px; }
+  p  { line-height:1.7; color:#374151; margin:0 0 14px; }
+
+  /* Steps */
+  .step-list { list-style:none; padding:0; margin:0 0 24px; counter-reset:steps; }
+  .step-list li {
+    counter-increment:steps;
+    display:flex;
+    gap:18px;
+    margin-bottom:18px;
+    align-items:flex-start;
+  }
+  .step-num {
+    width:36px; height:36px; flex-shrink:0;
+    background:var(--accent);
+    color:white;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:1rem;
+  }
+  .step-body { flex:1; padding-top:5px; }
+  .step-body strong { display:block; font-size:1rem; color:#1c1917; margin-bottom:4px; }
+  .step-body p { margin:0; font-size:.95rem; }
+
+  /* Code blocks */
+  pre {
+    background:#1e293b;
+    color:#e2e8f0;
+    border-radius:10px;
+    padding:18px 20px;
+    font-family:'Courier New',monospace;
+    font-size:.9rem;
+    overflow-x:auto;
+    margin:10px 0 16px;
+    line-height:1.6;
+  }
+  pre .comment { color:#64748b; }
+  pre .cmd     { color:#7dd3fc; }
+  pre .val     { color:#86efac; }
+  code {
+    background:#e0f2f1;
+    color:#005a4b;
+    padding:2px 7px;
+    border-radius:5px;
+    font-family:'Courier New',monospace;
+    font-size:.88em;
+    font-weight:700;
+  }
+
+  /* Info/warning boxes */
+  .box {
+    border-radius:12px;
+    padding:16px 20px;
+    margin:16px 0;
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .box.info    { background:#eff6ff; border-left:4px solid #3b82f6; }
+  .box.warning { background:#fffbeb; border-left:4px solid #f59e0b; }
+  .box.success { background:#f0fdf9; border-left:4px solid var(--accent); }
+  .box.danger  { background:#fff1f2; border-left:4px solid #f43f5e; }
+  .box-icon    { font-size:1.3rem; flex-shrink:0; margin-top:1px; }
+  .box p       { margin:0; font-size:.95rem; }
+  .box p + p   { margin-top:6px; }
+  .box strong  { color:#1c1917; }
+
+  /* URL table */
+  .url-table { width:100%; border-collapse:collapse; margin:16px 0; }
+  .url-table th { background:var(--primary); color:white; padding:10px 14px; text-align:left; font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; }
+  .url-table td { padding:10px 14px; border-bottom:1px solid #e5e7eb; font-size:.95rem; }
+  .url-table tr:last-child td { border-bottom:none; }
+  .url-table tr:nth-child(even) td { background:#f9fafb; }
+  .url-table code { background:#e0f2f1; }
+
+  /* File tree */
+  .file-tree {
+    background:#1e293b;
+    color:#cbd5e1;
+    border-radius:10px;
+    padding:18px 20px;
+    font-family:'Courier New',monospace;
+    font-size:.9rem;
+    line-height:1.9;
+    margin:10px 0 16px;
+  }
+  .file-tree .dir  { color:#7dd3fc; font-weight:700; }
+  .file-tree .file { color:#a5f3fc; }
+  .file-tree .new  { color:#86efac; }
+  .file-tree .comm { color:#475569; font-style:italic; }
+
+  /* PM2 status mock */
+  .pm2-output {
+    background:#0f172a;
+    color:#94a3b8;
+    border-radius:10px;
+    padding:14px 18px;
+    font-family:'Courier New',monospace;
+    font-size:.82rem;
+    margin:10px 0 16px;
+    line-height:1.7;
+  }
+  .pm2-output .green  { color:#4ade80; }
+  .pm2-output .yellow { color:#facc15; }
+  .pm2-output .white  { color:#f1f5f9; font-weight:700; }
+
+  .toc { background:white; border:1px solid #e5e7eb; border-radius:12px; padding:22px 26px; margin-bottom:32px; }
+  .toc h3 { margin:0 0 12px; color:var(--primary); font-size:1rem; }
+  .toc ol { margin:0; padding-left:20px; }
+  .toc li { margin-bottom:5px; }
+  .toc a  { color:var(--accent); font-weight:600; text-decoration:none; }
+  .toc a:hover { text-decoration:underline; }
+
+  hr { border:none; border-top:2px solid #e5e7eb; margin:36px 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>🏥 Studio Ippocrate</h1>
+  <p class="sub">Guida di installazione completa per Windows</p>
+  <div class="badges">
+    <span class="badge">✅ Windows 10 / 11</span>
+    <span class="badge">⚙️ Node.js 18+</span>
+    <span class="badge">🔄 PM2 (auto-avvio)</span>
+    <span class="badge">📡 Rete WiFi locale</span>
+    <span class="badge" style="background:rgba(0,184,148,.25);border-color:rgba(0,184,148,.4);">🟢 Server: 192.168.0.1</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="box success" style="margin-bottom:28px;border-left:6px solid var(--accent);border-radius:14px;padding:20px 24px;">
+    <span class="box-icon" style="font-size:1.8rem;">🟢</span>
+    <div>
+      <p style="font-size:1.1rem;font-weight:900;color:#065f46;margin-bottom:6px;">Installazione completata con successo!</p>
+      <p>Il server Studio Ippocrate è <strong>già operativo</strong> su questo PC. Le sezioni 2–7 della guida sono già state completate. Conserva questo documento come riferimento per i comandi di manutenzione e gli indirizzi da distribuire ai dispositivi dello studio.</p>
+    </div>
+  </div>
+
+  <div class="toc">
+    <h3>📋 Indice</h3>
+    <ol>
+      <li><a href="#requisiti">Requisiti di sistema</a></li>
+      <li><a href="#nodejs">Installazione Node.js</a></li>
+      <li><a href="#progetto">Copia del progetto</a></li>
+      <li><a href="#dipendenze">Installazione dipendenze</a></li>
+      <li><a href="#avvio">Primo avvio</a></li>
+      <li><a href="#pm2">PM2 — Server sempre attivo</a></li>
+      <li><a href="#autostart">Avvio automatico con Windows</a></li>
+      <li><a href="#indirizzi">Indirizzi di accesso</a></li>
+      <li><a href="#firewall">Firewall Windows</a></li>
+      <li><a href="#problemi">Risoluzione problemi comuni</a></li>
+    </ol>
+  </div>
+
+  <!-- ─── SEZIONE 1 ─────────────────────────────────────────────────────────── -->
+  <h2 id="requisiti">1. Requisiti di sistema</h2>
+
+  <div class="box info">
+    <span class="box-icon">💻</span>
+    <p>Il server deve girare sul <strong>PC fisso della Segreteria</strong> (o su qualsiasi PC sempre acceso). Tutti gli altri dispositivi — tablet check-in, PC dei medici, monitor sala — accedono via browser sulla stessa rete WiFi, senza installare nulla.</p>
+  </div>
+
+  <p>Verifica che il computer della Segreteria soddisfi questi requisiti:</p>
+  <ul style="line-height:2;">
+    <li><strong>Sistema operativo:</strong> Windows 10 (64-bit) o Windows 11</li>
+    <li><strong>RAM:</strong> almeno 2 GB liberi</li>
+    <li><strong>Connessione:</strong> cablata (LAN) o WiFi stabile sulla rete dello studio</li>
+    <li><strong>Sempre acceso</strong> durante l'orario di studio</li>
+  </ul>
+
+  <!-- ─── SEZIONE 2 ─────────────────────────────────────────────────────────── -->
+  <h2 id="nodejs">2. Installazione Node.js</h2>
+
+  <ol class="step-list">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Scarica Node.js LTS</strong>
+        <p>Vai su <strong>https://nodejs.org</strong> e clicca sul pulsante verde <em>"LTS — Recommended For Most Users"</em> (versione 20.x o superiore). Scarica il file <code>.msi</code>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Esegui il programma di installazione</strong>
+        <p>Apri il file scaricato e segui la procedura guidata. Lascia tutte le opzioni di default selezionate. Quando richiesto, <strong>spunta</strong> "Automatically install the necessary tools" se disponibile.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Verifica l'installazione</strong>
+        <p>Apri il <strong>Prompt dei Comandi</strong> (premi <code>Windows + R</code>, digita <code>cmd</code>, premi Invio) e digita:</p>
+        <pre><span class="cmd">node --version</span>
+<span class="comment"># Deve rispondere qualcosa come: v20.11.0</span>
+
+<span class="cmd">npm --version</span>
+<span class="comment"># Deve rispondere qualcosa come: 10.2.4</span></pre>
+        <p>Se vedi i numeri di versione, Node.js è installato correttamente. ✅</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="box warning">
+    <span class="box-icon">⚠️</span>
+    <p>Se il prompt dice <em>"node non riconosciuto come comando"</em>, chiudi e riapri il Prompt dei Comandi dopo l'installazione. Se il problema persiste, riavvia il PC.</p>
+  </div>
+
+  <!-- ─── SEZIONE 3 ─────────────────────────────────────────────────────────── -->
+  <h2 id="progetto">3. Copia del progetto sul PC</h2>
+
+  <p>Crea una cartella dedicata per il progetto. Ti consigliamo:</p>
+  <pre><span class="val">C:\StudioIppocrate\</span></pre>
+
+  <p>All'interno, la struttura dei file deve essere esattamente questa:</p>
+  <div class="file-tree">
+    <span class="dir">C:\StudioIppocrate\</span>
+    ├── <span class="file">server.js</span>
+    ├── <span class="file">package.json</span>
+    ├── <span class="file">README.md</span>
+    └── <span class="dir">public\</span>
+        ├── <span class="file">index.html</span>     <span class="comm">← tablet check-in</span>
+        ├── <span class="file">medico.html</span>    <span class="comm">← dashboard medici</span>
+        ├── <span class="file">monitor.html</span>   <span class="comm">← schermo sala d'attesa</span>
+        └── <span class="file">admin.html</span>     <span class="comm">← pannello segreteria</span>
+  </div>
+
+  <div class="box info">
+    <span class="box-icon">📁</span>
+    <p>La cartella <code>data\</code> verrà <strong>creata automaticamente</strong> dal server al primo avvio. Contiene il file di salvataggio automatico dello stato giornaliero.</p>
+  </div>
+
+  <p>Assicurati che il file <code>package.json</code> contenga esattamente questo:</p>
+  <pre>{
+  <span class="val">"name"</span>: "studio-ippocrate",
+  <span class="val">"version"</span>: "2.0.0",
+  <span class="val">"main"</span>: "server.js",
+  <span class="val">"scripts"</span>: {
+    <span class="val">"start"</span>: "node server.js"
+  },
+  <span class="val">"dependencies"</span>: {
+    <span class="val">"express"</span>: "^4.18.2",
+    <span class="val">"socket.io"</span>: "^4.6.1"
+  }
+}</pre>
+
+  <!-- ─── SEZIONE 4 ─────────────────────────────────────────────────────────── -->
+  <h2 id="dipendenze">4. Installazione delle dipendenze</h2>
+
+  <ol class="step-list">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Apri il Prompt dei Comandi nella cartella del progetto</strong>
+        <p>Apri Esplora File, naviga in <code>C:\StudioIppocrate</code>, poi clicca sulla barra dell'indirizzo in alto, digita <code>cmd</code> e premi Invio. Si aprirà il prompt già nella cartella giusta.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Installa le dipendenze del progetto</strong>
+        <pre><span class="cmd">npm install</span>
+<span class="comment"># Attendi il completamento (30–60 secondi)</span>
+<span class="comment"># Verrà creata automaticamente la cartella node_modules\</span></pre>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Installa PM2 globalmente</strong>
+        <p>PM2 è il gestore di processi che mantiene il server attivo anche se si chiude il prompt o si riavvia il PC:</p>
+        <pre><span class="cmd">npm install -g pm2</span>
+<span class="cmd">npm install -g pm2-windows-startup</span>
+<span class="comment"># Il secondo pacchetto serve per l'avvio automatico con Windows</span></pre>
+      </div>
+    </li>
+  </ol>
+
+  <!-- ─── SEZIONE 5 ─────────────────────────────────────────────────────────── -->
+  <h2 id="avvio">5. Primo avvio (test)</h2>
+
+  <p>Avvia il server con PM2 nella cartella del progetto:</p>
+  <pre><span class="comment"># Assicurati di essere in C:\StudioIppocrate\</span>
+<span class="cmd">pm2 start server.js --name "Ippocrate"</span></pre>
+
+  <p>Se tutto è corretto, il prompt mostrerà:</p>
+  <div class="pm2-output">
+[PM2] Spawning PM2 daemon with pm2_home=<span class="yellow">C:\Users\user\.pm2</span><br>
+[PM2] PM2 Successfully daemonized<br>
+[PM2] Starting <span class="white">C:\StudioIppocrate\server.js</span> in fork_mode (1 instance)<br>
+[PM2] Done.<br>
+<br>
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐<br>
+│ id │ name &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ mode &nbsp; &nbsp; │ ↺ &nbsp; &nbsp;│ status &nbsp; &nbsp;│ cpu &nbsp; &nbsp; &nbsp;│ memory &nbsp; │<br>
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤<br>
+│ 0 &nbsp;│ <span class="green">Ippocrate</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ fork &nbsp; &nbsp; │ 0 &nbsp; &nbsp;│ <span class="green">online</span> &nbsp; &nbsp;│ 0% &nbsp; &nbsp; &nbsp; │ 41.2mb &nbsp; │<br>
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+  </div>
+
+  <p>Apri Chrome o Edge sul PC della segreteria e vai su <code>http://localhost:3000/admin</code>. Se vedi il pannello segreteria, il server funziona. ✅</p>
+
+  <p>Premi <code>Ctrl + C</code> per fermare il server di test. Adesso configuriamo PM2.</p>
+
+  <!-- ─── SEZIONE 6 ─────────────────────────────────────────────────────────── -->
+  <h2 id="pm2">6. PM2 — Server sempre attivo</h2>
+
+  <p>Con PM2 il server rimane attivo in background, si riavvia automaticamente in caso di errore, e continua a funzionare anche dopo la chiusura del prompt.</p>
+
+  <ol class="step-list">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Avvia il server con PM2</strong>
+        <pre><span class="comment"># Sempre da C:\StudioIppocrate\</span>
+<span class="cmd">pm2 start server.js --name "Ippocrate"</span></pre>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Verifica che sia in esecuzione</strong>
+        <pre><span class="cmd">pm2 list</span></pre>
+        <div class="pm2-output">
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐<br>
+│ id │ name &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ mode &nbsp; &nbsp; │ ↺ &nbsp; &nbsp;│ status &nbsp; &nbsp;│ cpu &nbsp; &nbsp; &nbsp;│ memory &nbsp; │<br>
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤<br>
+│ 0 &nbsp;│ <span class="green">Ippocrate</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ fork &nbsp; &nbsp; │ 0 &nbsp; &nbsp;│ <span class="green">online</span> &nbsp; &nbsp;│ 0% &nbsp; &nbsp; &nbsp; │ 60.1mb &nbsp; │<br>
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+        </div>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Salva la configurazione PM2</strong>
+        <pre><span class="cmd">pm2 save</span>
+<span class="comment"># Output atteso:</span>
+[PM2] Saving current process list...
+[PM2] Successfully saved in C:\Users\user\.pm2\dump.pm2</pre>
+      </div>
+    </li>
+  </ol>
+
+  <h3>Comandi PM2 utili</h3>
+  <pre><span class="comment"># Ver stato</span>
+<span class="cmd">pm2 list</span>
+
+<span class="comment"># Riavvia il server (es. dopo aggiornamento file)</span>
+<span class="cmd">pm2 restart Ippocrate</span>
+
+<span class="comment"># Ferma il server</span>
+<span class="cmd">pm2 stop Ippocrate</span>
+
+<span class="comment"># Riprendi il server fermato</span>
+<span class="cmd">pm2 start Ippocrate</span>
+
+<span class="comment"># Leggi i log in tempo reale (utile per debug)</span>
+<span class="cmd">pm2 logs Ippocrate</span>
+
+<span class="comment"># Cancella i log</span>
+<span class="cmd">pm2 flush</span></pre>
+
+  <!-- ─── SEZIONE 7 ─────────────────────────────────────────────────────────── -->
+  <h2 id="autostart">7. Avvio automatico con Windows</h2>
+
+  <p>L'avvio automatico è già stato configurato con successo su questo PC. Il messaggio ricevuto è stato:</p>
+
+  <div class="pm2-output">
+C:\StudioIppocrate&gt; <span class="white">pm2-startup install</span><br>
+<span class="green">Successfully added PM2 startup registry entry.</span>
+  </div>
+
+  <div class="box success">
+    <span class="box-icon">✅</span>
+    <p>Questo significa che ad ogni avvio del PC, Windows rilancerà automaticamente PM2 con il processo <strong>Ippocrate</strong> già salvato. Non è necessario fare nulla di più.</p>
+  </div>
+
+  <h3>Test di verifica (opzionale)</h3>
+  <p>Per confermare che tutto funzioni dopo un riavvio:</p>
+  <ol style="line-height:2.2;padding-left:20px;">
+    <li>Riavvia il PC</li>
+    <li>Aspetta circa 30 secondi dopo l'avvio del desktop</li>
+    <li>Apri il browser e vai su <code>http://localhost:3000/admin</code></li>
+    <li>Se vedi il pannello segreteria senza aver avviato nulla manualmente → ✅ funziona</li>
+  </ol>
+
+  <div class="box warning">
+    <span class="box-icon">⚠️</span>
+    <p>Se dopo un riavvio il server non parte, esegui nuovamente (come Amministratore):</p>
+    <pre style="margin:8px 0 0"><span class="cmd">pm2 save</span>
+<span class="cmd">pm2-startup install</span></pre>
+  </div>
+
+  <!-- ─── SEZIONE 8 ─────────────────────────────────────────────────────────── -->
+  <h2 id="indirizzi">8. Indirizzi di accesso dalla rete</h2>
+
+  <div class="box success" style="border-left:6px solid var(--accent);">
+    <span class="box-icon">📡</span>
+    <div>
+      <p style="font-weight:900;color:#065f46;font-size:1rem;margin-bottom:4px;">IP del server confermato: <code style="background:#d1fae5;color:#065f46;font-size:1rem;">192.168.0.1</code></p>
+      <p>Questo è l'indirizzo da usare su tutti i dispositivi dello studio. Rilevato con <code>ipconfig</code> sulla scheda <strong>"Connessione alla rete locale (LAN)"</strong>.</p>
+    </div>
+  </div>
+
+  <h3>Output ipconfig del PC server (riferimento)</h3>
+  <div class="pm2-output">
+Scheda Ethernet Connessione alla rete locale (LAN):<br>
+&nbsp;&nbsp; Suffisso DNS specifico per connessione: <span class="yellow">broadband</span><br>
+&nbsp;&nbsp; Indirizzo IPv4. . . . . . . . . . . . : <span class="green">192.168.0.1</span><br>
+&nbsp;&nbsp; Subnet mask . . . . . . . . . . . . . : 255.255.255.0<br>
+&nbsp;&nbsp; Gateway predefinito . . . . . . . . . : 192.168.0.7
+  </div>
+
+  <table class="url-table">
+    <thead>
+      <tr>
+        <th>Dispositivo</th>
+        <th>URL da aprire nel browser</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>🖥️ PC Segreteria (locale)</td>
+        <td><code>http://localhost:3000/admin.html</code></td>
+        <td>Solo sul PC server</td>
+      </tr>
+      <tr>
+        <td>📱 Tablet check-in</td>
+        <td><code>http://192.168.0.1:3000/</code></td>
+        <td>Pagina principale check-in pazienti</td>
+      </tr>
+      <tr>
+        <td>🩺 PC dei medici</td>
+        <td><code>http://192.168.0.1:3000/medico.html</code></td>
+        <td>Ogni medico sceglie il proprio nome</td>
+      </tr>
+      <tr>
+        <td>📺 Monitor sala d'attesa</td>
+        <td><code>http://192.168.0.1:3000/monitor.html</code></td>
+        <td>Premi F11 per schermo intero</td>
+      </tr>
+      <tr>
+        <td>🛡️ Segreteria (da altro PC)</td>
+        <td><code>http://192.168.0.1:3000/admin.html</code></td>
+        <td>Pannello completo di gestione</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box warning">
+    <span class="box-icon">💡</span>
+    <p><strong>Importante:</strong> L'IP <code>192.168.0.1</code> potrebbe cambiare se il PC si riavvia o il router si resetta. Per renderlo permanente, vai su <em>Pannello di controllo → Centro connessioni di rete → Ethernet → Proprietà → Protocollo Internet versione 4 (TCP/IPv4)</em> e imposta manualmente IP statico <code>192.168.0.1</code>, subnet mask <code>255.255.255.0</code>, gateway <code>192.168.0.7</code>.</p>
+  </div>
+
+  <!-- ─── SEZIONE 9 ─────────────────────────────────────────────────────────── -->
+  <h2 id="firewall">9. Configurazione Firewall Windows</h2>
+
+  <p>Se gli altri dispositivi non riescono a connettersi al server, è necessario aprire la porta 3000 nel Firewall di Windows:</p>
+
+  <ol class="step-list">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Apri Windows Defender Firewall con sicurezza avanzata</strong>
+        <p>Premi <code>Windows</code>, cerca "Windows Defender Firewall" e apri la versione <em>"con sicurezza avanzata"</em>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Crea una nuova regola in entrata</strong>
+        <p>Nel pannello sinistro, clicca su <em>"Regole connessioni in entrata"</em> → <em>"Nuova regola..."</em> nel pannello destro.</p>
+        <ul style="line-height:2;margin-top:8px;">
+          <li><strong>Tipo di regola:</strong> Porta</li>
+          <li><strong>Protocollo:</strong> TCP</li>
+          <li><strong>Porte locali specifiche:</strong> <code>3000</code></li>
+          <li><strong>Azione:</strong> Consenti la connessione</li>
+          <li><strong>Profilo:</strong> Privato (e Dominio se presente)</li>
+          <li><strong>Nome:</strong> <code>Studio Ippocrate</code></li>
+        </ul>
+      </div>
+    </li>
+  </ol>
+
+  <h3>Alternativa rapida da Prompt dei Comandi (come Amministratore)</h3>
+  <pre><span class="cmd">netsh advfirewall firewall add rule name="Studio Ippocrate" ^
+  dir=in action=allow protocol=TCP localport=3000</span></pre>
+
+  <!-- ─── SEZIONE 10 ──────────────────────────────────────────────────────────── -->
+  <h2 id="problemi">10. Risoluzione problemi comuni</h2>
+
+  <div class="box danger">
+    <span class="box-icon">❌</span>
+    <div>
+      <p><strong>Errore: "EADDRINUSE" o "porta 3000 già in uso"</strong></p>
+      <p>Un'altra istanza del server è già in esecuzione. Esegui:</p>
+      <pre style="margin:6px 0 0"><span class="cmd">pm2 delete Ippocrate</span>
+<span class="cmd">pm2 start server.js --name "Ippocrate"</span></pre>
+    </div>
+  </div>
+
+  <div class="box danger">
+    <span class="box-icon">❌</span>
+    <div>
+      <p><strong>Gli altri dispositivi non si connettono</strong></p>
+      <p>Verifica: (1) tutti sulla stessa rete WiFi, (2) hai aperto la porta 3000 nel Firewall (vedi sezione 9), (3) stai usando l'IP corretto. Riesegui <code>ipconfig</code> per verificare l'IP attuale.</p>
+    </div>
+  </div>
+
+  <div class="box danger">
+    <span class="box-icon">❌</span>
+    <div>
+      <p><strong>Errore: "Cannot find module 'express'"</strong></p>
+      <p>Le dipendenze non sono installate. Rientra nella cartella del progetto ed esegui:</p>
+      <pre style="margin:6px 0 0"><span class="cmd">cd C:\StudioIppocrate</span>
+<span class="cmd">npm install</span></pre>
+    </div>
+  </div>
+
+  <div class="box danger">
+    <span class="box-icon">❌</span>
+    <div>
+      <p><strong>Il server si ferma dopo la chiusura del prompt</strong></p>
+      <p>Assicurati di aver avviato il server tramite PM2 (<code>pm2 start server.js --name "Ippocrate"</code>) e non con <code>node server.js</code>.</p>
+    </div>
+  </div>
+
+  <div class="box danger">
+    <span class="box-icon">❌</span>
+    <div>
+      <p><strong>Il server non si avvia dopo il riavvio del PC</strong></p>
+      <p>Riconfigurazione avvio automatico:</p>
+      <pre style="margin:6px 0 0"><span class="cmd">pm2 save</span>
+<span class="cmd">pm2-startup install</span></pre>
+    </div>
+  </div>
+
+  <div class="box success">
+    <span class="box-icon">✅</span>
+    <div>
+      <p><strong>Controllo rapido che tutto funzioni</strong></p>
+      <pre style="margin:6px 0 0"><span class="cmd">pm2 list</span>         <span class="comment">← deve mostrare "Ippocrate online"</span>
+<span class="cmd">pm2 logs Ippocrate --lines 20</span>  <span class="comment">← ultimi 20 log</span></pre>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="box info">
+    <span class="box-icon">📞</span>
+    <div>
+      <p><strong>Aggiornare i file</strong></p>
+      <p>Per aggiornare i file HTML (index, medico, monitor, admin) basta sostituire i file nella cartella <code>public\</code> e ricaricare il browser sui dispositivi. Non serve riavviare il server.</p>
+      <p>Per aggiornare <code>server.js</code>, invece, esegui: <code>pm2 restart Ippocrate</code></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

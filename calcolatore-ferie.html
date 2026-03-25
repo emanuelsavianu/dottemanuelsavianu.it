@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Calcolatore Ferie e Coperture - Medicina di Gruppo</title>
+
+    <!-- React via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4',
+                            300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6',
+                            600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- SheetJS per export Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-50 antialiased">
+
+<div id="root"></div>
+
+<script type="text/babel">
+// ============================================================
+// COSTANTI E UTILITY
+// ============================================================
+
+const STORAGE_KEY = 'calcolatore-ferie-mdg';
+
+// Giorni festivi nazionali italiani (fissi + Pasquetta calcolata)
+const HOLIDAYS_BY_YEAR = {};
+function getItalianHolidays(year) {
+    if (HOLIDAYS_BY_YEAR[year]) return HOLIDAYS_BY_YEAR[year];
+
+    // Calcolo Pasqua con algoritmo di Gauss/Computus
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    const easter = new Date(year, month - 1, day);
+    const easterMonday = new Date(easter);
+    easterMonday.setDate(easter.getDate() + 1);
+
+    const holidays = [
+        `${year}-01-01`, // Capodanno
+        `${year}-01-06`, // Epifania
+        `${year}-04-25`, // Liberazione
+        `${year}-05-01`, // Festa dei Lavoratori
+        `${year}-06-02`, // Repubblica
+        `${year}-08-15`, // Ferragosto
+        `${year}-11-01`, // Ognissanti
+        `${year}-12-08`, // Immacolata
+        `${year}-12-25`, // Natale
+        `${year}-12-26`, // Santo Stefano
+        formatDate(easter),
+        formatDate(easterMonday),
+    ];
+    HOLIDAYS_BY_YEAR[year] = new Set(holidays);
+    return HOLIDAYS_BY_YEAR[year];
+}
+
+function formatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+}
+
+function parseDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
+function formatDateIT(str) {
+    const d = parseDate(str);
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Conta giorni lavorativi tra due date (esclusi weekend e festivi)
+function countWorkingDays(startStr, endStr, excludeHolidays = true) {
+    const start = parseDate(startStr);
+    const end = parseDate(endStr);
+    let count = 0;
+    const current = new Date(start);
+    while (current <= end) {
+        const day = current.getDay();
+        const dateStr = formatDate(current);
+        const year = current.getFullYear();
+        const isWeekend = day === 0 || day === 6;
+        const isHoliday = excludeHolidays && getItalianHolidays(year).has(dateStr);
+        if (!isWeekend && !isHoliday) count++;
+        current.setDate(current.getDate() + 1);
+    }
+    return count;
+}
+
+// Genera tutti i giorni lavorativi in un periodo
+function getWorkingDaysInRange(startStr, endStr) {
+    const start = parseDate(startStr);
+    const end = parseDate(endStr);
+    const days = [];
+    const current = new Date(start);
+    while (current <= end) {
+        const day = current.getDay();
+        const dateStr = formatDate(current);
+        const year = current.getFullYear();
+        const isWeekend = day === 0 || day === 6;
+        const isHoliday = getItalianHolidays(year).has(dateStr);
+        if (!isWeekend && !isHoliday) days.push(dateStr);
+        current.setDate(current.getDate() + 1);
+    }
+    return days;
+}
+
+// Genera ID univoco
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+// Colori predefiniti per i medici
+const DOCTOR_COLORS = [
+    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300' },
+    { bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-300' },
+    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300' },
+    { bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-300' },
+    { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-300' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-300' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-300' },
+    { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-300' },
+    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' },
+];
+
+// ============================================================
+// ICONE SVG INLINE
+// ============================================================
+const Icons = {
+    Calendar: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    ),
+    Users: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    ),
+    Plus: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    ),
+    Trash: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    ),
+    Download: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    ),
+    AlertTriangle: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    ),
+    Check: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+    ),
+    Settings: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    ),
+    BarChart: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    ),
+    RefreshCw: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    ),
+    Edit: ({ size = 20, className = "" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    ),
+};
+
+// ============================================================
+// HOOK: PERSISTENZA localStorage
+// ============================================================
+function useLocalStorage(key, defaultValue) {
+    const [value, setValue] = React.useState(() => {
+        try {
+            const saved = localStorage.getItem(key);
+            return saved ? JSON.parse(saved) : defaultValue;
+        } catch { return defaultValue; }
+    });
+
+    React.useEffect(() => {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    }, [key, value]);
+
+    return [value, setValue];
+}
+
+// ============================================================
+// COMPONENTE: Pannello di Configurazione
+// ============================================================
+function SetupPanel({ doctors, setDoctors, coverageLimit, setCoverageLimit, onComplete }) {
+    const [newName, setNewName] = React.useState('');
+    const [newDays, setNewDays] = React.useState(30);
+
+    const addDoctor = () => {
+        const name = newName.trim();
+        if (!name) return;
+        const colorIdx = doctors.length % DOCTOR_COLORS.length;
+        setDoctors([...doctors, {
+            id: uid(),
+            name,
+            totalDays: Number(newDays) || 30,
+            colorIdx
+        }]);
+        setNewName('');
+        setNewDays(30);
+    };
+
+    const removeDoctor = (id) => setDoctors(doctors.filter(d => d.id !== id));
+
+    const updateDoctor = (id, field, value) => {
+        setDoctors(doctors.map(d => d.id === id ? { ...d, [field]: field === 'totalDays' ? (Number(value) || 0) : value } : d));
+    };
+
+    return (
+        <div className="fade-in space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-brand-600 to-brand-700">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 p-2 rounded-lg">
+                            <Icons.Settings size={22} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Configurazione Gruppo</h2>
+                            <p className="text-brand-100 text-sm">Inserisci i medici e i parametri del gruppo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    {/* Limite copertura */}
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            Limite copertura: max medici in ferie contemporaneamente
+                        </label>
+                        <input
+                            type="number" min="1" max="20"
+                            value={coverageLimit}
+                            onChange={e => setCoverageLimit(Math.max(1, Number(e.target.value) || 1))}
+                            className="w-32 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-center font-medium"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Se il numero di medici assenti in un giorno supera questo limite, verrà segnalata una scopertura.</p>
+                    </div>
+
+                    {/* Lista medici esistenti */}
+                    {doctors.length > 0 && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-700 mb-3">Medici nel gruppo ({doctors.length})</h3>
+                            <div className="space-y-2">
+                                {doctors.map((doc, idx) => {
+                                    const c = DOCTOR_COLORS[doc.colorIdx % DOCTOR_COLORS.length];
+                                    return (
+                                        <div key={doc.id} className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${c.border} ${c.bg}`}>
+                                            <span className={`font-semibold text-sm ${c.text} flex-1`}>
+                                                {idx + 1}. {doc.name}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number" min="0" max="365"
+                                                    value={doc.totalDays}
+                                                    onChange={e => updateDoctor(doc.id, 'totalDays', e.target.value)}
+                                                    className="w-20 px-2 py-1 border border-slate-300 rounded text-sm text-center bg-white"
+                                                />
+                                                <span className="text-xs text-slate-600">gg spettanti</span>
+                                            </div>
+                                            <button onClick={() => removeDoctor(doc.id)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors" title="Rimuovi">
+                                                <Icons.Trash size={16} />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Aggiungi medico */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Aggiungi medico</h3>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                                type="text"
+                                placeholder="Nome e cognome (es. Dott. Rossi)"
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addDoctor()}
+                                className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
+                            />
+                            <input
+                                type="number" min="0" max="365"
+                                value={newDays}
+                                onChange={e => setNewDays(e.target.value)}
+                                className="w-28 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm text-center"
+                                placeholder="Giorni"
+                            />
+                            <button onClick={addDoctor} className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                <Icons.Plus size={16} /> Aggiungi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// COMPONENTE: Form Inserimento Ferie
+// ============================================================
+function HolidayForm({ doctors, holidays, setHolidays }) {
+    const [selectedDoc, setSelectedDoc] = React.useState('');
+    const [startDate, setStartDate] = React.useState('');
+    const [endDate, setEndDate] = React.useState('');
+    const [editId, setEditId] = React.useState(null);
+
+    const resetForm = () => { setSelectedDoc(''); setStartDate(''); setEndDate(''); setEditId(null); };
+
+    const addHoliday = () => {
+        if (!selectedDoc || !startDate || !endDate) return;
+        if (startDate > endDate) return alert('La data di inizio deve essere precedente alla data di fine.');
+
+        const entry = { id: editId || uid(), doctorId: selectedDoc, start: startDate, end: endDate };
+
+        if (editId) {
+            setHolidays(holidays.map(h => h.id === editId ? entry : h));
+        } else {
+            setHolidays([...holidays, entry]);
+        }
+        resetForm();
+    };
+
+    const editHoliday = (h) => {
+        setSelectedDoc(h.doctorId);
+        setStartDate(h.start);
+        setEndDate(h.end);
+        setEditId(h.id);
+    };
+
+    const deleteHoliday = (id) => {
+        setHolidays(holidays.filter(h => h.id !== id));
+        if (editId === id) resetForm();
+    };
+
+    const getDoctorName = (id) => doctors.find(d => d.id === id)?.name || 'Sconosciuto';
+    const getDoctorColor = (id) => {
+        const doc = doctors.find(d => d.id === id);
+        return doc ? DOCTOR_COLORS[doc.colorIdx % DOCTOR_COLORS.length] : DOCTOR_COLORS[0];
+    };
+
+    // Ordina ferie per data
+    const sortedHolidays = [...holidays].sort((a, b) => a.start.localeCompare(b.start));
+
+    return (
+        <div className="fade-in space-y-6">
+            {/* Form inserimento */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-blue-600 to-blue-700">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 p-2 rounded-lg">
+                            <Icons.Calendar size={22} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white">{editId ? 'Modifica Periodo Ferie' : 'Inserisci Periodo Ferie'}</h2>
+                            <p className="text-blue-100 text-sm">Seleziona medico e date</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Medico</label>
+                            <select
+                                value={selectedDoc}
+                                onChange={e => setSelectedDoc(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
+                            >
+                                <option value="">— Seleziona —</option>
+                                {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Data inizio</label>
+                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Data fine</label>
+                            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <button onClick={addHoliday}
+                                className={`flex-1 flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${editId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {editId ? <><Icons.Check size={16}/> Salva</> : <><Icons.Plus size={16}/> Aggiungi</>}
+                            </button>
+                            {editId && (
+                                <button onClick={resetForm} className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                                    Annulla
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Lista ferie inserite */}
+            {sortedHolidays.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                        <h3 className="font-semibold text-slate-700">Ferie inserite ({sortedHolidays.length} periodi)</h3>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                        {sortedHolidays.map(h => {
+                            const c = getDoctorColor(h.doctorId);
+                            const days = countWorkingDays(h.start, h.end);
+                            return (
+                                <div key={h.id} className="flex items-center gap-4 px-6 py-3 hover:bg-slate-50 transition-colors">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.text} border ${c.border} whitespace-nowrap`}>
+                                        {getDoctorName(h.doctorId)}
+                                    </span>
+                                    <span className="text-sm text-slate-700 flex-1">
+                                        {formatDateIT(h.start)} — {formatDateIT(h.end)}
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                                        {days} gg lav.
+                                    </span>
+                                    <button onClick={() => editHoliday(h)} className="p-1.5 rounded hover:bg-blue-50 text-blue-500 transition-colors" title="Modifica">
+                                        <Icons.Edit size={15} />
+                                    </button>
+                                    <button onClick={() => deleteHoliday(h.id)} className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors" title="Elimina">
+                                        <Icons.Trash size={15} />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================
+// COMPONENTE: Dashboard con calcoli e alert
+// ============================================================
+function Dashboard({ doctors, holidays, coverageLimit }) {
+
+    // --- Calcolo riepilogo per medico ---
+    const doctorSummary = React.useMemo(() => {
+        return doctors.map(doc => {
+            const docHolidays = holidays.filter(h => h.doctorId === doc.id);
+            const totalUsed = docHolidays.reduce((sum, h) => sum + countWorkingDays(h.start, h.end), 0);
+            return {
+                ...doc,
+                holidays: docHolidays,
+                used: totalUsed,
+                remaining: doc.totalDays - totalUsed
+            };
+        });
+    }, [doctors, holidays]);
+
+    // --- Calcolo alert copertura ---
+    const coverageAlerts = React.useMemo(() => {
+        if (holidays.length === 0) return [];
+
+        // Raccogli tutti i giorni lavorativi in cui qualcuno è in ferie
+        const dayMap = {}; // dateStr -> [doctorIds]
+        holidays.forEach(h => {
+            const days = getWorkingDaysInRange(h.start, h.end);
+            days.forEach(d => {
+                if (!dayMap[d]) dayMap[d] = [];
+                if (!dayMap[d].includes(h.doctorId)) dayMap[d].push(h.doctorId);
+            });
+        });
+
+        // Trova giorni che superano il limite
+        const alerts = [];
+        Object.entries(dayMap)
+            .filter(([_, ids]) => ids.length > coverageLimit)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .forEach(([date, ids]) => {
+                alerts.push({
+                    date,
+                    count: ids.length,
+                    doctors: ids.map(id => doctors.find(d => d.id === id)?.name || '?')
+                });
+            });
+
+        // Raggruppa alert consecutivi
+        const grouped = [];
+        alerts.forEach(a => {
+            const last = grouped[grouped.length - 1];
+            if (last && last.count === a.count && last.doctors.join(',') === a.doctors.join(',')) {
+                const prevDate = parseDate(last.endDate || last.startDate);
+                const currDate = parseDate(a.date);
+                const diff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
+                // Considera consecutivi se differenza <= 3 (salta weekend)
+                if (diff <= 3) {
+                    last.endDate = a.date;
+                    return;
+                }
+            }
+            grouped.push({ startDate: a.date, endDate: a.date, count: a.count, doctors: a.doctors });
+        });
+
+        return grouped;
+    }, [holidays, doctors, coverageLimit]);
+
+    const getDoctorColor = (doc) => DOCTOR_COLORS[doc.colorIdx % DOCTOR_COLORS.length];
+
+    return (
+        <div className="fade-in space-y-6">
+            {/* Alert Scopertura */}
+            {coverageAlerts.length > 0 && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-red-100 p-2 rounded-lg">
+                            <Icons.AlertTriangle size={22} className="text-red-600" />
+                        </div>
+                        <h3 className="font-bold text-red-800 text-lg">Attenzione: Scoperture rilevate!</h3>
+                    </div>
+                    <p className="text-sm text-red-700 mb-4">
+                        Nei seguenti periodi il numero di medici assenti supera il limite consentito di <strong>{coverageLimit}</strong>.
+                    </p>
+                    <div className="space-y-2">
+                        {coverageAlerts.map((alert, idx) => (
+                            <div key={idx} className="bg-white border border-red-200 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="font-mono font-semibold text-red-700 text-sm whitespace-nowrap">
+                                    {formatDateIT(alert.startDate)}{alert.endDate !== alert.startDate ? ` — ${formatDateIT(alert.endDate)}` : ''}
+                                </span>
+                                <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">
+                                    {alert.count} assenti (limite: {coverageLimit})
+                                </span>
+                                <span className="text-sm text-slate-600 flex-1">
+                                    {alert.doctors.join(', ')}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {coverageAlerts.length === 0 && holidays.length > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-center gap-3">
+                    <div className="bg-green-100 p-2 rounded-lg">
+                        <Icons.Check size={22} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-green-800">Copertura OK</h3>
+                        <p className="text-sm text-green-700">Nessuna scopertura rilevata. Il limite di {coverageLimit} medici assenti non viene mai superato.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Tabella Riepilogativa */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-700 to-slate-800">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 p-2 rounded-lg">
+                            <Icons.BarChart size={22} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Riepilogo Ferie per Medico</h2>
+                            <p className="text-slate-300 text-sm">Giorni lavorativi (esclusi weekend e festivi)</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                <th className="px-6 py-3 font-semibold border-b border-slate-200">Medico</th>
+                                <th className="px-6 py-3 font-semibold border-b border-slate-200 text-center">Spettanti</th>
+                                <th className="px-6 py-3 font-semibold border-b border-slate-200 text-center">Godute</th>
+                                <th className="px-6 py-3 font-semibold border-b border-slate-200 text-center">Residue</th>
+                                <th className="px-6 py-3 font-semibold border-b border-slate-200 text-center">Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {doctorSummary.map(doc => {
+                                const c = getDoctorColor(doc);
+                                const pct = doc.totalDays > 0 ? Math.min(100, Math.round((doc.used / doc.totalDays) * 100)) : 0;
+                                const isOver = doc.remaining < 0;
+                                return (
+                                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${c.bg} ${c.text} border ${c.border}`}>
+                                                {doc.name}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-700">{doc.totalDays}</td>
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-700">{doc.used}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`font-bold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
+                                                {doc.remaining}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : pct > 80 ? 'bg-amber-500' : 'bg-brand-500'}`}
+                                                        style={{ width: `${Math.min(100, pct)}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-medium text-slate-500 w-10 text-right">{pct}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// FUNZIONE: Esportazione Excel (SheetJS)
+// ============================================================
+function exportToExcel(doctors, holidays, coverageLimit) {
+    const wb = XLSX.utils.book_new();
+
+    // --- Foglio 1: Riepilogo per medico ---
+    const summaryData = doctors.map(doc => {
+        const docH = holidays.filter(h => h.doctorId === doc.id);
+        const used = docH.reduce((sum, h) => sum + countWorkingDays(h.start, h.end), 0);
+        return {
+            'Medico': doc.name,
+            'Ferie Spettanti': doc.totalDays,
+            'Ferie Godute': used,
+            'Ferie Residue': doc.totalDays - used,
+            'N. Periodi': docH.length
+        };
+    });
+    const ws1 = XLSX.utils.json_to_sheet(summaryData);
+    ws1['!cols'] = [{ wch: 25 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Riepilogo');
+
+    // --- Foglio 2: Elenco cronologico ferie ---
+    const sortedH = [...holidays].sort((a, b) => a.start.localeCompare(b.start));
+    const listData = sortedH.map(h => {
+        const doc = doctors.find(d => d.id === h.doctorId);
+        return {
+            'Medico': doc?.name || 'Sconosciuto',
+            'Data Inizio': formatDateIT(h.start),
+            'Data Fine': formatDateIT(h.end),
+            'Giorni Lavorativi': countWorkingDays(h.start, h.end),
+        };
+    });
+    const ws2 = XLSX.utils.json_to_sheet(listData);
+    ws2['!cols'] = [{ wch: 25 }, { wch: 14 }, { wch: 14 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Elenco Ferie');
+
+    // --- Foglio 3: Alert scoperture ---
+    const dayMap = {};
+    holidays.forEach(h => {
+        getWorkingDaysInRange(h.start, h.end).forEach(d => {
+            if (!dayMap[d]) dayMap[d] = [];
+            if (!dayMap[d].includes(h.doctorId)) dayMap[d].push(h.doctorId);
+        });
+    });
+    const alertData = Object.entries(dayMap)
+        .filter(([_, ids]) => ids.length > coverageLimit)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, ids]) => ({
+            'Data': formatDateIT(date),
+            'Medici Assenti': ids.length,
+            'Limite': coverageLimit,
+            'Nomi': ids.map(id => doctors.find(d => d.id === id)?.name || '?').join(', ')
+        }));
+    const ws3 = XLSX.utils.json_to_sheet(alertData.length > 0 ? alertData : [{ 'Esito': 'Nessuna scopertura rilevata' }]);
+    ws3['!cols'] = [{ wch: 14 }, { wch: 16 }, { wch: 8 }, { wch: 40 }];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Scoperture');
+
+    XLSX.writeFile(wb, 'Ferie_Medicina_di_Gruppo.xlsx');
+}
+
+// ============================================================
+// COMPONENTE: App Principale con navigazione a tab
+// ============================================================
+function App() {
+    const [activeTab, setActiveTab] = React.useState('setup');
+    const [doctors, setDoctors] = useLocalStorage(`${STORAGE_KEY}-doctors`, []);
+    const [holidays, setHolidays] = useLocalStorage(`${STORAGE_KEY}-holidays`, []);
+    const [coverageLimit, setCoverageLimit] = useLocalStorage(`${STORAGE_KEY}-limit`, 2);
+    const [showResetConfirm, setShowResetConfirm] = React.useState(false);
+
+    const resetAll = () => {
+        setDoctors([]);
+        setHolidays([]);
+        setCoverageLimit(2);
+        setActiveTab('setup');
+        setShowResetConfirm(false);
+    };
+
+    const tabs = [
+        { id: 'setup', label: 'Configurazione', icon: Icons.Settings, color: 'brand' },
+        { id: 'holidays', label: 'Inserimento Ferie', icon: Icons.Calendar, color: 'blue' },
+        { id: 'dashboard', label: 'Dashboard', icon: Icons.BarChart, color: 'slate' },
+    ];
+
+    return (
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
+            {/* Header */}
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-brand-600 p-2 rounded-xl text-white shadow-sm">
+                                <Icons.Users size={24} />
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-bold text-slate-900 leading-tight">Calcolatore Ferie</h1>
+                                <p className="text-xs text-slate-500 hidden sm:block">Medicina di Gruppo</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {doctors.length > 0 && (
+                                <button
+                                    onClick={() => exportToExcel(doctors, holidays, coverageLimit)}
+                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                                >
+                                    <Icons.Download size={16} /> <span className="hidden sm:inline">Esporta Excel</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowResetConfirm(true)}
+                                className="flex items-center gap-1.5 border border-slate-300 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-600 px-3 py-2 rounded-lg text-sm transition-colors"
+                                title="Resetta tutti i dati"
+                            >
+                                <Icons.RefreshCw size={14} /> <span className="hidden sm:inline">Reset</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Tabs */}
+            <div className="bg-white border-b border-slate-200 shadow-sm">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <nav className="flex gap-1 -mb-px">
+                        {tabs.map(tab => {
+                            const isActive = activeTab === tab.id;
+                            const Icon = tab.icon;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                                        isActive
+                                            ? 'border-brand-600 text-brand-700'
+                                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <Icon size={16} />
+                                    <span className="hidden sm:inline">{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+            </div>
+
+            {/* Contenuto principale */}
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {activeTab === 'setup' && (
+                    <SetupPanel
+                        doctors={doctors}
+                        setDoctors={setDoctors}
+                        coverageLimit={coverageLimit}
+                        setCoverageLimit={setCoverageLimit}
+                    />
+                )}
+                {activeTab === 'holidays' && (
+                    doctors.length === 0 ? (
+                        <div className="text-center py-16">
+                            <Icons.Users size={48} className="mx-auto text-slate-300 mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-600 mb-2">Nessun medico configurato</h3>
+                            <p className="text-slate-500 mb-4">Prima di inserire le ferie, configura i medici del gruppo.</p>
+                            <button onClick={() => setActiveTab('setup')} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                                Vai alla Configurazione
+                            </button>
+                        </div>
+                    ) : (
+                        <HolidayForm doctors={doctors} holidays={holidays} setHolidays={setHolidays} />
+                    )
+                )}
+                {activeTab === 'dashboard' && (
+                    doctors.length === 0 ? (
+                        <div className="text-center py-16">
+                            <Icons.BarChart size={48} className="mx-auto text-slate-300 mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-600 mb-2">Nessun dato disponibile</h3>
+                            <p className="text-slate-500 mb-4">Configura il gruppo e inserisci le ferie per visualizzare la dashboard.</p>
+                            <button onClick={() => setActiveTab('setup')} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                                Inizia la Configurazione
+                            </button>
+                        </div>
+                    ) : (
+                        <Dashboard doctors={doctors} holidays={holidays} coverageLimit={coverageLimit} />
+                    )
+                )}
+            </main>
+
+            {/* Modal conferma reset */}
+            {showResetConfirm && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowResetConfirm(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="bg-red-100 p-2.5 rounded-full">
+                                <Icons.AlertTriangle size={22} className="text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">Conferma Reset</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-6">
+                            Tutti i dati (medici, ferie, configurazione) verranno eliminati permanentemente dal browser. Questa azione non è reversibile.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button onClick={() => setShowResetConfirm(false)}
+                                className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                Annulla
+                            </button>
+                            <button onClick={resetAll}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                Elimina tutto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Footer */}
+            <footer className="text-center text-xs text-slate-400 mt-8 pb-4">
+                Calcolatore Ferie e Coperture — Medicina di Gruppo &copy; {new Date().getFullYear()}
+            </footer>
+        </div>
+    );
+}
+
+// Mount dell'app
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

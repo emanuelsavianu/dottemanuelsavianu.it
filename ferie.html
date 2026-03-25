@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+
+    <title>Medico di Base Arezzo | Dott. Emanuel Savianu</title>
+    <meta name="description" content="Studio Medico Ippocrate - Dott. Emanuel Savianu a Arezzo (Via Ubaldo Pasqui 38). Prenota visite online, ricette Millebook.">
+    
+    <meta name="geo.region" content="IT-AR" />
+    <meta name="geo.placename" content="Arezzo" />
+    <meta name="geo.position" content="43.4632;11.8796" />
+    <meta name="ICBM" content="43.4632, 11.8796" />
+
+    <meta name="author" content="Dott. Emanuel Savianu">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://savianu.it">
+
+    <meta name="theme-color" content="#1a2f4c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dr. Savianu">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- New Brand Fonts: Montserrat & Playball -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
+    
+    <link rel="stylesheet" href="styles.css?v=8">
+
+</head>
+<body>
+<script>if (!sessionStorage.getItem('welcomeSeen')) document.body.classList.add('modal-open');</script>
+
+<a href="#main-content" class="skip-link">Vai al contenuto principale</a>
+
+<a href="faq.html" class="floating-faq" aria-label="Domande Frequenti">
+    <i class="fas fa-question-circle"></i>
+    <span class="floating-faq-text">FAQ</span>
+</a>
+
+<div id="welcome-overlay" class="active" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="welcome-card">
+        <div class="welcome-header">
+            <h2 id="welcome-title">Dr. Savianu Emanuel</h2>
+            <p style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; letter-spacing: 2px; margin-top: 5px; color: white;">STUDIO MEDICO IPPOCRATE</p>
+        </div>
+        
+        <div class="welcome-body">
+            
+            <div class="welcome-step notice-transfer" style="margin-bottom: 25px;">
+                <div class="step-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="step-content">
+                    <h3>Nuova Sede Studio</h3>
+                    <p>Dal 27 Aprile 2026 il Dott. Savianu si trasferirà in <strong>Piazza Saione 3</strong>. Attualmente: <strong>Via Ubaldo Pasqui 38</strong>.</p>
+                </div>
+            </div>
+
+            <p style="margin-bottom: 25px; font-size: 1.05rem;">
+                Benvenuti. Ho organizzato questo sito per semplificare la vostra vita. 
+                Utilizzando gli strumenti digitali, mi permettete di dedicare la massima attenzione alle visite mediche vere e proprie.
+            </p>
+
+            <div class="welcome-step notice-readfaq">
+                <div class="step-icon"><i class="fas fa-question-circle"></i></div>
+                <div class="step-content">
+                    <h3>0. Prima di tutto: Leggi le FAQ</h3>
+                    <p>La maggior parte delle risposte a dubbi su certificati, ricette ed esenzioni si trova nelle <strong><a href="faq.html" style="text-decoration:underline; font-weight: bold;">Domande Frequenti</a></strong>. Consultale prima di chiamare!</p>
+                </div>
+            </div>
+
+            <div class="welcome-step">
+                <div class="step-icon"><i class="fas fa-mobile-alt"></i></div>
+                <div class="step-content">
+                    <h3>1. Canale Preferenziale: Millebook</h3>
+                    <p>Usatelo per <strong>farmaci continuativi</strong>, messaggi brevi e visione ricette. È il metodo più veloce.</p>
+                </div>
+            </div>
+
+            <div class="welcome-step">
+                <div class="step-icon"><i class="far fa-calendar-check"></i></div>
+                <div class="step-content">
+                    <h3>2. Prenotazione Appuntamenti</h3>
+                    <p>L'agenda online vi permette di prenotare la visita senza attese al telefono.</p>
+                </div>
+            </div>
+
+            <div class="welcome-step welcome-step-emergency">
+                <div class="step-icon" style="background: var(--danger); color: white;"><i class="fas fa-phone-alt"></i></div>
+                <div class="step-content">
+                    <h3 style="color: var(--danger);">3. Urgenze e Contatto Diretto</h3>
+                    <p style="margin-bottom: 5px; font-size: 1.05rem;">Segreteria: <strong>0575 910 904</strong></p>
+                    <p style="margin-bottom: 5px; color: var(--danger);"><strong>Urgenze vere: chiamare 112 / 116 117.</strong></p>
+                    <p style="margin-bottom: 0px; font-size: 0.85rem; color: var(--text-medium);">Il numero del Dottore (0575 171 3428) è riservato solo alle urgenze.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome-footer">
+            <button class="btn-accept" onclick="closeWelcome()">
+                <span>Ho letto e accetto</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="reps-overlay" role="dialog" aria-modal="true" aria-labelledby="reps-title">
+    <div class="reps-card">
+        <i class="fas fa-briefcase-medical" style="font-size: 3rem; color: var(--danger); margin-bottom: 20px;"></i>
+        <h3 id="reps-title" class="text-primary" style="margin-bottom: 15px; font-size: 1.4rem; font-weight: 700;">Informazione per Rappresentanti</h3>
+        <p style="margin-bottom: 25px;">
+            Si informa che il Dr. Savianu Emanuel <strong>non accetta appuntamenti con informatori scientifici del farmaco</strong>.
+        </p>
+        <button class="btn-reps-close" onclick="toggleRepsModal(false)">Ho capito</button>
+    </div>
+</div>
+
+<header role="banner">
+    <nav class="lang-switch" aria-label="Language selector">
+        <button onclick="setLanguage('it')" class="lang-btn active" id="btn-it">ITA</button>
+        <span class="lang-separator">|</span>
+        <button onclick="setLanguage('en')" class="lang-btn" id="btn-en">ENG</button>
+        <span class="lang-separator">|</span>
+        <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+    </nav>
+    <div class="header-content">
+        <h1>Dr. Savianu Emanuel</h1>
+        <p style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px;">STUDIO MEDICO IPPOCRATE</p>
+        <p data-i18n="header_subtitle">Medico di Medicina Generale - Arezzo</p>
+        <a href="tel:+390575910904" class="btn-telefono-header">
+            <i class="fas fa-phone-alt"></i> Segreteria: 0575 910 904
+        </a>
+    </div>
+</header>
+
+<div class="container">
+
+    <main role="main" id="main-content">
+        
+        <section class="alert-box" role="alert" aria-live="polite">
+            <p class="text-primary" style="margin-bottom: 15px; font-size: 1.1rem;">
+                <i class="fas fa-info-circle" aria-hidden="true" style="margin-right: 8px;"></i>
+                <strong>Trasferimento:</strong> Dal 27 Aprile 2026, il Dr. Savianu si trasferirà in <strong>Piazza Saione 3</strong>. Attualmente in Via Ubaldo Pasqui 38.
+            </p>
+            <p data-i18n="alert_p1">
+                <i class="fas fa-exclamation-circle" aria-hidden="true" style="color: var(--accent); margin-right: 8px;"></i>
+                <strong>Nuovi pazienti:</strong> Prenotate tramite il tasto "Prima Visita". Provvederò personalmente a iscrivervi a <strong>MilleBook</strong> in studio.
+            </p>
+            <p data-i18n="alert_p2" style="margin-top: 10px;">
+                <i class="fas fa-check-circle" aria-hidden="true" style="color: var(--accent); margin-right: 8px;"></i>
+                Dopo la prima visita, usate esclusivamente <strong>MilleBook</strong> per ricette e richieste.
+            </p>
+            <p style="margin-top: 10px; color: var(--danger);">
+                <i class="fas fa-comment-slash" aria-hidden="true" style="margin-right: 8px;"></i>
+                <strong>Nota Bene:</strong> Il Dottore non risponde a richieste cliniche tramite WhatsApp o SMS personali.
+            </p>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
+                <h2 data-i18n="services_title">Servizi Online</h2>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <a href="faq.html" class="btn-main faq-banner-btn">
+                    <i class="fas fa-question-circle"></i>
+                    <span data-i18n="btn_faq_main">Leggi prima le FAQ (Domande Frequenti)</span>
+                </a>
+                <p style="text-align: center; font-size: 0.85rem; color: var(--text-medium); margin-top: 8px;">
+                    Trovi subito le risposte ai dubbi più comuni (certificati, esenzioni, impegnative).
+                </p>
+            </div>
+
+            <div class="action-grid" style="margin-bottom: 25px; align-items: stretch;">
+                <button onclick="startBooking()" class="btn-prenota-large">
+                    <i class="far fa-calendar-check" aria-hidden="true"></i>
+                    <span data-i18n="btn_book">PRENOTA VISITA</span>
+                    <small data-i18n="btn_book_sub">Scegli il giorno e l'orario</small>
+                </button>
+
+                <a href="https://www.millebook.it/#/login" target="_blank" rel="noopener noreferrer" class="btn-millebook" aria-label="Accedi a MilleBook" style="height: 100%; margin-bottom: 0;">
+                    <i class="fas fa-laptop-medical" aria-hidden="true"></i>
+                    <span data-i18n="millebook_btn">ACCEDI A MILLEBOOK</span>
+                    <small data-i18n="millebook_sub">Il tuo fascicolo sanitario digitale</small>
+                </a>
+            </div>
+        </section>
+
+        <section id="booking-section" class="card hidden" aria-labelledby="booking-title">
+            <div class="card-header">
+                <i class="far fa-calendar-alt" aria-hidden="true"></i>
+                <h2 id="booking-title" data-i18n="booking_title">Seleziona il tipo di visita</h2>
+            </div>
+            
+            <div class="booking-guide" style="background: var(--bg-gradient-1); padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid var(--accent);">
+                <h3 class="text-primary" style="font-size: 1.1rem; margin-bottom: 15px;">Come prenotare:</h3>
+                <ol style="margin-left: 20px; color: var(--text-medium); line-height: 1.8;">
+                    <li>Clicca il pulsante del tipo di visita qui sotto.</li>
+                    <li>Scegli il giorno e l'orario disponibile sul calendario.</li>
+                    <li>Inserisci Nome, Cognome e un indirizzo Email.</li>
+                    <li>Clicca <strong>Conferma</strong> (riceverai un'email di riepilogo).</li>
+                </ol>
+            </div>
+            
+            <div class="cal-services-grid">
+                <a href="https://calendar.app.google/tuFm2ZZSnsHvn5F19?hl=it&ctz=Europe/Rome" target="_blank" class="btn-cal-service prima">
+                    <div class="cal-icon-wrapper"><i class="fas fa-user-plus"></i></div>
+                    <div class="cal-text">
+                        <h3>Prima Visita (Nuovi Pazienti)</h3>
+                        <p>Solo per la prima visita. Portare documentazione, esami, referti ed esenzioni. (45 min)</p>
+                    </div>
+                </a>
+                
+                <a href="https://calendar.app.google/qgWNNbUKJHLa2GnKA?hl=it&ctz=Europe/Rome" target="_blank" class="btn-cal-service ordinaria">
+                    <div class="cal-icon-wrapper"><i class="fas fa-stethoscope"></i></div>
+                    <div class="cal-text">
+                        <h3>Visita Ordinaria</h3>
+                        <p>Controlli e problemi non urgenti. (20 min)</p>
+                    </div>
+                </a>
+
+                <a href="https://calendar.app.google/C57sv4LCP9w3Cxe49?hl=it&ctz=Europe/Rome" target="_blank" class="btn-cal-service breve">
+                    <div class="cal-icon-wrapper"><i class="fas fa-clock"></i></div>
+                    <div class="cal-text">
+                        <h3>Sintomi Recenti</h3>
+                        <p>Visite non rimandabili, malattie acute, certificati INPS malattia. (10 min)</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="privacy-notice" style="margin-top: 30px;">
+                <p><i class="fas fa-info-circle" aria-hidden="true" style="color: var(--accent);"></i> Leggi l'informativa privacy.</p>
+                <a href="privacy.html" target="_blank" rel="noopener noreferrer">
+                    Informativa Trattamento Dati <i class="fas fa-external-link-alt" aria-hidden="true" style="font-size: 0.8rem;"></i>
+                </a>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+                <h2>Cosa portare alla visita & Link Utili</h2>
+            </div>
+            <p style="margin-bottom: 15px; font-weight: 600;">Per la visita in ambulatorio, ricordarsi di portare:</p>
+            <ul style="margin-left: 20px; margin-bottom: 25px; color: var(--text-medium); line-height: 1.8;">
+                <li>Tessera Sanitaria e/o Codice Fiscale</li>
+                <li>Lista aggiornata e dettagliata dei farmaci assunti regolarmente</li>
+                <li>Eventuali esami, referti specialistici o lettere di dimissioni precedenti</li>
+            </ul>
+            <div class="action-grid" style="margin-bottom: 0;">
+                <a href="https://prenota.sanita.toscana.it/" target="_blank" rel="noopener noreferrer" class="btn-main btn-app" style="flex-direction: row; gap: 10px; padding: 15px; width: 100%; justify-content: center;">
+                    <i class="fas fa-external-link-alt" style="margin:0; font-size: 1.4rem;"></i>
+                    <span>Accedi al CUP Toscana</span>
+                </a>
+                <a href="https://fse.sanita.toscana.it/" target="_blank" rel="noopener noreferrer" class="btn-main btn-app" style="flex-direction: row; gap: 10px; padding: 15px; width: 100%; justify-content: center;">
+                    <i class="fas fa-folder-open" style="margin:0; font-size: 1.4rem;"></i>
+                    <span>Fascicolo Sanitario</span>
+                </a>
+            </div>
+        </section>
+
+        <div class="urgency-wrapper">
+            <aside class="alert-emergency" role="alert">
+                <i class="fas fa-ambulance" aria-hidden="true"></i>
+                <span data-i18n="emergency_112">Per urgenze ed emergenze mediche, contattare sempre il Numero Unico 112.</span>
+            </aside>
+        </div>
+
+        <section class="card">
+            <div class="card-header">
+                <i class="fas fa-moon" aria-hidden="true"></i>
+                <h2 data-i18n="guard_title">Continuità Assistenziale</h2>
+            </div>
+            <p data-i18n="guard_desc" style="margin-bottom:10px;">Per assistenza medica non urgente durante la notte, i festivi e prefestivi.</p>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">
+                <i class="fas fa-phone-volume"></i> <a href="tel:116117">116 117</a>
+            </div>
+        </section>
+
+    </main>
+
+    <aside role="complementary">
+        <div class="sidebar-logo-container">
+            <!-- Updated Logo reference -->
+            <img src="logo_1A2F4C (1).png" alt="Studio Medico Ippocrate Arezzo" class="sidebar-logo-img">
+        </div>
+
+        <section class="card">
+            <div class="card-header">
+                <i class="fas fa-address-book" aria-hidden="true"></i>
+                <h2 data-i18n="contacts_title">Contatti Studio</h2>
+            </div>
+            
+            <a href="tel:0575910904" class="contact-row">
+                <div class="icon-circle"><i class="fas fa-phone-alt"></i></div>
+                <div><span data-i18n="label_secretary" class="contact-label">Segreteria e Appuntamenti</span><span class="contact-value text-primary">0575 910 904</span></div>
+            </a>
+
+            <a href="tel:05751713428" class="contact-row">
+                <div class="icon-circle"><i class="fas fa-user-md"></i></div>
+                <div><span data-i18n="label_doctor" class="contact-label">Tel. Personale (Solo Urgenze)</span><span class="contact-value" style="font-size: 0.95rem; font-weight: 500;">0575 171 3428</span></div>
+            </a>
+
+            <div style="margin-bottom: 15px;">
+                <a href="https://www.google.com/maps/search/?api=1&query=Studio+Medico+Ippocrate+Via+Ubaldo+Pasqui+38+Arezzo" target="_blank" class="contact-row" style="margin-bottom: 0; border-radius: 10px 10px 0 0;">
+                    <div class="icon-circle"><i class="fas fa-map-marker-alt"></i></div>
+                    <div><span data-i18n="label_address" class="contact-label">Studio Medico Ippocrate</span><span style="display:block;">Via Ubaldo Pasqui 38, Arezzo</span></div>
+                </a>
+            </div>
+            <a href="mailto:segreteria@savianu.it" class="contact-row">
+                <div class="icon-circle"><i class="far fa-envelope"></i></div>
+                <div><span class="contact-label">Email</span><span class="contact-value" style="font-size:0.85rem;">segreteria@savianu.it</span></div>
+            </a>
+        </section>
+
+        <section class="card">
+            <div class="card-header" style="margin-bottom: 10px;">
+                <i class="far fa-clock" aria-hidden="true"></i>
+                <h2 data-i18n="hours_title">Orari di Studio</h2>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--danger); font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">Solo su appuntamento</p>
+            <table class="hours-table">
+                <tbody>
+                    <tr><td class="day">Lun · Mer · Ven</td><td class="time">16:00 – 19:00</td></tr>
+                    <tr><td class="day">Mar · Gio</td><td class="time">10:00 – 13:00</td></tr>
+                    <tr><td class="day closed-day" data-i18n="day_sat_sun">Sab - Dom</td><td class="time" data-i18n="closed">Chiuso</td></tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <i class="fas fa-headset" style="color: var(--accent); font-size: 1.2rem;"></i>
+                    <h3 class="text-primary" style="font-size: 1.1rem; font-weight: 700;">Orari Segreteria</h3>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 15px;">Per appuntamenti telefonici e info.</p>
+                <table class="hours-table">
+                    <tbody>
+                        <tr><td class="day">Lun - Ven</td><td class="time">09:30 – 12:30<br>15:30 – 19:00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </aside>
+
+</div>
+
+<footer role="contentinfo">
+    <div class="footer-content">
+        <p>© <span id="current-year">2026</span> Studio Medico Ippocrate - Dr. Savianu Emanuel</p>
+        <nav style="margin-top: 10px;">
+            <a href="faq.html">FAQ</a> ·
+            <a href="privacy.html" data-i18n="link_privacy">Privacy Policy</a>
+        </nav>
+    </div>
+</footer>
+
+<script src="app.js?v=8"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('ServiceWorker successfully registered');
+        })
+        .catch(error => {
+          console.log('ServiceWorker registration failed:', error);
+        });
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        window.location.reload();
+        refreshing = true;
+      }
+    });
+  }
+</script>
+</body>
+</html>
