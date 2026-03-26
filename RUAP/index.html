@@ -74,6 +74,11 @@
         class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-user-plus"></i> Aggiungi Medico
       </button>
+      <!-- Auto-Assegna -->
+      <button id="btn-auto-assign"
+        class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 shadow-sm transition-transform hover:scale-105">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Assegna Mese
+      </button>
       <!-- Oggi -->
       <button id="btn-oggi" class="bg-brand-500 hover:bg-brand-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-calendar-day"></i> Oggi
@@ -660,6 +665,14 @@ function getWeeklyAssignedHours(doctorId, weekStart) {
     });
   }
   return hours;
+}
+
+/** Verifica se il medico sta già lavorando in un'altra sede nello stesso giorno e fascia oraria */
+function isDoctorAlreadyWorking(doctorId, dateKey, slotKey) {
+  return PLACES.some(place => {
+    const checkKey = `${dateKey}_${slotKey}_${place}`;
+    return state.assignments[checkKey] === doctorId;
+  });
 }
 
 /** Trova un medico per ID */
@@ -1487,6 +1500,89 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redoAction(); }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveToStorage(); showToast('Salvato!', 'success'); }
   if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); }
+});
+
+// ====================================================
+// AUTO-ASSEGNAZIONE (Algoritmo Euristico)
+// ====================================================
+
+function autoAssignMonth() {
+  if (state.doctors.length === 0) {
+    showToast('Aggiungi almeno un medico prima di auto-assegnare i turni.', 'warning');
+    return;
+  }
+
+  const year = state.calYear;
+  const month = state.calMonth;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let assignedCount = 0;
+
+  for (let day = 1; day <= lastDay; day++) {
+    const cellDate = new Date(year, month, day);
+    const dateKey = toDateKey(cellDate);
+    const jsDay = cellDate.getDay();
+    if (jsDay === 0 || jsDay === 6) continue; // Salta weekend
+
+    const weekStart = getWeekStart(cellDate);
+
+    PLACES.forEach(place => {
+      SLOTS.forEach(slot => {
+        const slotKey = `${dateKey}_${slot.key}_${place}`;
+        if (state.assignments[slotKey]) return; // Non sovrascrivere turni esistenti
+
+        // Medici disponibili per giorno/fascia, non già in un'altra sede nello stesso slot
+        let candidates = state.doctors.filter(doc =>
+          isDoctorAvailableForSlot(doc, dateKey, slot.key) &&
+          !isDoctorAlreadyWorking(doc.id, dateKey, slot.key)
+        );
+
+        if (candidates.length === 0) return;
+
+        // Priorità: chi ha più ore rimanenti nel debito settimanale
+        candidates.sort((a, b) => {
+          const remA = (a.weeklyHours || 38) - getWeeklyAssignedHours(a.id, weekStart);
+          const remB = (b.weeklyHours || 38) - getWeeklyAssignedHours(b.id, weekStart);
+          return remB - remA;
+        });
+
+        // Assegna solo se ha ancora ore disponibili nel debito
+        const best = candidates.find(doc => {
+          const rem = (doc.weeklyHours || 38) - getWeeklyAssignedHours(doc.id, weekStart);
+          return rem >= slot.hours;
+        });
+
+        if (best) {
+          state.assignments[slotKey] = best.id;
+          assignedCount++;
+        }
+      });
+    });
+  }
+
+  if (assignedCount > 0) {
+    saveToStorage();
+    saveStateToHistory();
+    renderAll();
+    const btn = document.getElementById('btn-auto-assign');
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check"></i> ${assignedCount} turni assegnati!`;
+    btn.classList.replace('bg-purple-600', 'bg-green-600');
+    btn.classList.replace('hover:bg-purple-500', 'hover:bg-green-500');
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.replace('bg-green-600', 'bg-purple-600');
+      btn.classList.replace('hover:bg-green-500', 'hover:bg-purple-500');
+    }, 2500);
+    showToast(`Auto-assegnazione completata: ${assignedCount} turni riempiti.`, 'success');
+  } else {
+    showToast('Nessun turno assegnato. Verifica disponibilità medici e ore rimanenti.', 'warning');
+  }
+}
+
+document.getElementById('btn-auto-assign').addEventListener('click', () => {
+  if (confirm(`Auto-assegna turni vuoti per ${['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'][state.calMonth]} ${state.calYear}?\nI turni già assegnati non verranno modificati.`)) {
+    autoAssignMonth();
+  }
 });
 
 // ====================================================
