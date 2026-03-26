@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Gestione Turni RUAP — ASL</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Scrollbar sottile per sidebar */
+    .thin-scroll::-webkit-scrollbar { width: 4px; }
+    .thin-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 2px; }
+    /* Transizione slot calendario */
+    .slot-btn { transition: all 0.15s ease; }
+    .slot-btn:hover { transform: scale(1.02); }
+    /* Dropdown assegnazione */
+    #assign-dropdown { z-index: 9999; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
+
+<!-- ===================================================
+     HEADER
+     =================================================== -->
+<header class="bg-brand-800 text-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-calendar-check text-blue-300 text-xl"></i>
+      <div>
+        <h1 class="font-bold text-lg leading-tight">Gestione Turni RUAP</h1>
+        <p class="text-blue-200 text-xs">Attività Oraria Avanzata — ACN 2024</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <!-- Pulsante aggiunta medico -->
+      <button id="btn-add-doctor"
+        class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-user-plus"></i> Aggiungi Medico
+      </button>
+      <!-- Export -->
+      <button id="btn-export"
+        class="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-file-export"></i> Export JSON
+      </button>
+      <!-- Import -->
+      <label class="bg-slate-500 hover:bg-slate-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+        <i class="fa-solid fa-file-import"></i> Import JSON
+        <input type="file" id="import-file" accept=".json" class="hidden" />
+      </label>
+    </div>
+  </div>
+</header>
+
+<!-- ===================================================
+     LAYOUT PRINCIPALE: Sidebar + Calendario
+     =================================================== -->
+<div class="max-w-screen-xl mx-auto px-4 py-4 flex gap-4 items-start">
+
+  <!-- ---- SIDEBAR SINISTRA: Contatori medici ---- -->
+  <aside class="w-72 flex-shrink-0 bg-white rounded-xl shadow p-4 sticky top-20 thin-scroll" style="max-height: calc(100vh - 6rem); overflow-y: auto;">
+    <h2 class="font-bold text-brand-800 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+      <i class="fa-solid fa-users text-brand-500"></i> Stato Settimanale
+    </h2>
+    <!-- Selettore settimana per i contatori -->
+    <div class="flex items-center justify-between mb-4 bg-slate-50 rounded-lg p-2">
+      <button id="sidebar-week-prev" class="text-brand-700 hover:text-brand-500 px-1"><i class="fa-solid fa-chevron-left"></i></button>
+      <span id="sidebar-week-label" class="text-xs font-semibold text-slate-600 text-center"></span>
+      <button id="sidebar-week-next" class="text-brand-700 hover:text-brand-500 px-1"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+    <!-- Lista medici con contatori — generata dinamicamente -->
+    <div id="sidebar-doctors" class="space-y-3"></div>
+  </aside>
+
+  <!-- ---- AREA CALENDARIO ---- -->
+  <main class="flex-1 min-w-0">
+    <!-- Navigazione mese -->
+    <div class="bg-white rounded-xl shadow mb-4 px-4 py-3 flex items-center justify-between">
+      <button id="cal-prev" class="text-brand-700 hover:text-brand-500 font-bold px-2 py-1 rounded hover:bg-slate-100">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <h2 id="cal-title" class="font-bold text-brand-800 text-lg tracking-wide"></h2>
+      <button id="cal-next" class="text-brand-700 hover:text-brand-500 font-bold px-2 py-1 rounded hover:bg-slate-100">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Griglia intestazioni giorni -->
+    <div class="grid grid-cols-5 gap-2 mb-2 px-1">
+      <div class="text-center text-xs font-bold text-slate-500 uppercase">Lun</div>
+      <div class="text-center text-xs font-bold text-slate-500 uppercase">Mar</div>
+      <div class="text-center text-xs font-bold text-slate-500 uppercase">Mer</div>
+      <div class="text-center text-xs font-bold text-slate-500 uppercase">Gio</div>
+      <div class="text-center text-xs font-bold text-slate-500 uppercase">Ven</div>
+    </div>
+
+    <!-- Griglia settimane del mese — generata dinamicamente -->
+    <div id="cal-grid" class="space-y-2"></div>
+  </main>
+</div>
+
+<!-- ===================================================
+     DROPDOWN ASSEGNAZIONE TURNO (overlay globale)
+     =================================================== -->
+<div id="assign-dropdown" class="hidden fixed bg-white rounded-xl shadow-2xl border border-slate-200 p-3 w-64">
+  <div class="flex items-center justify-between mb-2">
+    <span id="assign-slot-label" class="text-xs font-bold text-brand-800"></span>
+    <button id="assign-close" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+  </div>
+  <div id="assign-list" class="space-y-1 max-h-52 overflow-y-auto thin-scroll"></div>
+  <!-- Opzione rimozione, visibile solo se slot assegnato -->
+  <div id="assign-remove-wrap" class="hidden mt-2 pt-2 border-t border-slate-100">
+    <button id="assign-remove"
+      class="w-full text-left text-xs text-red-500 hover:bg-red-50 rounded px-2 py-1 flex items-center gap-1.5">
+      <i class="fa-solid fa-trash-can"></i> Rimuovi assegnazione
+    </button>
+  </div>
+</div>
+
+<!-- ===================================================
+     MODALE GESTIONE MEDICO (Aggiungi / Modifica)
+     =================================================== -->
+<div id="doctor-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-8 px-4 pb-8 overflow-y-auto">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+    <!-- Header modale -->
+    <div class="bg-brand-800 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+      <h3 id="modal-title" class="font-bold text-lg flex items-center gap-2">
+        <i class="fa-solid fa-user-doctor"></i> Aggiungi Medico
+      </h3>
+      <button id="modal-close" class="text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-6 space-y-5">
+      <!-- Input nascosto per ID (modifica) -->
+      <input type="hidden" id="modal-doctor-id" />
+
+      <!-- Nome + Pazienti -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Nome Medico *</label>
+          <input type="text" id="modal-name" placeholder="Es. Dott. Rossi"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">N° Pazienti</label>
+          <input type="number" id="modal-patients" placeholder="Es. 1500" min="0"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        </div>
+      </div>
+
+      <!-- Debito orario -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">
+          Debito Orario Settimanale (ore) *
+          <span class="font-normal text-slate-400 ml-1">Max 38h ACN 2024</span>
+        </label>
+        <input type="number" id="modal-hours" placeholder="38" min="1" max="38"
+          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+      </div>
+
+      <!-- Disponibilità standard -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">
+          Disponibilità Standard
+          <span class="font-normal text-slate-400 ml-1">(M = Mattina 08-14, P = Pomeriggio 14-20)</span>
+        </label>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-50">
+                <th class="px-3 py-2 text-left font-semibold text-slate-600 w-28">Giorno</th>
+                <th class="px-3 py-2 text-center font-semibold text-slate-600">Mattina<br><span class="text-xs font-normal text-slate-400">08:00-14:00</span></th>
+                <th class="px-3 py-2 text-center font-semibold text-slate-600">Pomeriggio<br><span class="text-xs font-normal text-slate-400">14:00-20:00</span></th>
+              </tr>
+            </thead>
+            <tbody id="avail-table">
+              <!-- Generato da JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Periodi di indisponibilità -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-sm font-semibold text-slate-700">Periodi di Indisponibilità</label>
+          <button id="btn-add-period" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg px-2 py-1 flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> Aggiungi Periodo
+          </button>
+        </div>
+        <div id="unavail-periods" class="space-y-2"></div>
+        <p class="text-xs text-slate-400 mt-1">Inserisci i periodi in cui il medico NON è disponibile (ferie, assenze, ecc.)</p>
+      </div>
+
+      <!-- Colore identificativo -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Colore Calendario</label>
+        <div id="color-picker" class="flex flex-wrap gap-2"></div>
+      </div>
+    </div>
+    <!-- Footer modale -->
+    <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+      <button id="modal-cancel" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Annulla</button>
+      <button id="modal-save" class="px-4 py-2 rounded-lg text-sm font-bold bg-brand-700 hover:bg-brand-600 text-white flex items-center gap-1.5">
+        <i class="fa-solid fa-floppy-disk"></i> Salva Medico
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     JAVASCRIPT — Logica App
+     =================================================== -->
+<script>
+// ====================================================
+// COSTANTI E CONFIGURAZIONE
+// ====================================================
+const STORAGE_DOCTORS = 'ruap-turni-medici';
+const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
+
+// Giorni della settimana (0=Lun, 4=Ven) per lookup
+const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
+const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
+
+// Fasce orarie
+const SLOTS = [
+  { key: 'mat', label: '08:00-14:00', hours: 6, icon: '🌅' },
+  { key: 'pom', label: '14:00-20:00', hours: 6, icon: '🌆' }
+];
+
+// Palette colori per i medici
+const COLOR_PALETTE = [
+  { bg: 'bg-blue-500',   text: 'text-white', hex: '#3b82f6',  label: 'Blu' },
+  { bg: 'bg-green-500',  text: 'text-white', hex: '#22c55e',  label: 'Verde' },
+  { bg: 'bg-purple-500', text: 'text-white', hex: '#a855f7',  label: 'Viola' },
+  { bg: 'bg-rose-500',   text: 'text-white', hex: '#f43f5e',  label: 'Rosa' },
+  { bg: 'bg-amber-500',  text: 'text-white', hex: '#f59e0b',  label: 'Ambra' },
+  { bg: 'bg-teal-500',   text: 'text-white', hex: '#14b8a6',  label: 'Teal' },
+  { bg: 'bg-orange-500', text: 'text-white', hex: '#f97316',  label: 'Arancio' },
+  { bg: 'bg-cyan-600',   text: 'text-white', hex: '#0891b2',  label: 'Ciano' },
+];
+
+// ====================================================
+// STATO APPLICAZIONE
+// ====================================================
+let state = {
+  doctors: [],        // Array di oggetti medico
+  assignments: {},    // { 'YYYY-MM-DD_mat': doctorId, 'YYYY-MM-DD_pom': doctorId }
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(), // 0-indexed
+  sidebarWeekStart: getWeekStart(new Date()), // Data lunedì della settimana corrente
+  editingDoctorId: null,           // ID medico in modifica (null = nuovo)
+  activeSlotKey: null,             // Chiave slot per dropdown aperto
+  activeSlotPos: null,             // Posizione {top,left} dropdown
+};
+
+// ====================================================
+// DATI DEMO DEFAULT — Dott. Savianu
+// ====================================================
+function getDefaultDoctors() {
+  const currentYear = new Date().getFullYear();
+  return [
+    {
+      id: generateId(),
+      name: 'Dott. Savianu',
+      patients: 1500,
+      weeklyHours: 38,  // Debito orario settimanale
+      colorIndex: 0,    // Blu
+      // Disponibilità standard per fascia:
+      // Lun/Mer/Ven = Mattina; Mar/Gio = Pomeriggio
+      availability: {
+        lun: { mat: true,  pom: false },
+        mar: { mat: false, pom: true  },
+        mer: { mat: true,  pom: false },
+        gio: { mat: false, pom: true  },
+        ven: { mat: true,  pom: false },
+      },
+      // Periodi di indisponibilità totale (ferie/assenza)
+      unavailPeriods: [
+        {
+          id: generateId(),
+          from: `${currentYear}-04-01`,
+          to:   `${currentYear}-04-30`,
+          note: 'Ferie Aprile'
+        }
+      ]
+    }
+  ];
+}
+
+// ====================================================
+// UTILITY FUNCTIONS
+// ====================================================
+
+/** Genera un ID unico semplice */
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/** Ritorna la data del Lunedì della settimana di una data */
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Dom
+  const diff = day === 0 ? -6 : 1 - day; // offset verso Lunedì
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Formatta data come YYYY-MM-DD */
+function toDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Formatta data come DD/MM/YYYY */
+function formatDateIT(date) {
+  const d = new Date(date + 'T00:00:00'); // Evita timezone shift
+  return d.toLocaleDateString('it-IT');
+}
+
+/** Formatta data come "D MMM" (es. "5 Mar") */
+function formatDateShort(date) {
+  return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+}
+
+/** Ritorna i nomi dei mesi in italiano */
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                   'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+/**
+ * Verifica se un medico è in un periodo di indisponibilità per una data specifica
+ * @param {object} doctor - Oggetto medico
+ * @param {string} dateKey - Data YYYY-MM-DD
+ * @returns {boolean}
+ */
+function isDoctorUnavailable(doctor, dateKey) {
+  if (!doctor.unavailPeriods) return false;
+  return doctor.unavailPeriods.some(p => dateKey >= p.from && dateKey <= p.to);
+}
+
+/**
+ * Verifica se un medico è disponibile per uno slot specifico
+ * Controlla: disponibilità standard per giorno/fascia + periodi indisponibilità
+ * @param {object} doctor
+ * @param {string} dateKey - YYYY-MM-DD
+ * @param {string} slotKey - 'mat' | 'pom'
+ * @returns {boolean}
+ */
+function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
+  // 1. Controlla periodi di indisponibilità
+  if (isDoctorUnavailable(doctor, dateKey)) return false;
+
+  // 2. Recupera il giorno della settimana
+  const date = new Date(dateKey + 'T00:00:00');
+  const jsDay = date.getDay(); // 0=Dom, 1=Lun...
+  if (jsDay === 0 || jsDay === 6) return false; // Weekend
+
+  // 3. Mappa giorno JS → chiave (0=Dom, 1=Lun → 'lun', ecc.)
+  const dayKeyMap = { 1:'lun', 2:'mar', 3:'mer', 4:'gio', 5:'ven' };
+  const dayKey = dayKeyMap[jsDay];
+
+  // 4. Controlla disponibilità standard
+  if (!doctor.availability || !doctor.availability[dayKey]) return false;
+  return !!doctor.availability[dayKey][slotKey];
+}
+
+/**
+ * Calcola le ore assegnate a un medico in una settimana specifica
+ * @param {string} doctorId
+ * @param {Date} weekStart - Data del Lunedì
+ * @returns {number} ore totali assegnate
+ */
+function getWeeklyAssignedHours(doctorId, weekStart) {
+  let hours = 0;
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const dk = toDateKey(d);
+    SLOTS.forEach(slot => {
+      const key = `${dk}_${slot.key}`;
+      if (state.assignments[key] === doctorId) {
+        hours += slot.hours;
+      }
+    });
+  }
+  return hours;
+}
+
+/** Trova un medico per ID */
+function getDoctorById(id) {
+  return state.doctors.find(d => d.id === id);
+}
+
+/** Ritorna l'oggetto colore di un medico */
+function getDoctorColor(doctor) {
+  return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0];
+}
+
+// ====================================================
+// PERSISTENZA — localStorage
+// ====================================================
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_DOCTORS, JSON.stringify(state.doctors));
+  localStorage.setItem(STORAGE_ASSIGNMENTS, JSON.stringify(state.assignments));
+}
+
+function loadFromStorage() {
+  try {
+    const docs = localStorage.getItem(STORAGE_DOCTORS);
+    const asgn = localStorage.getItem(STORAGE_ASSIGNMENTS);
+    if (docs) state.doctors = JSON.parse(docs);
+    if (asgn) state.assignments = JSON.parse(asgn);
+  } catch (e) {
+    console.error('Errore caricamento localStorage:', e);
+  }
+}
+
+// ====================================================
+// EXPORT / IMPORT JSON
+// ====================================================
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    doctors: state.doctors,
+    assignments: state.assignments
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `turni-ruap-${toDateKey(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
+      if (!confirm(`Importare i dati da "${file.name}"?\nI dati attuali verranno sovrascritti.`)) return;
+      state.doctors = data.doctors;
+      state.assignments = data.assignments;
+      saveToStorage();
+      renderAll();
+      alert('Importazione completata!');
+    } catch (err) {
+      alert('Errore importazione: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // Reset input
+});
+
+// ====================================================
+// RENDER SIDEBAR — Contatori medici
+// ====================================================
+
+function renderSidebar() {
+  // Aggiorna etichetta settimana
+  const weekEnd = new Date(state.sidebarWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 4); // Venerdì
+  document.getElementById('sidebar-week-label').textContent =
+    `${formatDateShort(state.sidebarWeekStart)} – ${formatDateShort(weekEnd)}`;
+
+  const container = document.getElementById('sidebar-doctors');
+  if (state.doctors.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-slate-400 py-6 text-sm">
+        <i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>
+        Nessun medico registrato
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  state.doctors.forEach(doc => {
+    const color = getDoctorColor(doc);
+    const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
+    const debt = doc.weeklyHours || 38;
+    const remaining = debt - assigned;
+    const pct = Math.min(100, Math.round((assigned / debt) * 100));
+    const isOver = assigned > debt;
+    const isComplete = assigned >= debt;
+
+    // Controlla se medico è indisponibile questa settimana
+    const weekEndDate = new Date(state.sidebarWeekStart);
+    weekEndDate.setDate(weekEndDate.getDate() + 4);
+    const weekStartKey = toDateKey(state.sidebarWeekStart);
+    const weekEndKey = toDateKey(weekEndDate);
+    const unavailThisWeek = (doc.unavailPeriods || []).some(p =>
+      p.from <= weekEndKey && p.to >= weekStartKey
+    );
+
+    const card = document.createElement('div');
+    card.className = `rounded-xl border p-3 ${isOver ? 'border-red-300 bg-red-50' : isComplete ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-slate-50'}`;
+    card.innerHTML = `
+      <div class="flex items-start justify-between mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
+          <span class="font-semibold text-sm text-slate-800 truncate">${doc.name}</span>
+        </div>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          ${unavailThisWeek ? '<span class="text-xs bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 font-medium">Assente</span>' : ''}
+          <button class="text-slate-400 hover:text-brand-600 text-xs ml-1" onclick="openDoctorModal('${doc.id}')">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="text-slate-400 hover:text-red-500 text-xs" onclick="deleteDoctor('${doc.id}')">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-slate-500">${doc.patients ? doc.patients + ' paz.' : ''}</span>
+        <span class="text-xs font-bold ${isOver ? 'text-red-600' : isComplete ? 'text-green-600' : 'text-slate-700'}">
+          ${assigned}h / ${debt}h
+          ${isOver ? '<i class="fa-solid fa-triangle-exclamation ml-1"></i>' : ''}
+          ${isComplete && !isOver ? '<i class="fa-solid fa-circle-check ml-1"></i>' : ''}
+        </span>
+      </div>
+      <!-- Barra di progresso -->
+      <div class="w-full bg-slate-200 rounded-full h-2">
+        <div class="h-2 rounded-full transition-all ${isOver ? 'bg-red-500' : isComplete ? 'bg-green-500' : 'bg-blue-500'}"
+             style="width: ${pct}%"></div>
+      </div>
+      <div class="text-xs text-slate-400 mt-1 text-right">
+        ${isOver ? `<span class="text-red-500 font-medium">+${Math.abs(remaining)}h eccedenza</span>` :
+          remaining > 0 ? `${remaining}h mancanti` : 'Debito completato'}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ====================================================
+// RENDER CALENDARIO
+// ====================================================
+
+function renderCalendar() {
+  const year = state.calYear;
+  const month = state.calMonth;
+
+  // Aggiorna titolo
+  document.getElementById('cal-title').textContent = `${MONTHS_IT[month]} ${year}`;
+
+  // Genera tutte le settimane del mese (Lun-Ven)
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Primo giorno del mese
+  const firstDay = new Date(year, month, 1);
+  // Ultimo giorno del mese
+  const lastDay = new Date(year, month + 1, 0);
+
+  // Trova il Lunedì della prima settimana che contiene giorni del mese
+  const startDate = getWeekStart(firstDay);
+
+  // Genera settimane fino a coprire tutto il mese
+  let currentWeekStart = new Date(startDate);
+  const weeks = [];
+
+  while (true) {
+    // Venerdì di questa settimana
+    const weekFriday = new Date(currentWeekStart);
+    weekFriday.setDate(weekFriday.getDate() + 4);
+
+    // Includi la settimana se c'è almeno un giorno nel mese corrente
+    if (currentWeekStart > lastDay) break;
+
+    weeks.push(new Date(currentWeekStart));
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  weeks.forEach(weekStart => {
+    const weekRow = document.createElement('div');
+    weekRow.className = 'grid grid-cols-5 gap-2';
+
+    for (let i = 0; i < 5; i++) {
+      const cellDate = new Date(weekStart);
+      cellDate.setDate(cellDate.getDate() + i);
+      const dateKey = toDateKey(cellDate);
+      const inMonth = cellDate.getMonth() === month;
+      const isToday = toDateKey(new Date()) === dateKey;
+
+      const cell = document.createElement('div');
+      cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
+
+      // Data in testa alla cella
+      cell.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">
+            ${cellDate.getDate()}
+          </span>
+          ${isToday ? '<span class="text-xs text-brand-500 font-medium">Oggi</span>' : ''}
+        </div>
+      `;
+
+      // Slot Mattina e Pomeriggio
+      SLOTS.forEach(slot => {
+        const slotKey = `${dateKey}_${slot.key}`;
+        const assignedId = state.assignments[slotKey];
+        const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+        const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+
+        const slotBtn = document.createElement('button');
+        slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
+          (assignedDoc
+            ? 'border-transparent text-white shadow-sm'
+            : inMonth
+              ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700'
+              : 'border-transparent bg-transparent cursor-default');
+
+        if (assignedDoc && color) {
+          slotBtn.style.backgroundColor = color.hex;
+        }
+
+        slotBtn.innerHTML = assignedDoc
+          ? `<div class="truncate font-semibold">${slot.icon} ${assignedDoc.name.replace('Dott. ', 'Dr. ')}</div>
+             <div class="opacity-80 text-xs">${slot.label}</div>`
+          : `<div>${slot.icon} ${slot.label}</div>`;
+
+        if (inMonth) {
+          slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey));
+        }
+
+        cell.appendChild(slotBtn);
+      });
+
+      weekRow.appendChild(cell);
+    }
+
+    grid.appendChild(weekRow);
+  });
+}
+
+// ====================================================
+// DROPDOWN ASSEGNAZIONE
+// ====================================================
+
+/**
+ * Apre il dropdown per assegnare/modificare un turno
+ */
+function openAssignDropdown(e, slotKey, slot, dateKey) {
+  e.stopPropagation();
+  state.activeSlotKey = slotKey;
+
+  const dropdown = document.getElementById('assign-dropdown');
+  const list = document.getElementById('assign-list');
+  const removeWrap = document.getElementById('assign-remove-wrap');
+  const labelEl = document.getElementById('assign-slot-label');
+
+  // Titolo slot
+  const date = new Date(dateKey + 'T00:00:00');
+  labelEl.textContent = `${date.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})} — ${slot.label}`;
+
+  // Popola lista medici disponibili
+  const availDocs = state.doctors.filter(doc =>
+    isDoctorAvailableForSlot(doc, dateKey, slot.key)
+  );
+
+  if (availDocs.length === 0) {
+    list.innerHTML = '<p class="text-xs text-slate-400 italic py-2 px-1">Nessun medico disponibile per questo slot</p>';
+  } else {
+    list.innerHTML = '';
+    availDocs.forEach(doc => {
+      const color = getDoctorColor(doc);
+      // Calcola ore settimana
+      const weekStart = getWeekStart(date);
+      const assignedHrs = getWeeklyAssignedHours(doc.id, weekStart);
+      const debtHrs = doc.weeklyHours || 38;
+      const remaining = debtHrs - assignedHrs;
+
+      const btn = document.createElement('button');
+      btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 text-sm';
+      btn.innerHTML = `
+        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
+        <span class="flex-1 font-medium">${doc.name}</span>
+        <span class="text-xs ${remaining <= 0 ? 'text-red-400' : 'text-slate-400'} flex-shrink-0">
+          ${remaining <= 0 ? '⚠ '+remaining+'h' : remaining+'h rim.'}
+        </span>
+      `;
+      btn.addEventListener('click', () => assignSlot(slotKey, doc.id));
+      list.appendChild(btn);
+    });
+  }
+
+  // Mostra opzione rimozione se slot già assegnato
+  const currentAssigned = state.assignments[slotKey];
+  removeWrap.classList.toggle('hidden', !currentAssigned);
+
+  // Posiziona dropdown vicino al click
+  const rect = e.currentTarget.getBoundingClientRect();
+  dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 280)}px`;
+  dropdown.classList.remove('hidden');
+}
+
+/** Assegna un medico a uno slot */
+function assignSlot(slotKey, doctorId) {
+  state.assignments[slotKey] = doctorId;
+  saveToStorage();
+  closeAssignDropdown();
+  renderAll();
+}
+
+/** Rimuove assegnazione dallo slot attivo */
+document.getElementById('assign-remove').addEventListener('click', () => {
+  if (state.activeSlotKey) {
+    delete state.assignments[state.activeSlotKey];
+    saveToStorage();
+    closeAssignDropdown();
+    renderAll();
+  }
+});
+
+function closeAssignDropdown() {
+  document.getElementById('assign-dropdown').classList.add('hidden');
+  state.activeSlotKey = null;
+}
+
+// Chiudi dropdown cliccando fuori
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('assign-dropdown');
+  if (!dropdown.contains(e.target)) closeAssignDropdown();
+});
+document.getElementById('assign-close').addEventListener('click', closeAssignDropdown);
+
+// ====================================================
+// MODALE GESTIONE MEDICI
+// ====================================================
+
+/** Apre il modale (nuovo medico o modifica esistente) */
+function openDoctorModal(doctorId = null) {
+  state.editingDoctorId = doctorId;
+  const modal = document.getElementById('doctor-modal');
+  const title = document.getElementById('modal-title');
+
+  // Reset form
+  document.getElementById('modal-doctor-id').value = doctorId || '';
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-patients').value = '';
+  document.getElementById('modal-hours').value = '38';
+
+  // Genera tabella disponibilità
+  renderAvailTable(null);
+
+  // Reset periodi
+  document.getElementById('unavail-periods').innerHTML = '';
+
+  // Genera color picker
+  renderColorPicker(0);
+
+  if (doctorId) {
+    // Modalità modifica: pre-popola con dati esistenti
+    const doc = getDoctorById(doctorId);
+    if (!doc) return;
+    title.innerHTML = '<i class="fa-solid fa-user-doctor"></i> Modifica Medico';
+    document.getElementById('modal-name').value = doc.name;
+    document.getElementById('modal-patients').value = doc.patients || '';
+    document.getElementById('modal-hours').value = doc.weeklyHours || 38;
+    renderAvailTable(doc.availability);
+    renderColorPicker(doc.colorIndex ?? 0);
+    // Periodi di indisponibilità
+    (doc.unavailPeriods || []).forEach(p => addUnavailPeriodRow(p));
+  } else {
+    title.innerHTML = '<i class="fa-solid fa-user-plus"></i> Aggiungi Medico';
+    renderAvailTable(null);
+  }
+
+  modal.classList.remove('hidden');
+}
+
+/** Genera la tabella checkbox disponibilità */
+function renderAvailTable(existing) {
+  const tbody = document.getElementById('avail-table');
+  tbody.innerHTML = '';
+  DAY_KEYS.forEach((dayKey, i) => {
+    const matChecked = existing ? (existing[dayKey]?.mat || false) : false;
+    const pomChecked = existing ? (existing[dayKey]?.pom || false) : false;
+    const tr = document.createElement('tr');
+    tr.className = i % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+    tr.innerHTML = `
+      <td class="px-3 py-2.5 font-medium text-slate-700 text-sm">${DAY_NAMES[i]}</td>
+      <td class="px-3 py-2.5 text-center">
+        <input type="checkbox" class="avail-check w-4 h-4 accent-blue-600 cursor-pointer"
+               data-day="${dayKey}" data-slot="mat" ${matChecked ? 'checked' : ''} />
+      </td>
+      <td class="px-3 py-2.5 text-center">
+        <input type="checkbox" class="avail-check w-4 h-4 accent-blue-600 cursor-pointer"
+               data-day="${dayKey}" data-slot="pom" ${pomChecked ? 'checked' : ''} />
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/** Genera il color picker */
+function renderColorPicker(selectedIndex) {
+  const container = document.getElementById('color-picker');
+  container.innerHTML = '';
+  COLOR_PALETTE.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `w-8 h-8 rounded-full border-2 transition-all ${i === selectedIndex ? 'border-slate-800 scale-110' : 'border-transparent hover:scale-105'}`;
+    btn.style.backgroundColor = c.hex;
+    btn.title = c.label;
+    btn.dataset.colorIndex = i;
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('button').forEach(b => {
+        b.classList.remove('border-slate-800', 'scale-110');
+        b.classList.add('border-transparent');
+      });
+      btn.classList.add('border-slate-800', 'scale-110');
+      btn.classList.remove('border-transparent');
+    });
+    container.appendChild(btn);
+  });
+}
+
+/** Aggiunge una riga periodo indisponibilità */
+function addUnavailPeriodRow(period = null) {
+  const container = document.getElementById('unavail-periods');
+  const id = period?.id || generateId();
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2';
+  wrapper.dataset.periodId = id;
+  wrapper.innerHTML = `
+    <i class="fa-solid fa-ban text-amber-500 text-sm flex-shrink-0"></i>
+    <input type="date" class="period-from border border-amber-300 rounded px-2 py-1 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400 bg-white"
+           value="${period?.from || ''}" />
+    <span class="text-xs text-slate-500 flex-shrink-0">→</span>
+    <input type="date" class="period-to border border-amber-300 rounded px-2 py-1 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-amber-400 bg-white"
+           value="${period?.to || ''}" />
+    <input type="text" class="period-note border border-amber-300 rounded px-2 py-1 text-xs flex-1 focus:outline-none bg-white"
+           placeholder="Nota (es. Ferie)" value="${period?.note || ''}" />
+    <button type="button" class="text-red-400 hover:text-red-600 flex-shrink-0" onclick="this.closest('[data-period-id]').remove()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  `;
+  container.appendChild(wrapper);
+}
+
+document.getElementById('btn-add-period').addEventListener('click', () => addUnavailPeriodRow());
+
+/** Raccoglie i dati dal form modale e salva il medico */
+document.getElementById('modal-save').addEventListener('click', () => {
+  const name = document.getElementById('modal-name').value.trim();
+  const patients = parseInt(document.getElementById('modal-patients').value) || 0;
+  const hours = parseInt(document.getElementById('modal-hours').value) || 38;
+
+  if (!name) {
+    alert('Inserisci il nome del medico.');
+    document.getElementById('modal-name').focus();
+    return;
+  }
+
+  // Raccoglie disponibilità dalle checkbox
+  const availability = {};
+  DAY_KEYS.forEach(dk => { availability[dk] = { mat: false, pom: false }; });
+  document.querySelectorAll('.avail-check').forEach(chk => {
+    availability[chk.dataset.day][chk.dataset.slot] = chk.checked;
+  });
+
+  // Raccoglie colore selezionato
+  const selectedColor = document.querySelector('#color-picker button.border-slate-800');
+  const colorIndex = selectedColor ? parseInt(selectedColor.dataset.colorIndex) : 0;
+
+  // Raccoglie periodi indisponibilità
+  const unavailPeriods = [];
+  document.querySelectorAll('#unavail-periods [data-period-id]').forEach(row => {
+    const from = row.querySelector('.period-from').value;
+    const to = row.querySelector('.period-to').value;
+    const note = row.querySelector('.period-note').value.trim();
+    if (from && to) {
+      unavailPeriods.push({ id: row.dataset.periodId, from, to, note });
+    }
+  });
+
+  if (state.editingDoctorId) {
+    // Modifica medico esistente
+    const idx = state.doctors.findIndex(d => d.id === state.editingDoctorId);
+    if (idx > -1) {
+      state.doctors[idx] = {
+        ...state.doctors[idx],
+        name, patients, weeklyHours: hours,
+        availability, colorIndex, unavailPeriods
+      };
+    }
+  } else {
+    // Nuovo medico
+    state.doctors.push({
+      id: generateId(),
+      name, patients, weeklyHours: hours,
+      availability, colorIndex, unavailPeriods
+    });
+  }
+
+  saveToStorage();
+  closeDoctorModal();
+  renderAll();
+});
+
+/** Elimina un medico (con conferma) */
+function deleteDoctor(doctorId) {
+  const doc = getDoctorById(doctorId);
+  if (!doc) return;
+  if (!confirm(`Eliminare "${doc.name}"?\nTutte le assegnazioni di questo medico verranno rimosse.`)) return;
+  // Rimuovi medico
+  state.doctors = state.doctors.filter(d => d.id !== doctorId);
+  // Rimuovi tutte le assegnazioni di questo medico
+  Object.keys(state.assignments).forEach(k => {
+    if (state.assignments[k] === doctorId) delete state.assignments[k];
+  });
+  saveToStorage();
+  renderAll();
+}
+
+function closeDoctorModal() {
+  document.getElementById('doctor-modal').classList.add('hidden');
+  state.editingDoctorId = null;
+}
+
+// Event listeners modale
+document.getElementById('btn-add-doctor').addEventListener('click', () => openDoctorModal());
+document.getElementById('modal-close').addEventListener('click', closeDoctorModal);
+document.getElementById('modal-cancel').addEventListener('click', closeDoctorModal);
+document.getElementById('doctor-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('doctor-modal')) closeDoctorModal();
+});
+
+// ====================================================
+// NAVIGAZIONE CALENDARIO
+// ====================================================
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  state.calMonth--;
+  if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+  renderCalendar();
+  syncSidebarToCalendar();
+});
+
+document.getElementById('cal-next').addEventListener('click', () => {
+  state.calMonth++;
+  if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+  renderCalendar();
+  syncSidebarToCalendar();
+});
+
+/** Sincronizza la settimana della sidebar alla prima settimana visibile del mese del calendario */
+function syncSidebarToCalendar() {
+  const firstDay = new Date(state.calYear, state.calMonth, 1);
+  state.sidebarWeekStart = getWeekStart(firstDay);
+  renderSidebar();
+}
+
+// ====================================================
+// NAVIGAZIONE SETTIMANA SIDEBAR
+// ====================================================
+
+document.getElementById('sidebar-week-prev').addEventListener('click', () => {
+  state.sidebarWeekStart = new Date(state.sidebarWeekStart);
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() - 7);
+  renderSidebar();
+});
+
+document.getElementById('sidebar-week-next').addEventListener('click', () => {
+  state.sidebarWeekStart = new Date(state.sidebarWeekStart);
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() + 7);
+  renderSidebar();
+});
+
+// ====================================================
+// RENDER ALL — Aggiorna tutta la UI
+// ====================================================
+
+function renderAll() {
+  renderCalendar();
+  renderSidebar();
+}
+
+// ====================================================
+// INIZIALIZZAZIONE
+// ====================================================
+
+function init() {
+  loadFromStorage();
+
+  // Se non ci sono medici salvati, inserisce i dati demo
+  if (state.doctors.length === 0) {
+    state.doctors = getDefaultDoctors();
+    saveToStorage();
+  }
+
+  renderAll();
+}
+
+// Avvia l'app
+init();
+</script>
+</body>
+</html>
