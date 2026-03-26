@@ -7,6 +7,8 @@
   <title>Gestione Turni RUAP — ASL</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -28,6 +30,28 @@
     .slot-btn:hover { transform: scale(1.02); }
     /* Dropdown assegnazione */
     #assign-dropdown { z-index: 9999; }
+    /* Animazioni */
+    .fade-in { animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .doctor-card { transition: all 0.2s ease; }
+    .doctor-card:hover { transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(0,0,0,.1); }
+    .toast-item { transition: all 0.3s ease; }
+    /* Dark mode */
+    body.dark-mode { background: #0f172a !important; color: #e2e8f0; }
+    body.dark-mode .bg-white { background: #1e293b !important; }
+    body.dark-mode .bg-slate-50 { background: #1e293b !important; }
+    body.dark-mode .bg-slate-100 { background: #0f172a !important; }
+    body.dark-mode .text-slate-800 { color: #e2e8f0 !important; }
+    body.dark-mode .text-slate-700 { color: #cbd5e1 !important; }
+    body.dark-mode .text-slate-600 { color: #94a3b8 !important; }
+    body.dark-mode .text-slate-500 { color: #64748b !important; }
+    body.dark-mode .border-slate-200 { border-color: #334155 !important; }
+    body.dark-mode .border-slate-100 { border-color: #1e293b !important; }
+    body.dark-mode .shadow { box-shadow: 0 1px 3px rgba(0,0,0,.4) !important; }
+    body.dark-mode .bg-slate-200 { background: #334155 !important; }
+    /* Festività */
+    .holiday-cell { background: linear-gradient(135deg, #fef2f2, #fff) !important; }
+    body.dark-mode .holiday-cell { background: linear-gradient(135deg, #1c0a0a, #1e293b) !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
@@ -44,11 +68,15 @@
         <p class="text-blue-200 text-xs">Attività Oraria Avanzata — ACN 2024</p>
       </div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
       <!-- Pulsante aggiunta medico -->
       <button id="btn-add-doctor"
         class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-user-plus"></i> Aggiungi Medico
+      </button>
+      <!-- Oggi -->
+      <button id="btn-oggi" class="bg-brand-500 hover:bg-brand-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-calendar-day"></i> Oggi
       </button>
       <!-- Export -->
       <button id="btn-export"
@@ -60,6 +88,14 @@
         <i class="fa-solid fa-file-import"></i> Import JSON
         <input type="file" id="import-file" accept=".json" class="hidden" />
       </label>
+      <!-- PDF -->
+      <button id="btn-pdf" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+      <!-- Dark mode -->
+      <button id="btn-darkmode" class="bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-moon" id="darkmode-icon"></i>
+      </button>
     </div>
   </div>
 </header>
@@ -74,6 +110,17 @@
     <h2 class="font-bold text-brand-800 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
       <i class="fa-solid fa-users text-brand-500"></i> Stato Settimanale
     </h2>
+
+    <!-- Stats row -->
+    <div class="flex justify-between text-xs text-slate-500 mb-2 px-1">
+      <span><i class="fas fa-user-md mr-1"></i> <b id="total-doctors">0</b> medici</span>
+      <span><i class="fas fa-clock mr-1"></i> <b id="total-hours">0</b>h tot.</span>
+    </div>
+
+    <!-- Search -->
+    <input type="text" id="doctor-search" placeholder="🔍 Cerca medico..."
+      class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs mb-3 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+
     <!-- Selettore settimana per i contatori -->
     <div class="flex items-center justify-between mb-4 bg-slate-50 rounded-lg p-2">
       <button id="sidebar-week-prev" class="text-brand-700 hover:text-brand-500 px-1"><i class="fa-solid fa-chevron-left"></i></button>
@@ -120,6 +167,11 @@
     <button id="assign-close" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
   </div>
   <div id="assign-list" class="space-y-1 max-h-52 overflow-y-auto thin-scroll"></div>
+  <!-- Sezione medici non disponibili -->
+  <div id="assign-unavail-section" class="hidden mt-2 pt-2 border-t border-slate-100">
+    <div class="text-xs text-slate-400 uppercase font-bold mb-1 px-1">Non disponibili</div>
+    <div id="assign-unavail-list" class="space-y-1 max-h-32 overflow-y-auto"></div>
+  </div>
   <!-- Opzione rimozione, visibile solo se slot assegnato -->
   <div id="assign-remove-wrap" class="hidden mt-2 pt-2 border-t border-slate-100">
     <button id="assign-remove"
@@ -159,14 +211,21 @@
         </div>
       </div>
 
-      <!-- Debito orario -->
+      <!-- Debito orario (auto-calcolato) -->
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">
-          Debito Orario Settimanale (ore) *
-          <span class="font-normal text-slate-400 ml-1">Max 38h ACN 2024</span>
-        </label>
-        <input type="number" id="modal-hours" placeholder="38" min="1" max="38"
-          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-sm font-semibold text-slate-700">
+            Debito Orario Settimanale (ore) *
+          </label>
+          <span id="debt-formula-badge" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-medium">
+            Auto-calcolato AIR Toscana 2026
+          </span>
+        </div>
+        <input type="number" id="modal-hours" placeholder="38" min="0" max="38" readonly
+          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 cursor-not-allowed focus:outline-none" />
+        <p id="debt-formula-text" class="text-xs text-slate-500 mt-1.5 font-mono bg-slate-50 px-2 py-1.5 rounded border border-slate-200">
+          Fino a 400: 38h | 401-1.000: 24h | 1.001-1.200: 12h | 1.200+: 0h
+        </p>
       </div>
 
       <!-- Disponibilità standard -->
@@ -220,6 +279,44 @@
 </div>
 
 <!-- ===================================================
+     CONFLICT MODAL
+     =================================================== -->
+<div id="conflict-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md fade-in">
+    <div class="bg-red-600 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+      <h3 class="font-bold text-lg flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation"></i> Conflitto Turno
+      </h3>
+      <button onclick="closeConflictModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
+    </div>
+    <div class="p-6">
+      <p id="conflict-message" class="text-slate-700 mb-4"></p>
+      <div class="flex justify-end gap-3">
+        <button onclick="closeConflictModal()" class="px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Annulla</button>
+        <button id="conflict-force-btn" class="px-4 py-2 rounded-lg text-sm font-bold bg-red-600 text-white hover:bg-red-700">Assegna comunque</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     TOAST CONTAINER
+     =================================================== -->
+<div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none"></div>
+
+<!-- ===================================================
+     UNDO/REDO BUTTONS (floating)
+     =================================================== -->
+<div class="fixed bottom-4 right-4 flex gap-2 z-40">
+  <button id="btn-undo" class="bg-slate-700 text-white p-2.5 rounded-full shadow-lg hover:bg-slate-600 transition opacity-0 pointer-events-none" title="Annulla (Ctrl+Z)">
+    <i class="fas fa-undo text-sm"></i>
+  </button>
+  <button id="btn-redo" class="bg-slate-700 text-white p-2.5 rounded-full shadow-lg hover:bg-slate-600 transition opacity-0 pointer-events-none" title="Ripristina (Ctrl+Y)">
+    <i class="fas fa-redo text-sm"></i>
+  </button>
+</div>
+
+<!-- ===================================================
      JAVASCRIPT — Logica App
      =================================================== -->
 <script>
@@ -232,6 +329,9 @@ const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
 // Giorni della settimana (0=Lun, 4=Ven) per lookup
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
+
+// Posti/Strutture da coprire
+const PLACES = ['M.S.Savino', 'Subbiano'];
 
 // Fasce orarie
 const SLOTS = [
@@ -251,12 +351,26 @@ const COLOR_PALETTE = [
   { bg: 'bg-cyan-600',   text: 'text-white', hex: '#0891b2',  label: 'Ciano' },
 ];
 
+// Festività nazionali fisse
+const NATIONAL_HOLIDAYS_FIXED = [
+  { m:1,  d:1,  name:'Capodanno' },
+  { m:1,  d:6,  name:'Epifania' },
+  { m:4,  d:25, name:'Liberazione' },
+  { m:5,  d:1,  name:'Festa Lavoro' },
+  { m:6,  d:2,  name:'Repubblica' },
+  { m:8,  d:15, name:'Ferragosto' },
+  { m:11, d:1,  name:'Ognissanti' },
+  { m:12, d:8,  name:'Immacolata' },
+  { m:12, d:25, name:'Natale' },
+  { m:12, d:26, name:'S.Stefano' }
+];
+
 // ====================================================
 // STATO APPLICAZIONE
 // ====================================================
 let state = {
   doctors: [],        // Array di oggetti medico
-  assignments: {},    // { 'YYYY-MM-DD_mat': doctorId, 'YYYY-MM-DD_pom': doctorId }
+  assignments: {},    // { 'YYYY-MM-DD_mat_Place': doctorId, ... }
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(), // 0-indexed
   sidebarWeekStart: getWeekStart(new Date()), // Data lunedì della settimana corrente
@@ -264,6 +378,162 @@ let state = {
   activeSlotKey: null,             // Chiave slot per dropdown aperto
   activeSlotPos: null,             // Posizione {top,left} dropdown
 };
+
+// ====================================================
+// HISTORY — Undo/Redo
+// ====================================================
+let history = [];
+let historyIndex = -1;
+
+function saveStateToHistory() {
+  const snapshot = {
+    doctors: JSON.parse(JSON.stringify(state.doctors)),
+    assignments: JSON.parse(JSON.stringify(state.assignments))
+  };
+  history = history.slice(0, historyIndex + 1);
+  history.push(snapshot);
+  if (history.length > 50) { history.shift(); }
+  else { historyIndex++; }
+  updateUndoRedoUI();
+}
+
+function undoAction() {
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  applySnapshot(history[historyIndex]);
+  showToast('Azione annullata', 'info');
+}
+
+function redoAction() {
+  if (historyIndex >= history.length - 1) return;
+  historyIndex++;
+  applySnapshot(history[historyIndex]);
+  showToast('Azione ripristinata', 'info');
+}
+
+function applySnapshot(snap) {
+  state.doctors = JSON.parse(JSON.stringify(snap.doctors));
+  state.assignments = JSON.parse(JSON.stringify(snap.assignments));
+  saveToStorage();
+  renderAll();
+  updateUndoRedoUI();
+}
+
+function updateUndoRedoUI() {
+  const undoBtn = document.getElementById('btn-undo');
+  const redoBtn = document.getElementById('btn-redo');
+  if (historyIndex > 0) undoBtn.classList.remove('opacity-0', 'pointer-events-none');
+  else undoBtn.classList.add('opacity-0', 'pointer-events-none');
+  if (historyIndex < history.length - 1) redoBtn.classList.remove('opacity-0', 'pointer-events-none');
+  else redoBtn.classList.add('opacity-0', 'pointer-events-none');
+}
+
+// ====================================================
+// TOAST SYSTEM
+// ====================================================
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  const colors = {
+    success: 'bg-green-600', error: 'bg-red-600',
+    warning: 'bg-amber-500', info: 'bg-blue-600'
+  };
+  const icons = {
+    success: 'fa-check-circle', error: 'fa-exclamation-circle',
+    warning: 'fa-exclamation-triangle', info: 'fa-info-circle'
+  };
+  toast.className = `toast-item pointer-events-auto flex items-center gap-3 ${colors[type] || colors.info} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm fade-in`;
+  toast.innerHTML = `<i class="fas ${icons[type] || icons.info} flex-shrink-0"></i><span class="flex-1">${message}</span><button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white ml-2"><i class="fas fa-times"></i></button>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ====================================================
+// DARK MODE
+// ====================================================
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  const icon = document.getElementById('darkmode-icon');
+  icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  localStorage.setItem('ruap-dark-mode', isDark ? '1' : '0');
+}
+
+// ====================================================
+// PDF EXPORT
+// ====================================================
+async function generatePDF() {
+  showToast('Generazione PDF in corso...', 'info');
+  try {
+    const element = document.getElementById('cal-grid');
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jspdf.jsPDF('l', 'pt', 'a4');
+    const w = pdf.internal.pageSize.getWidth();
+    const h = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+    pdf.save(`Turni-RUAP-${document.getElementById('cal-title').textContent.replace(' ', '_')}.pdf`);
+    showToast('PDF scaricato!', 'success');
+  } catch (err) {
+    showToast('Errore generazione PDF: ' + err.message, 'error');
+  }
+}
+
+// ====================================================
+// FESTIVITÀ NAZIONALI
+// ====================================================
+function getEasterDate(year) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4);
+  const e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7, m2 = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m2 + 114) / 31), day = ((h + l - 7 * m2 + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function isNationalHoliday(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const fixed = NATIONAL_HOLIDAYS_FIXED.find(h => h.m === m && h.d === d);
+  if (fixed) return fixed.name;
+  const easter = getEasterDate(y);
+  const easterKey = toDateKey(easter);
+  const easterMonday = new Date(easter);
+  easterMonday.setDate(easterMonday.getDate() + 1);
+  const easterMondayKey = toDateKey(easterMonday);
+  if (dateKey === easterKey) return 'Pasqua';
+  if (dateKey === easterMondayKey) return 'Pasquetta';
+  return null;
+}
+
+// ====================================================
+// CONFLICT DETECTION
+// ====================================================
+function checkDoctorConflict(doctorId, dateKey, slotType) {
+  // Returns list of places where this doctor is already assigned at same date+slot
+  return PLACES.filter(p => {
+    const k = `${dateKey}_${slotType}_${p}`;
+    return state.assignments[k] === doctorId;
+  });
+}
+
+let pendingConflictAssign = null;
+
+function showConflictModal(message, onConfirm) {
+  document.getElementById('conflict-message').textContent = message;
+  document.getElementById('conflict-modal').classList.remove('hidden');
+  pendingConflictAssign = onConfirm;
+  document.getElementById('conflict-force-btn').onclick = () => {
+    closeConflictModal();
+    if (pendingConflictAssign) pendingConflictAssign();
+  };
+}
+
+function closeConflictModal() {
+  document.getElementById('conflict-modal').classList.add('hidden');
+  pendingConflictAssign = null;
+}
 
 // ====================================================
 // DATI DEMO DEFAULT — Dott. Savianu
@@ -274,8 +544,8 @@ function getDefaultDoctors() {
     {
       id: generateId(),
       name: 'Dott. Savianu',
-      patients: 1500,
-      weeklyHours: 38,  // Debito orario settimanale
+      patients: 850,  // Debito calcolato: 24h secondo AIR 2026
+      weeklyHours: 24,  // Debito orario settimanale calcolato automaticamente
       colorIndex: 0,    // Blu
       // Disponibilità standard per fascia:
       // Lun/Mer/Ven = Mattina; Mar/Gio = Pomeriggio
@@ -343,9 +613,6 @@ const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
 
 /**
  * Verifica se un medico è in un periodo di indisponibilità per una data specifica
- * @param {object} doctor - Oggetto medico
- * @param {string} dateKey - Data YYYY-MM-DD
- * @returns {boolean}
  */
 function isDoctorUnavailable(doctor, dateKey) {
   if (!doctor.unavailPeriods) return false;
@@ -355,10 +622,6 @@ function isDoctorUnavailable(doctor, dateKey) {
 /**
  * Verifica se un medico è disponibile per uno slot specifico
  * Controlla: disponibilità standard per giorno/fascia + periodi indisponibilità
- * @param {object} doctor
- * @param {string} dateKey - YYYY-MM-DD
- * @param {string} slotKey - 'mat' | 'pom'
- * @returns {boolean}
  */
 function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
   // 1. Controlla periodi di indisponibilità
@@ -369,7 +632,7 @@ function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
   const jsDay = date.getDay(); // 0=Dom, 1=Lun...
   if (jsDay === 0 || jsDay === 6) return false; // Weekend
 
-  // 3. Mappa giorno JS → chiave (0=Dom, 1=Lun → 'lun', ecc.)
+  // 3. Mappa giorno JS → chiave
   const dayKeyMap = { 1:'lun', 2:'mar', 3:'mer', 4:'gio', 5:'ven' };
   const dayKey = dayKeyMap[jsDay];
 
@@ -380,9 +643,6 @@ function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
 
 /**
  * Calcola le ore assegnate a un medico in una settimana specifica
- * @param {string} doctorId
- * @param {Date} weekStart - Data del Lunedì
- * @returns {number} ore totali assegnate
  */
 function getWeeklyAssignedHours(doctorId, weekStart) {
   let hours = 0;
@@ -391,10 +651,12 @@ function getWeeklyAssignedHours(doctorId, weekStart) {
     d.setDate(d.getDate() + i);
     const dk = toDateKey(d);
     SLOTS.forEach(slot => {
-      const key = `${dk}_${slot.key}`;
-      if (state.assignments[key] === doctorId) {
-        hours += slot.hours;
-      }
+      PLACES.forEach(place => {
+        const key = `${dk}_${slot.key}_${place}`;
+        if (state.assignments[key] === doctorId) {
+          hours += slot.hours;
+        }
+      });
     });
   }
   return hours;
@@ -405,9 +667,37 @@ function getDoctorById(id) {
   return state.doctors.find(d => d.id === id);
 }
 
+/**
+ * Calcola il debito orario RUAP in base al numero di pazienti (AIR Toscana 2026)
+ */
+function calculateDebtByPatients(patients) {
+  if (!patients || patients < 0) return 38; // Default
+  if (patients <= 400) return 38;
+  if (patients <= 1000) return 24;
+  if (patients <= 1200) return 12;
+  return 0; // Oltre 1.200 pazienti
+}
+
 /** Ritorna l'oggetto colore di un medico */
 function getDoctorColor(doctor) {
   return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0];
+}
+
+/**
+ * Controlla se un posto è completamente coperto in un giorno (mat + pom)
+ */
+function isPlaceCovered(dateKey, place) {
+  const matKey = `${dateKey}_mat_${place}`;
+  const pomKey = `${dateKey}_pom_${place}`;
+  return !!state.assignments[matKey] && !!state.assignments[pomKey];
+}
+
+/**
+ * Conta quanti posti sono completamente coperti in un giorno
+ */
+function getDayPlacesCoverage(dateKey) {
+  const covered = PLACES.filter(p => isPlaceCovered(dateKey, p)).length;
+  return { covered, total: PLACES.length };
 }
 
 // ====================================================
@@ -462,10 +752,11 @@ document.getElementById('import-file').addEventListener('change', (e) => {
       state.doctors = data.doctors;
       state.assignments = data.assignments;
       saveToStorage();
+      saveStateToHistory();
       renderAll();
-      alert('Importazione completata!');
+      showToast('Importazione completata!', 'success');
     } catch (err) {
-      alert('Errore importazione: ' + err.message);
+      showToast('Errore importazione: ' + err.message, 'error');
     }
   };
   reader.readAsText(file);
@@ -477,6 +768,10 @@ document.getElementById('import-file').addEventListener('change', (e) => {
 // ====================================================
 
 function renderSidebar() {
+  // Aggiorna totali stats
+  document.getElementById('total-doctors').textContent = state.doctors.length;
+  document.getElementById('total-hours').textContent = state.doctors.reduce((s, d) => s + (d.weeklyHours || 38), 0);
+
   // Aggiorna etichetta settimana
   const weekEnd = new Date(state.sidebarWeekStart);
   weekEnd.setDate(weekEnd.getDate() + 4); // Venerdì
@@ -484,8 +779,47 @@ function renderSidebar() {
     `${formatDateShort(state.sidebarWeekStart)} – ${formatDateShort(weekEnd)}`;
 
   const container = document.getElementById('sidebar-doctors');
+
+  // Calcola copertura posti per la settimana
+  let placeCoverage = {};
+  PLACES.forEach(p => {
+    placeCoverage[p] = { covered: 0, total: 5 };
+  });
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(state.sidebarWeekStart);
+    d.setDate(d.getDate() + i);
+    const dk = toDateKey(d);
+    PLACES.forEach(place => {
+      if (isPlaceCovered(dk, place)) placeCoverage[place].covered++;
+    });
+  }
+
+  // Sezione riepilogo posti
+  const placeSummary = document.createElement('div');
+  placeSummary.className = 'bg-slate-100 rounded-xl p-3 mb-4 space-y-2';
+  placeSummary.innerHTML = '<div class="font-bold text-xs uppercase text-slate-600 tracking-widest mb-2">Copertura Posti</div>';
+  PLACES.forEach(place => {
+    const cov = placeCoverage[place];
+    const allCovered = cov.covered === cov.total;
+    const pct = Math.round((cov.covered / cov.total) * 100);
+    const row = document.createElement('div');
+    row.className = 'text-xs';
+    row.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <span class="font-medium text-slate-700">${place}</span>
+        <span class="font-bold ${allCovered ? 'text-green-600' : 'text-amber-600'}">${cov.covered}/${cov.total}</span>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-1.5">
+        <div class="h-1.5 rounded-full ${allCovered ? 'bg-green-500' : 'bg-amber-500'}" style="width: ${pct}%"></div>
+      </div>
+    `;
+    placeSummary.appendChild(row);
+  });
+  container.innerHTML = '';
+  container.appendChild(placeSummary);
+
   if (state.doctors.length === 0) {
-    container.innerHTML = `
+    container.innerHTML += `
       <div class="text-center text-slate-400 py-6 text-sm">
         <i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>
         Nessun medico registrato
@@ -493,8 +827,17 @@ function renderSidebar() {
     return;
   }
 
-  container.innerHTML = '';
+  // Leggi filtro ricerca corrente
+  const searchVal = (document.getElementById('doctor-search').value || '').toLowerCase().trim();
+
+  // Mantieni placeSummary e aggiungi le carte medici dopo
+  const docCardsSection = document.createElement('div');
+  docCardsSection.className = 'space-y-3';
+
   state.doctors.forEach(doc => {
+    // Filtra per ricerca
+    if (searchVal && !doc.name.toLowerCase().includes(searchVal)) return;
+
     const color = getDoctorColor(doc);
     const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
     const debt = doc.weeklyHours || 38;
@@ -513,7 +856,7 @@ function renderSidebar() {
     );
 
     const card = document.createElement('div');
-    card.className = `rounded-xl border p-3 ${isOver ? 'border-red-300 bg-red-50' : isComplete ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-slate-50'}`;
+    card.className = `doctor-card rounded-xl border p-3 ${isOver ? 'border-red-300 bg-red-50' : isComplete ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-slate-50'}`;
     card.innerHTML = `
       <div class="flex items-start justify-between mb-2">
         <div class="flex items-center gap-2 min-w-0">
@@ -548,8 +891,9 @@ function renderSidebar() {
           remaining > 0 ? `${remaining}h mancanti` : 'Debito completato'}
       </div>
     `;
-    container.appendChild(card);
+    docCardsSection.appendChild(card);
   });
+  container.appendChild(docCardsSection);
 }
 
 // ====================================================
@@ -580,13 +924,7 @@ function renderCalendar() {
   const weeks = [];
 
   while (true) {
-    // Venerdì di questa settimana
-    const weekFriday = new Date(currentWeekStart);
-    weekFriday.setDate(weekFriday.getDate() + 4);
-
-    // Includi la settimana se c'è almeno un giorno nel mese corrente
     if (currentWeekStart > lastDay) break;
-
     weeks.push(new Date(currentWeekStart));
     currentWeekStart.setDate(currentWeekStart.getDate() + 7);
   }
@@ -605,45 +943,71 @@ function renderCalendar() {
       const cell = document.createElement('div');
       cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
 
+      // Festività
+      const holiday = inMonth ? isNationalHoliday(dateKey) : null;
+      if (holiday) {
+        cell.classList.add('holiday-cell');
+      }
+
       // Data in testa alla cella
+      const coverage = inMonth ? getDayPlacesCoverage(dateKey) : { covered: 0, total: 2 };
+      const allCovered = coverage.covered === coverage.total;
       cell.innerHTML = `
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
           <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">
             ${cellDate.getDate()}
           </span>
-          ${isToday ? '<span class="text-xs text-brand-500 font-medium">Oggi</span>' : ''}
+          <div class="flex items-center gap-1 flex-wrap">
+            ${holiday ? `<span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">${holiday}</span>` : ''}
+            ${isToday ? '<span class="text-xs text-brand-500 font-medium">Oggi</span>' : ''}
+            ${inMonth && coverage.total > 0 ? `<span class="text-xs font-bold ${allCovered ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'} px-1.5 py-0.5 rounded-md">
+              ${allCovered ? '✓' : coverage.covered}/${coverage.total}
+            </span>` : ''}
+          </div>
         </div>
       `;
 
-      // Slot Mattina e Pomeriggio
-      SLOTS.forEach(slot => {
-        const slotKey = `${dateKey}_${slot.key}`;
-        const assignedId = state.assignments[slotKey];
-        const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-        const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+      // Slot per ogni posto e fascia oraria
+      PLACES.forEach(place => {
+        const placeSection = document.createElement('div');
+        placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
 
-        const slotBtn = document.createElement('button');
-        slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
-          (assignedDoc
-            ? 'border-transparent text-white shadow-sm'
-            : inMonth
-              ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700'
-              : 'border-transparent bg-transparent cursor-default');
+        const placeLabel = document.createElement('div');
+        placeLabel.className = 'text-xs font-bold text-slate-500 mb-1 uppercase tracking-widest';
+        placeLabel.textContent = place;
+        placeSection.appendChild(placeLabel);
 
-        if (assignedDoc && color) {
-          slotBtn.style.backgroundColor = color.hex;
-        }
+        SLOTS.forEach(slot => {
+          const slotKey = `${dateKey}_${slot.key}_${place}`;
+          const assignedId = state.assignments[slotKey];
+          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
 
-        slotBtn.innerHTML = assignedDoc
-          ? `<div class="truncate font-semibold">${slot.icon} ${assignedDoc.name.replace('Dott. ', 'Dr. ')}</div>
-             <div class="opacity-80 text-xs">${slot.label}</div>`
-          : `<div>${slot.icon} ${slot.label}</div>`;
+          const slotBtn = document.createElement('button');
+          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-0.5 text-xs font-medium border transition-all ' +
+            (assignedDoc
+              ? 'border-transparent text-white shadow-sm'
+              : inMonth
+                ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700'
+                : 'border-transparent bg-transparent cursor-default');
 
-        if (inMonth) {
-          slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey));
-        }
+          if (assignedDoc && color) {
+            slotBtn.style.backgroundColor = color.hex;
+          }
 
-        cell.appendChild(slotBtn);
+          slotBtn.innerHTML = assignedDoc
+            ? `<div class="truncate font-semibold">${slot.icon} ${assignedDoc.name.replace('Dott. ', 'Dr. ')}</div>
+               <div class="opacity-80 text-xs">${slot.label}</div>`
+            : `<div class="text-slate-600">${slot.icon} ${slot.label}</div>`;
+
+          if (inMonth) {
+            slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+          }
+
+          placeSection.appendChild(slotBtn);
+        });
+
+        cell.appendChild(placeSection);
       });
 
       weekRow.appendChild(cell);
@@ -660,7 +1024,7 @@ function renderCalendar() {
 /**
  * Apre il dropdown per assegnare/modificare un turno
  */
-function openAssignDropdown(e, slotKey, slot, dateKey) {
+function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   e.stopPropagation();
   state.activeSlotKey = slotKey;
 
@@ -668,10 +1032,12 @@ function openAssignDropdown(e, slotKey, slot, dateKey) {
   const list = document.getElementById('assign-list');
   const removeWrap = document.getElementById('assign-remove-wrap');
   const labelEl = document.getElementById('assign-slot-label');
+  const unavailSection = document.getElementById('assign-unavail-section');
+  const unavailList = document.getElementById('assign-unavail-list');
 
   // Titolo slot
   const date = new Date(dateKey + 'T00:00:00');
-  labelEl.textContent = `${date.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})} — ${slot.label}`;
+  labelEl.textContent = `${place} — ${date.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})} ${slot.label}`;
 
   // Popola lista medici disponibili
   const availDocs = state.doctors.filter(doc =>
@@ -696,12 +1062,38 @@ function openAssignDropdown(e, slotKey, slot, dateKey) {
         <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
         <span class="flex-1 font-medium">${doc.name}</span>
         <span class="text-xs ${remaining <= 0 ? 'text-red-400' : 'text-slate-400'} flex-shrink-0">
-          ${remaining <= 0 ? '⚠ '+remaining+'h' : remaining+'h rim.'}
+          ${remaining <= 0 ? '⚠ ' + remaining + 'h' : remaining + 'h rim.'}
         </span>
       `;
       btn.addEventListener('click', () => assignSlot(slotKey, doc.id));
       list.appendChild(btn);
     });
+  }
+
+  // Popola sezione medici non disponibili
+  const unavailDocs = state.doctors.filter(doc => !isDoctorAvailableForSlot(doc, dateKey, slot.key));
+  if (unavailDocs.length > 0) {
+    unavailList.innerHTML = '';
+    unavailDocs.forEach(doc => {
+      const color = getDoctorColor(doc);
+      let reason = 'Non disponibile';
+      if (isDoctorUnavailable(doc, dateKey)) {
+        reason = 'Indisponibile';
+      } else if (state.assignments[slotKey] === doc.id) {
+        reason = 'Già assegnato qui';
+      }
+      const item = document.createElement('div');
+      item.className = 'flex items-center gap-2 text-xs px-2 py-1 rounded text-slate-400';
+      item.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 opacity-50" style="background:${color.hex}"></span>
+        <span class="flex-1 truncate">${doc.name}</span>
+        <span class="text-xs text-slate-300 flex-shrink-0">${reason}</span>
+      `;
+      unavailList.appendChild(item);
+    });
+    unavailSection.classList.remove('hidden');
+  } else {
+    unavailSection.classList.add('hidden');
   }
 
   // Mostra opzione rimozione se slot già assegnato
@@ -715,12 +1107,34 @@ function openAssignDropdown(e, slotKey, slot, dateKey) {
   dropdown.classList.remove('hidden');
 }
 
-/** Assegna un medico a uno slot */
+/** Assegna un medico a uno slot (con rilevamento conflitti) */
 function assignSlot(slotKey, doctorId) {
-  state.assignments[slotKey] = doctorId;
-  saveToStorage();
-  closeAssignDropdown();
-  renderAll();
+  // Parse slotKey: YYYY-MM-DD_mat_PlaceName
+  const parts = slotKey.split('_');
+  const dateKey = parts[0];
+  const slotType = parts[1]; // mat or pom
+  // parts[2] is the place (no underscores in place names)
+
+  const conflictingPlaces = checkDoctorConflict(doctorId, dateKey, slotType);
+
+  const performAssign = () => {
+    state.assignments[slotKey] = doctorId;
+    saveToStorage();
+    saveStateToHistory();
+    closeAssignDropdown();
+    renderAll();
+    showToast('Turno assegnato', 'success');
+  };
+
+  if (conflictingPlaces.length > 0) {
+    const doc = getDoctorById(doctorId);
+    showConflictModal(
+      `${doc.name} è già assegnato alla fascia ${slotType === 'mat' ? 'Mattina' : 'Pomeriggio'} in: ${conflictingPlaces.join(', ')}. Assegnare comunque?`,
+      performAssign
+    );
+  } else {
+    performAssign();
+  }
 }
 
 /** Rimuove assegnazione dallo slot attivo */
@@ -728,8 +1142,10 @@ document.getElementById('assign-remove').addEventListener('click', () => {
   if (state.activeSlotKey) {
     delete state.assignments[state.activeSlotKey];
     saveToStorage();
+    saveStateToHistory();
     closeAssignDropdown();
     renderAll();
+    showToast('Assegnazione rimossa', 'info');
   }
 });
 
@@ -777,13 +1193,24 @@ function openDoctorModal(doctorId = null) {
     title.innerHTML = '<i class="fa-solid fa-user-doctor"></i> Modifica Medico';
     document.getElementById('modal-name').value = doc.name;
     document.getElementById('modal-patients').value = doc.patients || '';
-    document.getElementById('modal-hours').value = doc.weeklyHours || 38;
+    // Calcola e popola il debito orario in base ai pazienti
+    const debt = calculateDebtByPatients(doc.patients || 0);
+    document.getElementById('modal-hours').value = debt;
+    // Aggiorna il badge della formula
+    const badge = document.getElementById('debt-formula-badge');
+    const patients = doc.patients || 0;
+    if (patients <= 400) badge.textContent = 'fino a 400 pazienti → 38h';
+    else if (patients <= 1000) badge.textContent = '401-1.000 pazienti → 24h';
+    else if (patients <= 1200) badge.textContent = '1.001-1.200 pazienti → 12h';
+    else badge.textContent = 'oltre 1.200 pazienti → 0h';
     renderAvailTable(doc.availability);
     renderColorPicker(doc.colorIndex ?? 0);
     // Periodi di indisponibilità
     (doc.unavailPeriods || []).forEach(p => addUnavailPeriodRow(p));
   } else {
     title.innerHTML = '<i class="fa-solid fa-user-plus"></i> Aggiungi Medico';
+    document.getElementById('modal-hours').value = 38; // Default
+    document.getElementById('debt-formula-badge').textContent = 'fino a 400 pazienti → 38h';
     renderAvailTable(null);
   }
 
@@ -869,7 +1296,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
   const hours = parseInt(document.getElementById('modal-hours').value) || 38;
 
   if (!name) {
-    alert('Inserisci il nome del medico.');
+    showToast('Inserisci il nome del medico.', 'warning');
     document.getElementById('modal-name').focus();
     return;
   }
@@ -896,7 +1323,9 @@ document.getElementById('modal-save').addEventListener('click', () => {
     }
   });
 
-  if (state.editingDoctorId) {
+  const isEditing = !!state.editingDoctorId;
+
+  if (isEditing) {
     // Modifica medico esistente
     const idx = state.doctors.findIndex(d => d.id === state.editingDoctorId);
     if (idx > -1) {
@@ -916,6 +1345,8 @@ document.getElementById('modal-save').addEventListener('click', () => {
   }
 
   saveToStorage();
+  saveStateToHistory();
+  showToast(isEditing ? 'Medico aggiornato' : 'Medico aggiunto', 'success');
   closeDoctorModal();
   renderAll();
 });
@@ -932,6 +1363,8 @@ function deleteDoctor(doctorId) {
     if (state.assignments[k] === doctorId) delete state.assignments[k];
   });
   saveToStorage();
+  saveStateToHistory();
+  showToast('Medico rimosso', 'success');
   renderAll();
 }
 
@@ -939,6 +1372,22 @@ function closeDoctorModal() {
   document.getElementById('doctor-modal').classList.add('hidden');
   state.editingDoctorId = null;
 }
+
+// Auto-calcola debito orario quando cambia il numero di pazienti
+document.getElementById('modal-patients').addEventListener('input', (e) => {
+  const patients = parseInt(e.target.value) || 0;
+  const debt = calculateDebtByPatients(patients);
+  document.getElementById('modal-hours').value = debt;
+
+  // Aggiorna il badge con la formula RUAP applicata
+  const badge = document.getElementById('debt-formula-badge');
+  let formula = '';
+  if (patients <= 400) formula = 'fino a 400 pazienti → 38h';
+  else if (patients <= 1000) formula = '401-1.000 pazienti → 24h';
+  else if (patients <= 1200) formula = '1.001-1.200 pazienti → 12h';
+  else formula = 'oltre 1.200 pazienti → 0h';
+  badge.textContent = formula;
+});
 
 // Event listeners modale
 document.getElementById('btn-add-doctor').addEventListener('click', () => openDoctorModal());
@@ -999,6 +1448,48 @@ function renderAll() {
 }
 
 // ====================================================
+// NUOVI PULSANTI HEADER
+// ====================================================
+
+document.getElementById('btn-oggi').addEventListener('click', () => {
+  const now = new Date();
+  state.calYear = now.getFullYear();
+  state.calMonth = now.getMonth();
+  state.sidebarWeekStart = getWeekStart(now);
+  renderAll();
+});
+
+document.getElementById('btn-pdf').addEventListener('click', generatePDF);
+
+document.getElementById('btn-darkmode').addEventListener('click', toggleDarkMode);
+
+// ====================================================
+// UNDO / REDO BUTTONS
+// ====================================================
+
+document.getElementById('btn-undo').addEventListener('click', undoAction);
+document.getElementById('btn-redo').addEventListener('click', redoAction);
+
+// ====================================================
+// RICERCA MEDICI SIDEBAR
+// ====================================================
+
+document.getElementById('doctor-search').addEventListener('input', () => {
+  renderSidebar();
+});
+
+// ====================================================
+// TASTIERA — Shortcut globali
+// ====================================================
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redoAction(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveToStorage(); showToast('Salvato!', 'success'); }
+  if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); }
+});
+
+// ====================================================
 // INIZIALIZZAZIONE
 // ====================================================
 
@@ -1011,7 +1502,13 @@ function init() {
     saveToStorage();
   }
 
+  // Ripristina dark mode
+  if (localStorage.getItem('ruap-dark-mode') === '1') toggleDarkMode();
+
   renderAll();
+
+  // Salva snapshot iniziale per undo/redo
+  saveStateToHistory();
 }
 
 // Avvia l'app
