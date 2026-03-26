@@ -1,22 +1,23 @@
 // Service Worker for Dr. Savianu Medical Website
 // Cache version bumped to v75 for metadata/accessibility refresh
-const CACHE_NAME = 'savianu-v143';
+const CACHE_NAME = 'savianu-v144';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/faq.html',
-  '/android.html',
   '/privacy.html',
-  '/offline.html',
   '/styles.css',
   '/app.js',
   '/config.js',
-  '/android.js',
   '/logo.png',
   '/bluelogo.png',
   '/bronzelogo.png',
   '/cert-malattia.html',
-  '/calcolatore-ferie.html'
+  '/rsa.html',
+  '/calcolatore-ferie.html',
+  '/calcolatoreferiegemini.html',
+  '/ferie.html',
+  '/installazione.html',
+  '/xsegretarie.html'
 ];
 
 // Helper: Check if request is same-origin
