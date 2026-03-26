@@ -1,10 +1,4 @@
 // ====================================================
-// GEMINI API CONFIG
-// ====================================================
-// WARNING: Do not use hardcoded API keys in production frontend code.
-const GEMINI_API_KEY = 'AIzaSyDpDeFEMvpaBGjHI98550Fz2PnW__vEcZE'; 
-
-// ====================================================
 // COSTANTI E CONFIGURAZIONE
 // ====================================================
 const STORAGE_DOCTORS = 'ruap-turni-medici';
