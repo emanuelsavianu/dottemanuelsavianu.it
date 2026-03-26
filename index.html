@@ -14,8 +14,7 @@
     <meta name="ICBM" content="43.4632, 11.8796" />
 
     <meta name="author" content="Dott. Emanuel Savianu">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://emanuelsavianu.github.io/">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
 
@@ -25,56 +24,16 @@
     <meta name="apple-mobile-web-app-title" content="Dr. Savianu">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://emanuelsavianu.github.io/">
-    <meta property="og:locale" content="it_IT">
-    <meta property="og:site_name" content="Studio Medico Ippocrate">
-    <meta property="og:title" content="Portale Studio Medico Ippocrate | Dott. Emanuel Savianu">
-    <meta property="og:description" content="Accedi al portale pazienti o all'area riservata colleghi dello Studio Medico Ippocrate di Arezzo.">
-    <meta property="og:image" content="https://emanuelsavianu.github.io/logo.png">
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Portale Studio Medico Ippocrate | Dott. Emanuel Savianu">
-    <meta name="twitter:description" content="Accedi al portale pazienti o all'area riservata colleghi dello Studio Medico Ippocrate di Arezzo.">
-    <meta name="twitter:image" content="https://emanuelsavianu.github.io/logo.png">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="styles.css?v=11">
 
-    <!-- JSON-LD MedicalBusiness -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "MedicalBusiness",
-      "name": "Studio Medico Ippocrate - Dott. Emanuel Savianu",
-      "url": "https://savianu.it/",
-      "telephone": "+39 0575 910 904",
-      "email": "segreteria@savianu.it",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Via Ubaldo Pasqui 38",
-        "addressLocality": "Arezzo",
-        "addressRegion": "AR",
-        "postalCode": "52100",
-        "addressCountry": "IT"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": 43.4632,
-        "longitude": 11.8796
-      },
-      "medicalSpecialty": "GeneralPractice",
-      "areaServed": "Arezzo"
-    }
-    </script>
 
-    <style>
+<style>
         /* Responsive calendar wrapper */
         .calendar-container {
             position: relative;
@@ -162,8 +121,8 @@
             transition: background 0.2s ease;
         }
         body.dark-mode .accordion-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: var(--white);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            color: #f3efe6;
         }
         .accordion-header:hover {
             background: linear-gradient(135deg, var(--bg-gradient-2) 0%, var(--border-color) 100%);
@@ -191,8 +150,9 @@
             background: var(--white);
         }
         body.dark-mode .accordion-content {
-            background: var(--primary-dark);
+            background: #0d1e33;
             border-top-color: var(--primary-light);
+            color: #f3efe6;
         }
         .accordion-content.active {
             display: block;
@@ -456,10 +416,6 @@
 
 <header role="banner">
     <nav class="lang-switch" aria-label="Language selector">
-        <button onclick="setLanguage('it')" class="lang-btn active" id="btn-it">ITA</button>
-        <span class="lang-separator">|</span>
-        <button onclick="setLanguage('en')" class="lang-btn" id="btn-en">ENG</button>
-        <span class="lang-separator">|</span>
         <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
     </nav>
     <div class="header-content">
@@ -536,24 +492,6 @@
                         aria-label="Calendario Google per eventi e formazione">
                     </iframe>
                 </div>
-            </div>
-
-            <!-- Calcolatore Ferie e Coperture -->
-            <div class="card card-spotlight">
-                <div class="card-header">
-                    <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
-                    <h2>Calcolatore Ferie e Coperture</h2>
-                </div>
-                <p style="font-size: 1rem; color: var(--text-medium); max-width: 620px; margin: 0 auto; line-height: 1.7;">
-                    Pianifica le ferie del gruppo medico, verifica le coperture giornaliere e individua le scoperture. I dati vengono salvati localmente nel browser.
-                </p>
-                <a href="calcolatore-ferie.html"
-                   class="btn-prenota-large btn-assistente"
-                   aria-label="Apri il Calcolatore Ferie e Coperture">
-                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
-                    <span>Apri il Calcolatore Ferie</span>
-                    <small>Ferie · Coperture · Export Excel</small>
-                </a>
             </div>
 
             <!-- ★ CENTERPIECE — Assistente Burocratico ★ -->
@@ -681,138 +619,6 @@
                         <span>Note AIFA</span>
                         <small>Elenco ufficiale</small>
                     </a>
-                </div>
-            </div>
-
-            <!-- Trucchi e Scorciatoie Millewin -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-keyboard" aria-hidden="true"></i>
-                    <h2>Trucchi e Scorciatoie Millewin</h2>
-                </div>
-                <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-medium);">
-                    Combinazioni rapide per navigare velocemente senza usare continuamente il mouse.
-                </p>
-
-                <div class="accordion-container" id="millewin-accordion">
-                    
-                    <!-- Scorciatoie da Tastiera -->
-                    <div class="accordion-item">
-                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                            <i class="fas fa-keyboard"></i>
-                            <span>Scorciatoie da Tastiera</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="shortcut-list">
-                                <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Apre l'Agenda appuntamenti da qualsiasi schermata</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>F3</kbd> — Apre la Rubrica Telefonica per cercare rapidamente i recapiti di un paziente</li>
-                                <li><kbd>Alt</kbd> + <kbd>F</kbd> — Mostra i Familiari del paziente in visita, utilissimo per ripetere terapie continuative ai parenti senza uscire</li>
-                                <li><kbd>Alt</kbd> + <kbd>Q</kbd> — Apre le Informazioni Essenziali (Patient Summary), il quadro riassuntivo clinico fondamentale per sostituzioni e pronto soccorso</li>
-                                <li><kbd>Alt</kbd> + <kbd>H</kbd> — Apre la Pianificazione e Scadenze, raggruppando esami in scadenza, richiami vaccinali e protocolli attivi</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>R</kbd> — Apre la Cronologia Visite, per filtrare e vedere tutto lo storico di un singolo problema o accertamento</li>
-                                <li><kbd>F2</kbd> Monitoraggio — Posizionati su un farmaco o accertamento e premi <kbd>F2</kbd> per vedere istantaneamente tutto lo storico di prescrizione o i risultati nel tempo</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>O</kbd> Origine Spesa — Selezionando un accertamento appena prescritto, permette di marcare la prestazione come "Suggerita" dallo specialista</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>G</kbd> — Visualizza un'impegnativa dematerializzata direttamente dalla cartella del paziente (utile per ristamparla o rinviarla)</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Trucchi per le Prescrizioni -->
-                    <div class="accordion-item">
-                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                            <i class="fas fa-pills"></i>
-                            <span>Trucchi per le Prescrizioni</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="accordion-content">
-                            <p class="tip-category">Codici Mnemonici per esami veloci</p>
-                            <p>Cerca l'esame in tabella, clicca su "Modifica" e assegnagli un codice breve di 2-3 lettere (es. "CT"). Digita "CT" nel campo accertamenti e premi <kbd>Invio</kbd> per prescriverlo istantaneamente.</p>
-                            
-                            <p class="tip-category">Gruppi di Accertamenti in un click</p>
-                            <p>Digitando un punto <kbd>.</kbd> nel campo di ricerca degli accertamenti, Millewin mostra i "Gruppi" (es. BASE, DIABETE, GRAVIDANZA) per prescrivere un intero pannello di esami in un colpo solo.</p>
-                            
-                            <p class="tip-category">Ripetere terapia modificando la posologia</p>
-                            <p>Seleziona un farmaco già prescritto e premi <kbd>Ctrl</kbd> + <kbd>F6</kbd> (o tasto destro > Copia). Puoi variare le quantità o la posologia prima di mandare in stampa.</p>
-                            
-                            <p class="tip-category">Farmaci non sostituibili</p>
-                            <p>Quando cerchi il farmaco, spunta la casella "Non sostituibile" in basso a sinistra; sulla ricetta apparirà l'apposita dicitura.</p>
-                            
-                            <p class="tip-category">Mettere in evidenza i farmaci cronici</p>
-                            <p>Clicca sul bottone grigio accanto al nome di un farmaco per farlo diventare <span style="color: #22c55e; font-weight: bold;">Verde</span>. Il farmaco "galleggerà" in cima alla lista come Terapia Continuativa.</p>
-                        </div>
-                    </div>
-
-                    <!-- Gestione Pazienti e GDPR -->
-                    <div class="accordion-item">
-                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                            <i class="fas fa-user-shield"></i>
-                            <span>Gestione Pazienti e GDPR</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="accordion-content">
-                            <p class="tip-category">Eliminare pazienti doppi, trasferiti o deceduti</p>
-                            <p>Per rispettare il GDPR, non usare funzioni generiche. Vai su <strong>Mille Utilità > Statistiche > Controllo revocati</strong>. Da qui potrai:</p>
-                            <ul style="margin: 10px 0; padding-left: 20px;">
-                                <li><strong>Cancellare</strong> definitivamente (inclusi gli allegati)</li>
-                                <li><strong>Anonimizzare</strong> i pazienti, sostituendo il nome con "ZZZANONIMO" per mantenere lo storico clinico a fini statistici</li>
-                            </ul>
-                            
-                            <p class="tip-category">Analizzare i trend clinici (Grafici e Timeline)</p>
-                            <p>Per capire se una terapia sta funzionando (es. colesterolo o pressione):</p>
-                            <ol style="margin: 10px 0; padding-left: 20px;">
-                                <li>Premi <kbd>F2</kbd> sull'accertamento per aprire il monitoraggio</li>
-                                <li>Clicca su <strong>"F2 Timeline"</strong> per vedere l'andamento storico</li>
-                                <li>Oppure vai su <strong>Menu Viste > Grafici</strong> per una rappresentazione visiva dei valori sovrapposti ai farmaci prescritti</li>
-                            </ol>
-                        </div>
-                    </div>
-
-                    <!-- Lavoro in Mobilità e MilleBook -->
-                    <div class="accordion-item">
-                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                            <i class="fas fa-mobile-alt"></i>
-                            <span>Lavoro in Mobilità, MilleBook e Segreteria</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="accordion-content">
-                            <p class="tip-category">Visite Domiciliari (Millelight)</p>
-                            <p>Non serve portare il PC. Tramite tablet o smartphone, collegati a <strong>millelight.millewin.it</strong> usando le credenziali Cloud. Potrai accedere alle cartelle, fare ricette rosse o dematerializzate. I dati si sincronizzano automaticamente.</p>
-                            
-                            <p class="tip-category">Spostarsi tra vari ambulatori (Profili Stampanti)</p>
-                            <p>Se lavori con un portatile su più studi, vai su <strong>Gestione Studio > Impostazioni > Stampanti</strong>, clicca "Rinomina" per salvare Studio A, poi "Crea nuova configurazione" per Studio B. All'avvio, Millewin chiederà dove ti trovi.</p>
-                            
-                            <p class="tip-category">Abilitare la Segretaria all'Agenda Cloud</p>
-                            <p>La segretaria deve essere iscritta a MilleBook con un'email diversa da quella del medico. Dalle impostazioni dell'Agenda Cloud del medico, invia l'invito formale all'account della segretaria.</p>
-                        </div>
-                    </div>
-
-                    <!-- Troubleshooting -->
-                    <div class="accordion-item">
-                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                            <i class="fas fa-wrench"></i>
-                            <span>Risoluzione Problemi Comuni</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="accordion-content">
-                            <div class="troubleshoot-grid">
-                                <div class="troubleshoot-item">
-                                    <h4>Errore "Controllo Iniziale Fallito" su nuovo PC</h4>
-                                    <p>Capita quando sposti Millewin su un nuovo computer e fai il "Restore" dei dati vecchi su un programma appena installato.</p>
-                                    <p><strong>Soluzione:</strong> Chiudi l'errore, avvia l'icona "Mille Live Update" nella barra di Windows, fai scaricare le ultime Patch e Tabelle, riavvia.</p>
-                                </div>
-                                <div class="troubleshoot-item">
-                                    <h4>Errore "ODBC Manager ERROR timeout expired"</h4>
-                                    <p>Indica che Millewin non riesce a comunicare con il database.</p>
-                                    <ul>
-                                        <li><strong>Rete Locale:</strong> Verifica che il computer principale (Server) sia acceso</li>
-                                        <li><strong>Cloud (RRS.net / Millelight):</strong> Controlla la connessione internet o vai in <strong>Medico > Dati Personali > Funzionalità Millecloud</strong> e verifica che l'indirizzo sia impostato su <code>https://api.millewin.it</code></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
@@ -1017,7 +823,164 @@
                         <span>Certificati di Malattia</span>
                         <small>Informativa INPS · Obbligo visita</small>
                     </a>
+                    <a href="rsa.html"
+                       class="btn-main btn-prenota"
+                       aria-label="Vademecum Operativo RSA">
+                        <i class="fas fa-hospital" aria-hidden="true"></i>
+                        <span>Vademecum RSA</span>
+                        <small>Continuità Assistenziale · Limiti</small>
+                    </a>
                 </div>
+            </div>
+
+            <!-- Trucchi e Scorciatoie Millewin -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-keyboard" aria-hidden="true"></i>
+                    <h2>Trucchi e Scorciatoie Millewin</h2>
+                </div>
+                <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-medium);">
+                    Combinazioni rapide per navigare velocemente senza usare continuamente il mouse.
+                </p>
+
+                <div class="accordion-container" id="millewin-accordion">
+
+                    <!-- Scorciatoie da Tastiera -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-keyboard"></i>
+                            <span>Scorciatoie da Tastiera</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <ul class="shortcut-list">
+                                <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Apre l'Agenda appuntamenti da qualsiasi schermata</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>F3</kbd> — Apre la Rubrica Telefonica per cercare rapidamente i recapiti di un paziente</li>
+                                <li><kbd>Alt</kbd> + <kbd>F</kbd> — Mostra i Familiari del paziente in visita, utilissimo per ripetere terapie continuative ai parenti senza uscire</li>
+                                <li><kbd>Alt</kbd> + <kbd>Q</kbd> — Apre le Informazioni Essenziali (Patient Summary), il quadro riassuntivo clinico fondamentale per sostituzioni e pronto soccorso</li>
+                                <li><kbd>Alt</kbd> + <kbd>H</kbd> — Apre la Pianificazione e Scadenze, raggruppando esami in scadenza, richiami vaccinali e protocolli attivi</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>R</kbd> — Apre la Cronologia Visite, per filtrare e vedere tutto lo storico di un singolo problema o accertamento</li>
+                                <li><kbd>F2</kbd> Monitoraggio — Posizionati su un farmaco o accertamento e premi <kbd>F2</kbd> per vedere istantaneamente tutto lo storico di prescrizione o i risultati nel tempo</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>O</kbd> Origine Spesa — Selezionando un accertamento appena prescritto, permette di marcare la prestazione come "Suggerita" dallo specialista</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>G</kbd> — Visualizza un'impegnativa dematerializzata direttamente dalla cartella del paziente (utile per ristamparla o rinviarla)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Trucchi per le Prescrizioni -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-pills"></i>
+                            <span>Trucchi per le Prescrizioni</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Codici Mnemonici per esami veloci</p>
+                            <p>Cerca l'esame in tabella, clicca su "Modifica" e assegnagli un codice breve di 2-3 lettere (es. "CT"). Digita "CT" nel campo accertamenti e premi <kbd>Invio</kbd> per prescriverlo istantaneamente.</p>
+
+                            <p class="tip-category">Gruppi di Accertamenti in un click</p>
+                            <p>Digitando un punto <kbd>.</kbd> nel campo di ricerca degli accertamenti, Millewin mostra i "Gruppi" (es. BASE, DIABETE, GRAVIDANZA) per prescrivere un intero pannello di esami in un colpo solo.</p>
+
+                            <p class="tip-category">Ripetere terapia modificando la posologia</p>
+                            <p>Seleziona un farmaco già prescritto e premi <kbd>Ctrl</kbd> + <kbd>F6</kbd> (o tasto destro > Copia). Puoi variare le quantità o la posologia prima di mandare in stampa.</p>
+
+                            <p class="tip-category">Farmaci non sostituibili</p>
+                            <p>Quando cerchi il farmaco, spunta la casella "Non sostituibile" in basso a sinistra; sulla ricetta apparirà l'apposita dicitura.</p>
+
+                            <p class="tip-category">Mettere in evidenza i farmaci cronici</p>
+                            <p>Clicca sul bottone grigio accanto al nome di un farmaco per farlo diventare <span style="color: #22c55e; font-weight: bold;">Verde</span>. Il farmaco "galleggerà" in cima alla lista come Terapia Continuativa.</p>
+                        </div>
+                    </div>
+
+                    <!-- Gestione Pazienti e GDPR -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Gestione Pazienti e GDPR</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Eliminare pazienti doppi, trasferiti o deceduti</p>
+                            <p>Per rispettare il GDPR, non usare funzioni generiche. Vai su <strong>Mille Utilità > Statistiche > Controllo revocati</strong>. Da qui potrai:</p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li><strong>Cancellare</strong> definitivamente (inclusi gli allegati)</li>
+                                <li><strong>Anonimizzare</strong> i pazienti, sostituendo il nome con "ZZZANONIMO" per mantenere lo storico clinico a fini statistici</li>
+                            </ul>
+
+                            <p class="tip-category">Analizzare i trend clinici (Grafici e Timeline)</p>
+                            <p>Per capire se una terapia sta funzionando (es. colesterolo o pressione):</p>
+                            <ol style="margin: 10px 0; padding-left: 20px;">
+                                <li>Premi <kbd>F2</kbd> sull'accertamento per aprire il monitoraggio</li>
+                                <li>Clicca su <strong>"F2 Timeline"</strong> per vedere l'andamento storico</li>
+                                <li>Oppure vai su <strong>Menu Viste > Grafici</strong> per una rappresentazione visiva dei valori sovrapposti ai farmaci prescritti</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Lavoro in Mobilità e MilleBook -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Lavoro in Mobilità, MilleBook e Segreteria</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="tip-category">Visite Domiciliari (Millelight)</p>
+                            <p>Non serve portare il PC. Tramite tablet o smartphone, collegati a <strong>millelight.millewin.it</strong> usando le credenziali Cloud. Potrai accedere alle cartelle, fare ricette rosse o dematerializzate. I dati si sincronizzano automaticamente.</p>
+
+                            <p class="tip-category">Spostarsi tra vari ambulatori (Profili Stampanti)</p>
+                            <p>Se lavori con un portatile su più studi, vai su <strong>Gestione Studio > Impostazioni > Stampanti</strong>, clicca "Rinomina" per salvare Studio A, poi "Crea nuova configurazione" per Studio B. All'avvio, Millewin chiederà dove ti trovi.</p>
+
+                            <p class="tip-category">Abilitare la Segretaria all'Agenda Cloud</p>
+                            <p>La segretaria deve essere iscritta a MilleBook con un'email diversa da quella del medico. Dalle impostazioni dell'Agenda Cloud del medico, invia l'invito formale all'account della segretaria.</p>
+                        </div>
+                    </div>
+
+                    <!-- Troubleshooting -->
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                            <i class="fas fa-wrench"></i>
+                            <span>Risoluzione Problemi Comuni</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="troubleshoot-grid">
+                                <div class="troubleshoot-item">
+                                    <h4>Errore "Controllo Iniziale Fallito" su nuovo PC</h4>
+                                    <p>Capita quando sposti Millewin su un nuovo computer e fai il "Restore" dei dati vecchi su un programma appena installato.</p>
+                                    <p><strong>Soluzione:</strong> Chiudi l'errore, avvia l'icona "Mille Live Update" nella barra di Windows, fai scaricare le ultime Patch e Tabelle, riavvia.</p>
+                                </div>
+                                <div class="troubleshoot-item">
+                                    <h4>Errore "ODBC Manager ERROR timeout expired"</h4>
+                                    <p>Indica che Millewin non riesce a comunicare con il database.</p>
+                                    <ul>
+                                        <li><strong>Rete Locale:</strong> Verifica che il computer principale (Server) sia acceso</li>
+                                        <li><strong>Cloud (RRS.net / Millelight):</strong> Controlla la connessione internet o vai in <strong>Medico > Dati Personali > Funzionalità Millecloud</strong> e verifica che l'indirizzo sia impostato su <code>https://api.millewin.it</code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Calcolatore Ferie e Coperture -->
+            <div class="card card-spotlight">
+                <div class="card-header">
+                    <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
+                    <h2>Calcolatore Ferie e Coperture</h2>
+                </div>
+                <p style="font-size: 1rem; color: var(--text-medium); max-width: 620px; margin: 0 auto; line-height: 1.7;">
+                    Pianifica le ferie del gruppo medico, verifica le coperture giornaliere e individua le scoperture. I dati vengono salvati localmente nel browser.
+                </p>
+                <a href="calcolatore-ferie.html"
+                   class="btn-prenota-large btn-assistente"
+                   aria-label="Apri il Calcolatore Ferie e Coperture">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    <span>Apri il Calcolatore Ferie</span>
+                    <small>Ferie · Coperture · Export Excel</small>
+                </a>
             </div>
 
         </section>

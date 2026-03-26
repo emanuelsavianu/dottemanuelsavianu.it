@@ -15,12 +15,71 @@
     <link rel="stylesheet" href="styles.css?v=11">
 
     <style>
-        .doc-page {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 20px 0 40px;
+        /* --- FALLBACK VARIABILI (in caso non siano nel file styles.css) --- */
+        :root {
+            --primary: #1a2f4c;
+            --primary-dark: #0f1a2a;
+            --primary-light: #285078;
+            --accent: #c29b57;
+            --bg-gradient-1: #f3efe6;
+            --text-dark: #1a2f4c;
+            --text-medium: #4a5568;
+            --white: #ffffff;
+            --border-color: #d1c7b3;
+            --danger: #dc2626;
+            --font-sans: 'Montserrat', sans-serif;
+            --font-serif: 'Playball', cursive;
+            --radius-md: 8px;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
         }
 
+        /* --- IMPOSTAZIONI DI BASE PER DESKTOP --- */
+        body {
+            background-color: #555; /* Sfondo scuro per risaltare il foglio su PC */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Il contenitore che simula il foglio A4 su Desktop */
+        .doc-page {
+            width: 210mm;
+            min-height: 296mm;
+            background: var(--white);
+            margin: 20px auto;
+            padding: 15mm 20mm;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        header[role="banner"], footer[role="contentinfo"] {
+            width: 100%;
+            text-align: center;
+            background: var(--primary-dark);
+            color: var(--white);
+            padding: 15px 20px;
+            box-sizing: border-box;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* --- STILI INTERNI AL DOCUMENTO --- */
         .doc-topbar {
             display: flex;
             align-items: center;
@@ -42,9 +101,7 @@
             line-height: 1.6;
         }
 
-        body.dark-mode .doc-intro {
-            background: var(--primary);
-        }
+        body.dark-mode .doc-intro { background: var(--primary); }
 
         .doc-section-title {
             font-family: var(--font-sans);
@@ -96,9 +153,7 @@
             letter-spacing: 0.4px;
         }
 
-        body.dark-mode .doc-list li strong {
-            color: var(--accent);
-        }
+        body.dark-mode .doc-list li strong { color: var(--accent); }
 
         .doc-law-ref {
             margin-top: 32px;
@@ -109,9 +164,7 @@
             line-height: 1.8;
         }
 
-        body.dark-mode .doc-law-ref {
-            border-top-color: var(--primary-light);
-        }
+        body.dark-mode .doc-law-ref { border-top-color: var(--primary-light); }
 
         .doc-footer-text {
             margin-top: 28px;
@@ -147,14 +200,8 @@
             text-decoration: none;
         }
 
-        .btn-print:hover {
-            background: var(--primary-light);
-        }
-
-        body.dark-mode .btn-print {
-            background: var(--accent);
-            color: var(--primary-dark);
-        }
+        .btn-print:hover { background: var(--primary-light); }
+        body.dark-mode .btn-print { background: var(--accent); color: var(--primary-dark); }
 
         .btn-back {
             display: inline-flex;
@@ -178,18 +225,65 @@
             color: var(--primary);
         }
 
+        /* --- RESPONSIVITÀ PER SMARTPHONE E TABLET --- */
+        @media (max-width: 800px) {
+            body {
+                background-color: var(--white); /* Rimuove lo sfondo grigio da pc */
+            }
+
+            .doc-page {
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+                padding: 20px 15px 40px;
+                box-shadow: none; /* Rimuove l'ombra del foglio */
+            }
+
+            .doc-topbar {
+                flex-direction: column; 
+                align-items: stretch; /* Pulsanti a larghezza intera su mobile */
+                gap: 15px;
+            }
+
+            .btn-print, .btn-back {
+                justify-content: center; /* Centra il testo nei pulsanti */
+            }
+        }
+
+        /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
         @media print {
-            body { background: none !important; }
-            .doc-topbar { display: none !important; }
-            header, footer { display: none !important; }
+            body { 
+                background: var(--white) !important; 
+                margin: 0; 
+                padding: 0; 
+            }
+            .doc-page { 
+                width: 210mm; 
+                min-height: 297mm; 
+                margin: 0; 
+                padding: 15mm 20mm;
+                box-shadow: none;
+            }
+            /* Nascondiamo tutto ciò che non fa parte del documento formale */
+            header[role="banner"], 
+            footer[role="contentinfo"], 
+            .doc-topbar, 
+            .lang-switch { 
+                display: none !important; 
+            }
             .doc-list li {
                 box-shadow: none;
                 border: 1px solid #ccc;
             }
-        }
-
-        @media (max-width: 600px) {
-            .doc-topbar { flex-direction: column; align-items: flex-start; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -208,7 +302,7 @@
     </div>
 </header>
 
-<div class="container">
+<div class="container" style="width: 100%; display: flex; justify-content: center;">
     <main class="doc-page" role="main">
 
         <div class="doc-topbar">
@@ -221,11 +315,11 @@
         </div>
 
         <div class="card">
-            <div class="card-header">
-                <i class="fas fa-file-medical" aria-hidden="true"></i>
-                <h2 style="font-family: var(--font-serif); font-weight: 400;">Informativa all'Utenza</h2>
+            <div class="card-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <i class="fas fa-file-medical" aria-hidden="true" style="font-size: 1.5rem; color: var(--primary);"></i>
+                <h2 style="font-family: var(--font-serif); font-weight: 400; font-size: 2rem; color: var(--primary); margin: 0;">Informativa all'Utenza</h2>
             </div>
-            <p style="font-size: 1rem; color: var(--text-medium); margin-bottom: 20px;">
+            <p style="font-size: 1.1rem; color: var(--text-medium); margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">
                 Rilascio Certificati di Malattia Telematici (INPS)
             </p>
 
@@ -289,6 +383,18 @@
 
 <script src="config.js"></script>
 <script src="app.js?v=9"></script>
+
+<script>
+    window.addEventListener('load', function() {
+        // Controlla se la finestra è più larga del breakpoint mobile (800px)
+        if (window.innerWidth > 800) {
+            // Aspetta mezzo secondo per assicurarsi che font e stili CSS siano completamente caricati
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    });
+</script>
 
 </body>
 </html>

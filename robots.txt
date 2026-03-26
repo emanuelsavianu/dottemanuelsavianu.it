@@ -1,4 +1,2 @@
 User-agent: *
-Allow: /
-
-Sitemap: https://dottemanuelsavianu.it/sitemap.xml
+Disallow: /

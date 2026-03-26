@@ -250,150 +250,15 @@ const translations = {
         faq_cta_title: "Non hai trovato la risposta?",
         faq_cta_desc: "Contatta la segreteria o accedi a MilleBook per comunicare con il medico."
     },
-    en: {
-        // Mobile banner
-        mobile_app_banner: "Open the App version",
-
-        // Header
-        header_subtitle: "General Practitioner - Arezzo",
-
-        // Alert box (index.html)
-        alert_notice: "<i class='fas fa-info-circle' aria-hidden='true' style='margin-right: 8px;'></i><strong>Relocation:</strong> From 27 April 2026, Dr. Savianu will be visiting at <strong>Piazza Saione 3</strong>.",
-
-        // Services section
-        services_title: "Online Services",
-        btn_faq_main: "Have questions? Read the FAQ first",
-        btn_book: "Book a visit",
-        btn_book_sub: "Choose date and time",
-        millebook_btn: "Request prescriptions or medications",
-        millebook_sub: "Access Millebook — the preferred channel",
-
-        // Booking section
-        booking_title: "Select visit type",
-        booking_guide_title: "How to book:",
-        booking_guide_steps: "<li>Click the button for the visit type below.</li><li>Choose an available day and time from the calendar.</li><li>Enter your first name, surname, and an email address.</li><li>Click <strong>Confirm</strong> (you will receive a confirmation email).</li>",
-        cal_prima_title: "First Visit (New Patients)",
-        cal_prima_desc: "For new patients only. Bring documents, tests, reports and exemptions. (30 min)",
-        cal_ord_title: "Standard Visit",
-        cal_ord_desc: "Check-ups and non-urgent issues. (20 min)",
-        cal_breve_title: "Recent Symptoms",
-        cal_breve_desc: "Urgent but non-emergency visits, acute illness, INPS sick leave certificates. (10 min)",
-        privacy_notice_text: "Please read the privacy policy.",
-        privacy_notice_link: "Data Processing Policy",
-
-        // Visit info section
-        visit_info_title: "What to Bring &amp; Useful Links",
-        visit_info_desc: "For your in-office visit, please remember to bring:",
-        visit_info_items: "<li>An up-to-date list of all medications you take regularly</li><li>Any previous tests, specialist reports, or hospital discharge letters</li>",
-        btn_cup: "Book via CUP Toscana",
-        btn_fse: "Health Record (FSE)",
-
-        // Emergency & out-of-hours
-        emergency_112: "For medical emergencies, always call the emergency number 112.",
-        guard_title: "Out-of-Hours Service (ex-Guardia Medica)",
-        guard_desc: "For non-urgent medical assistance during nights, public holidays and pre-holidays.",
-
-        // Contacts
-        contacts_title: "Office Contacts",
-        label_secretary: "Reception &amp; Appointments",
-        label_doctor: "Personal Phone (Emergencies only)",
-        label_address: "Studio Medico Ippocrate",
-        label_email: "Email",
-
-        // Hours
-        hours_title: "Clinic Hours",
-        appt_only: "By appointment only",
-        hours_day1: "Mon · Wed · Fri",
-        hours_day2: "Tue · Thu",
-        day_sat_sun: "Sat - Sun",
-        closed: "Closed",
-        hours_secretary_title: "Reception Hours",
-        hours_secretary_desc: "For phone appointments and enquiries.",
-
-        // Footer
-        link_privacy: "Privacy Policy",
-
-        // Welcome modal
-        welcome_transfer_title: "New Office Location",
-        welcome_transfer_desc: "From 27 April 2026, Dr. Savianu will move to <strong>Piazza Saione 3</strong>. Current address: <strong>Via Ubaldo Pasqui 38</strong>.",
-        welcome_intro: "Welcome. This website is designed to make your life easier. By using the digital tools available, you allow me to focus my full attention on in-person medical consultations.",
-        welcome_step0_title: "0. First of all: Read the FAQ",
-        welcome_step0_desc: "Most answers about certificates, prescriptions and exemptions can be found in the <strong><a href='faq.html' style='text-decoration:underline; font-weight:bold;'>Frequently Asked Questions</a></strong>. Check there before calling!",
-        welcome_step1_title: "1. Preferred Channel: Millebook",
-        welcome_step1_desc: "Use it for <strong>repeat prescriptions</strong>, short messages and viewing your prescriptions. It's the fastest method.",
-        welcome_step2_title: "2. Appointment Booking",
-        welcome_step2_desc: "The online calendar lets you book a visit without waiting on the phone.",
-        welcome_step3_title: "3. Urgent Matters &amp; Direct Contact",
-        welcome_step3_p1: "Reception: <strong>0575 910 904</strong>",
-        welcome_step3_p2: "<strong>True emergencies: call 112 / 116 117.</strong>",
-        welcome_step3_p3: "The doctor's direct number (0575 171 3428) is reserved for genuine emergencies only.",
-        welcome_btn: "<span>I have read and accept</span><i class='fas fa-arrow-right'></i>",
-
-        // FAQ page
-        faq_hero_title: "<i class='fas fa-question-circle' style='margin-right: 10px;'></i>FAQ for Patients",
-        faq_hero_desc: "Answers to the most common questions about the practice",
-        faq_back: "<i class='fas fa-arrow-left'></i> Back to main site",
-        faq_nav_prenotazioni: "Appointments",
-        faq_nav_ricette: "Prescriptions",
-        faq_nav_certificati: "Certificates",
-        faq_nav_referti: "Test Results",
-        faq_nav_millebook: "MilleBook",
-        faq_nav_nuovi: "New Patients",
-        faq_nav_urgenze: "Emergencies",
-        faq_nav_varie: "Services",
-        faq_sec_prenotazioni: "<i class='fas fa-calendar-check'></i> Appointments &amp; Bookings",
-        faq_sec_ricette: "<i class='fas fa-pills'></i> Prescriptions &amp; Medications",
-        faq_q1: "How do I book a visit?",
-        faq_a1: "The simplest and fastest way is through the <strong>website</strong>:<ul><li>Go to <a href='index.html'>savianu.it</a> and click \"Book Visit\"</li><li>Choose the type: <strong>First Visit</strong>, <strong>Standard Visit</strong>, or <strong>Recent Symptoms</strong></li><li>Select a day and time from the calendar</li><li>Enter your name, surname and email for confirmation</li></ul><div class='highlight-box'>Alternatively, call reception on <strong>0575 910 904</strong> during clinic hours.</div>",
-        faq_q2: "Can I come without an appointment?",
-        faq_a2: "The doctor sees patients <strong>by appointment only</strong> to ensure reasonable waiting times and give each patient the attention they deserve.<br><br>If you are unwell and cannot book online, come in anyway: the receptionist will let the doctor know, and he will contact you as soon as he is free.",
-        faq_q3: "What are the clinic opening hours?",
-        faq_a3: "<table style='width:100%; border-collapse: collapse;'><tr><td style='padding: 6px 0; font-weight: 600;'>Monday, Wednesday, Friday</td><td style='text-align:right; color: var(--text-dark); font-weight: 700;'>16:00 - 19:00</td></tr><tr><td style='padding: 6px 0; font-weight: 600;'>Tuesday, Thursday</td><td style='text-align:right; color: var(--text-dark); font-weight: 700;'>10:00 - 13:00</td></tr><tr><td style='padding: 6px 0; font-weight: 600; color: var(--danger);'>Saturday - Sunday</td><td style='text-align:right; color: var(--danger);'>Closed</td></tr></table><div class='highlight-box'><strong>Address:</strong> Studio Medico Ippocrate, Via Ubaldo Pasqui 38, Arezzo (dal 27/04/2026: Piazza Saione 3)</div>",
-        faq_q4: "How do I cancel or reschedule an appointment?",
-        faq_a4: "Your confirmation email contains a link to <strong>modify or cancel</strong> the appointment directly in the calendar.<br><br>If you cannot find the email, please call reception on <strong>0575 910 904</strong> with reasonable notice.",
-        faq_q5: "How do I request a prescription for my regular medications?",
-        faq_a5: "The preferred method is <strong>MilleBook</strong>:<ul><li>Log in at <a href='https://www.millebook.it/#/login' target='_blank'>millebook.it</a></li><li>Send a message listing the medications you need</li><li>Prescriptions will be ready <strong>within two working days</strong> and visible on MilleBook</li></ul><div class='highlight-box'><strong>Important:</strong> Electronic prescriptions (NRE) are sent directly to the system — you can collect them at any pharmacy by providing your tax ID (Codice Fiscale).</div>",
-        faq_sec_certificati: "<i class='fas fa-file-medical'></i> Certificates",
-        faq_sec_referti: "<i class='fas fa-flask'></i> Test Results &amp; Referrals",
-        faq_sec_millebook: "<i class='fas fa-laptop-medical'></i> MilleBook",
-        faq_sec_nuovi: "<i class='fas fa-user-plus'></i> New Patients",
-        faq_sec_urgenze: "<i class='fas fa-ambulance'></i> Emergencies &amp; Out-of-Hours",
-        faq_sec_varie: "<i class='fas fa-stethoscope'></i> Other Services",
-        faq_q6: "How do I request a medical certificate?",
-        faq_a6: "Standard certificates (for non-competitive sport, school absences, etc.) can be requested during a clinic visit or via <strong>MilleBook</strong> for straightforward cases.<br><br>Bring any relevant documents; the certificate is issued on the spot at the clinic.<div class='highlight-box'><strong>INPS sick leave certificates</strong> require an in-person visit. Book by selecting \"Recent Symptoms\".</div>",
-        faq_q7: "How do I access my test results?",
-        faq_a7: "Test results are available on the <strong>Electronic Health Record (FSE)</strong>, accessible at salute.toscana.it using SPID or CIE.<br><br>The doctor can review and discuss results during a visit. If you have questions about a result, book a standard appointment.",
-        faq_q8: "How do I sign up for MilleBook?",
-        faq_a8: "To register for MilleBook:<ul><li>Ask for your credentials at reception or during your first visit</li><li>You will receive an email and password to log in at <a href='https://www.millebook.it/#/login' target='_blank'>millebook.it</a></li></ul><div class='highlight-box'>MilleBook is the preferred channel for requesting prescriptions, sending messages to the doctor, and viewing documents.</div>",
-        faq_q9: "How do I register as a new patient?",
-        faq_a9: "To register as a new patient you must:<ul><li>Reside or be domiciled in the Arezzo area</li><li>Present yourself at reception with your <strong>health card (tessera sanitaria)</strong> and <strong>photo ID</strong></li></ul>After registration, book your first appointment by selecting <strong>\"First Visit (New Patients)\"</strong> (30 min).<div class='highlight-box'>Bring to your first visit: a list of your current medications, previous test results, specialist reports, and your exemption code if applicable.</div>",
-        faq_q10: "What do I do in an emergency?",
-        faq_a10: "In a medical emergency always call <strong>112</strong>.<br><br>For urgent but non-emergency situations outside clinic hours, contact the <strong>Out-of-Hours Service</strong> (Continuità Assistenziale) on <strong>116 117</strong>.<div class='highlight-box'>The doctor's personal number (0575 171 3428) is reserved for genuine emergencies during working hours only.</div>",
-        faq_q11: "How do I get a referral for tests or specialist appointments?",
-        faq_a11: "Referrals for blood tests, X-rays, or specialist visits must be requested during an in-person clinic visit.<br><br>For already-planned routine tests (e.g. annual check-up), you can request them via <strong>MilleBook</strong> without needing an appointment.<div class='highlight-box'>To book tests through the NHS, use <strong>CUP Toscana</strong> once you have your referral.</div>",
-        faq_cta_title: "Didn't find the answer?",
-        faq_cta_desc: "Contact reception or log in to MilleBook to send a message to the doctor."
-    }
 };
 
 function setLanguage(lang) {
-    const btnIt = document.getElementById('btn-it');
-    const btnEn = document.getElementById('btn-en');
-    if (btnIt) btnIt.classList.toggle('active', lang === 'it');
-    if (btnEn) btnEn.classList.toggle('active', lang === 'en');
     document.documentElement.lang = lang;
-
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[lang]?.[key]) el.innerHTML = translations[lang][key];
     });
-    try { localStorage.setItem('preferredLanguage', lang); } catch (e) {}
 }
-
-try {
-    const savedLang = localStorage.getItem('preferredLanguage');
-    if (savedLang) setLanguage(savedLang);
-} catch (e) {}
 
 // --- SMOOTH SCROLL ---
 function showSection(sectionId) {
@@ -457,12 +322,9 @@ function trapFocus(modal) {
     if (!anchor) return;
     const badge = document.createElement('span');
     badge.className = isOpen ? 'badge-open' : 'badge-closed';
-    const lang = (function() { try { return localStorage.getItem('preferredLanguage') || 'it'; } catch(e) { return 'it'; } })();
-    const openLabel = lang === 'en' ? 'Open now' : 'Aperto ora';
-    const closedLabel = lang === 'en' ? 'Closed' : 'Chiuso';
     badge.innerHTML = isOpen
-        ? '<i class="fas fa-circle"></i> ' + openLabel
-        : '<i class="fas fa-circle"></i> ' + closedLabel;
+        ? '<i class="fas fa-circle"></i> Aperto ora'
+        : '<i class="fas fa-circle"></i> Chiuso';
     anchor.parentNode.appendChild(badge);
 })();
 
