@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Turni RUAP - ASL (Vista Settimanale)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .modal-open { overflow: hidden; }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden font-sans">
+
+    <header class="bg-blue-800 text-white shadow-md z-10 p-4 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-user-md text-2xl"></i>
+            <h1 class="text-xl font-bold tracking-wide">Gestione Turni RUAP <span class="text-blue-200 text-sm font-normal ml-2">Vista Settimanale</span></h1>
+        </div>
+        
+        <div class="flex items-center gap-4 bg-blue-900 rounded-lg p-1">
+            <button onclick="changeWeek(-1)" class="px-3 py-1 hover:bg-blue-700 rounded transition"><i class="fas fa-chevron-left"></i></button>
+            <span id="currentWeekLabel" class="font-semibold min-w-[200px] text-center uppercase tracking-wider text-sm"></span>
+            <button onclick="changeWeek(1)" class="px-3 py-1 hover:bg-blue-700 rounded transition"><i class="fas fa-chevron-right"></i></button>
+            <button onclick="goToToday()" class="px-3 py-1 text-xs bg-blue-700 hover:bg-blue-600 rounded ml-2 transition">Oggi</button>
+        </div>
+
+        <div class="flex gap-2 text-sm">
+            <button onclick="exportData()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded flex items-center gap-2 transition shadow">
+                <i class="fas fa-download"></i> Esporta JSON
+            </button>
+            <label class="bg-amber-600 hover:bg-amber-500 px-3 py-2 rounded flex items-center gap-2 transition shadow cursor-pointer">
+                <i class="fas fa-upload"></i> Importa JSON
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            </label>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 z-10 shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)]">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h2 class="font-bold text-slate-700"><i class="fas fa-users mr-2"></i>Medici RUAP</h2>
+                <button onclick="openDoctorModal()" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-sm transition font-medium">
+                    <i class="fas fa-plus mr-1"></i> Nuovo
+                </button>
+            </div>
+            <div id="doctorsList" class="flex-1 overflow-y-auto p-4 space-y-4">
+                </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden relative">
+            
+            <div class="grid grid-cols-5 gap-px bg-slate-300 border-b border-slate-300 shrink-0 h-12 shadow-sm z-0">
+                <div class="bg-white flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">Lunedì</div>
+                <div class="bg-white flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">Martedì</div>
+                <div class="bg-white flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">Mercoledì</div>
+                <div class="bg-white flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">Giovedì</div>
+                <div class="bg-white flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">Venerdì</div>
+            </div>
+
+            <div id="calendarGrid" class="flex-1 bg-slate-200 grid grid-cols-5 gap-px">
+                </div>
+            
+        </main>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-black/60 z-50 hidden flex justify-center items-center fade-in backdrop-blur-sm">
+        
+        <div id="doctorModal" class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto hidden">
+            <div class="p-5 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h2 id="doctorModalTitle" class="text-xl font-bold text-slate-800">Aggiungi Medico</h2>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <input type="hidden" id="docId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Nome Cognome</label>
+                        <input type="text" id="docName" class="w-full border border-slate-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="es. Dott. Mario Rossi">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Numero Pazienti</label>
+                        <input type="number" id="docPatients" class="w-full border border-slate-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" value="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Debito Orario Sett. (ore)</label>
+                        <input type="number" id="docDebt" class="w-full border border-slate-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" value="38" step="1">
+                        <p class="text-xs text-slate-400 mt-1">Default 38h per completamento</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold border-b pb-2 mb-3 text-slate-700">Disponibilità Standard (Lu-Ve)</h3>
+                    <div class="grid grid-cols-5 gap-2 text-center text-sm" id="availabilityGrid">
+                        </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold border-b pb-2 mb-3 text-slate-700">Periodi di Indisponibilità (Ferie, ecc.)</h3>
+                    <div class="flex gap-2 items-end mb-3 bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-500 mb-1">Dal</label>
+                            <input type="date" id="unavStart" class="w-full border rounded p-1.5 text-sm">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-500 mb-1">Al</label>
+                            <input type="date" id="unavEnd" class="w-full border rounded p-1.5 text-sm">
+                        </div>
+                        <button onclick="addUnavailability()" class="bg-slate-700 text-white px-3 py-1.5 rounded hover:bg-slate-800 text-sm transition">Aggiungi</button>
+                    </div>
+                    <ul id="unavList" class="space-y-2 text-sm">
+                        </ul>
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                <button onclick="closeModals()" class="px-4 py-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 transition">Annulla</button>
+                <button onclick="saveDoctor()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow">Salva Medico</button>
+            </div>
+        </div>
+
+        <div id="assignModal" class="bg-white rounded-xl shadow-2xl w-full max-w-md hidden overflow-hidden">
+            <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
+                <h2 class="text-lg font-bold">Assegna Turno</h2>
+                <button onclick="closeModals()" class="text-blue-200 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5">
+                <p id="assignDetails" class="text-slate-600 font-medium mb-4 text-center bg-slate-100 p-3 rounded border border-slate-200 shadow-inner"></p>
+                <input type="hidden" id="assignDate">
+                <input type="hidden" id="assignPeriod">
+                <input type="hidden" id="assignLocation">
+                
+                <label class="block text-sm font-bold text-slate-700 mb-2">Medici Disponibili (Filtro Intelligente)</label>
+                <div id="availableDoctorsList" class="max-h-60 overflow-y-auto space-y-2 border border-slate-200 rounded p-2 bg-slate-50">
+                    </div>
+                <p id="noDoctorsMsg" class="text-sm text-red-500 italic hidden text-center py-4">Nessun medico disponibile per questa fascia oraria. Controlla le disponibilità e le ferie.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE & STATE ---
+        const SHIFT_HOURS = 6;
+        const PERIODS = {
+            morning: { label: 'Mattina', time: '08:00 - 14:00', icon: 'fa-sun', color: 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' },
+            afternoon: { label: 'Pomeriggio', time: '14:00 - 20:00', icon: 'fa-cloud-sun', color: 'bg-indigo-100 text-indigo-800 border-indigo-300 hover:bg-indigo-200' }
+        };
+        const LOCATIONS = [
+            { id: 'subbiano', name: 'Subbiano', shortName: 'Subbiano' },
+            { id: 'monte_san_savino', name: 'Monte San Savino', shortName: 'M. S. Savino' }
+        ];
+        const DAYS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+        const MONTHS = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+
+        let state = {
+            doctors: [],
+            shifts: [],
+            viewDate: new Date() // Start with today to generate the current week
+        };
+
+        // Modal Temporary State
+        let tempUnavailability = [];
+        let currentWeekDays = []; // Stores the 5 days (Mon-Fri) of the current week
+
+        // --- INITIALIZATION ---
+        function init() {
+            loadState();
+            if (state.doctors.length === 0) {
+                injectDemoData();
+            }
+            renderApp();
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('ruap_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.doctors = parsed.doctors || [];
+                    state.shifts = parsed.shifts || [];
+                    state.viewDate = new Date(); // Always start from today on refresh
+                } catch(e) { console.error("Error parsing state", e); }
+            }
+        }
+
+        function saveState() {
+            const stateToSave = { doctors: state.doctors, shifts: state.shifts };
+            localStorage.setItem('ruap_state', JSON.stringify(stateToSave));
+            renderSidebar(); 
+        }
+
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+
+        function injectDemoData() {
+            const cy = new Date().getFullYear();
+            state.doctors = [{
+                id: generateId(),
+                name: "Dott. Savianu",
+                patients: 1500,
+                weeklyDebt: 38,
+                availability: {
+                    1: { morning: true, afternoon: false },
+                    2: { morning: false, afternoon: true },
+                    3: { morning: true, afternoon: false },
+                    4: { morning: false, afternoon: true },
+                    5: { morning: true, afternoon: false }
+                },
+                unavailability: [
+                    { start: `${cy}-04-01`, end: `${cy}-04-30` } 
+                ]
+            }];
+            saveState();
+        }
+
+        // --- UTILS ---
+        function formatDate(date) {
+            const d = new Date(date);
+            const month = '' + (d.getMonth() + 1);
+            const day = '' + d.getDate();
+            const year = d.getFullYear();
+            return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+        }
+
+        function getMonday(d) {
+            d = new Date(d);
+            var day = d.getDay(),
+                diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        // --- RENDER ENGINE ---
+        function renderApp() {
+            generateCurrentWeek();
+            updateHeaderLabel();
+            renderCalendar();
+            renderSidebar();
+        }
+
+        function changeWeek(delta) {
+            state.viewDate.setDate(state.viewDate.getDate() + (delta * 7));
+            renderApp();
+        }
+        
+        function goToToday() {
+            state.viewDate = new Date();
+            renderApp();
+        }
+
+        function generateCurrentWeek() {
+            currentWeekDays = [];
+            let monday = getMonday(state.viewDate);
+            let currentDay = new Date(monday);
+            
+            for (let i = 0; i < 5; i++) { // Generate Mon (0) to Fri (4)
+                currentWeekDays.push(new Date(currentDay));
+                currentDay.setDate(currentDay.getDate() + 1);
+            }
+        }
+
+        function updateHeaderLabel() {
+            const start = currentWeekDays[0];
+            const end = currentWeekDays[4];
+            
+            let label = "";
+            if (start.getMonth() === end.getMonth()) {
+                label = `${start.getDate()} - ${end.getDate()} ${MONTHS[start.getMonth()]} ${start.getFullYear()}`;
+            } else {
+                label = `${start.getDate()} ${MONTHS[start.getMonth()]} - ${end.getDate()} ${MONTHS[end.getMonth()]} ${end.getFullYear()}`;
+            }
+            document.getElementById('currentWeekLabel').innerText = label;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            const todayStr = formatDate(new Date());
+
+            currentWeekDays.forEach(date => {
+                const dateStr = formatDate(date);
+                const isToday = dateStr === todayStr;
+                
+                // Each day is a flex column taking full height
+                const cell = document.createElement('div');
+                cell.className = `bg-white p-3 flex flex-col h-full overflow-y-auto ${isToday ? 'bg-blue-50 ring-2 ring-inset ring-blue-500 z-10 shadow-lg' : ''}`;
+                
+                // Day Number Header
+                cell.innerHTML = `
+                    <div class="text-right text-lg font-bold ${isToday ? 'text-blue-700' : 'text-slate-400'} border-b border-slate-100 pb-2 mb-4">
+                        ${date.getDate()} ${MONTHS[date.getMonth()]}
+                    </div>
+                `;
+
+                // Slots: Morning & Afternoon for each Location
+                LOCATIONS.forEach(loc => {
+                    const locDiv = document.createElement('div');
+                    locDiv.className = "mb-4 border border-slate-200 rounded-lg shadow-sm bg-slate-50 overflow-hidden";
+                    
+                    const locHeader = document.createElement('div');
+                    locHeader.className = "bg-slate-200 text-xs font-bold text-slate-700 px-2 py-1.5 border-b border-slate-300 flex items-center gap-2";
+                    locHeader.innerHTML = `<i class="fas fa-map-marker-alt text-slate-500"></i> ${loc.name}`;
+                    locDiv.appendChild(locHeader);
+
+                    const slotsContainer = document.createElement('div');
+                    slotsContainer.className = "p-2 space-y-2 flex flex-col";
+
+                    ['morning', 'afternoon'].forEach(period => {
+                        const shift = state.shifts.find(s => s.date === dateStr && s.period === period && s.locationId === loc.id);
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = 'relative flex-1';
+
+                        if (shift) {
+                            const doc = state.doctors.find(d => d.id === shift.doctorId);
+                            const docName = doc ? doc.name : 'Medico Rimosso';
+                            slotDiv.innerHTML = `
+                                <div class="border rounded-md p-2 text-sm font-semibold ${PERIODS[period].color} flex flex-col group cursor-pointer shadow-sm transition hover:shadow-md" onclick="removeShift('${dateStr}', '${period}', '${loc.id}')" title="Clicca per rimuovere turno">
+                                    <div class="flex justify-between items-center opacity-80 mb-1 border-b border-black/10 pb-1">
+                                        <span class="text-xs uppercase tracking-wide"><i class="fas ${PERIODS[period].icon} mr-1"></i>${PERIODS[period].label}</span>
+                                        <i class="fas fa-trash-alt opacity-0 group-hover:opacity-100 transition-opacity text-red-600 bg-white/50 px-1 rounded"></i>
+                                    </div>
+                                    <div class="truncate text-base mt-1">${docName}</div>
+                                </div>
+                            `;
+                        } else {
+                            slotDiv.innerHTML = `
+                                <button onclick="openAssignModal('${dateStr}', '${period}', '${loc.id}')" class="w-full h-full min-h-[60px] border-2 border-dashed border-slate-300 rounded-md bg-white hover:bg-blue-50 hover:border-blue-400 text-slate-400 hover:text-blue-600 transition text-sm font-medium flex items-center justify-center p-2 cursor-pointer group">
+                                    <i class="fas fa-plus mr-2 group-hover:scale-125 transition-transform"></i> ${PERIODS[period].label}
+                                </button>
+                            `;
+                        }
+                        slotsContainer.appendChild(slotDiv);
+                    });
+                    locDiv.appendChild(slotsContainer);
+                    cell.appendChild(locDiv);
+                });
+
+                grid.appendChild(cell);
+            });
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('doctorsList');
+            list.innerHTML = '';
+
+            if (state.doctors.length === 0) {
+                list.innerHTML = `<div class="text-sm text-slate-400 text-center mt-10 italic">Nessun medico presente.</div>`;
+                return;
+            }
+
+            state.doctors.forEach(doc => {
+                // Count shifts for this doctor IN THE CURRENT WEEK ONLY
+                let shiftCount = 0;
+                currentWeekDays.forEach(date => {
+                    const dStr = formatDate(date);
+                    shiftCount += state.shifts.filter(s => s.date === dStr && s.doctorId === doc.id).length;
+                });
+                
+                const hoursAssigned = shiftCount * SHIFT_HOURS;
+                const debt = doc.weeklyDebt;
+                
+                let statusColor = "text-emerald-600 font-bold"; 
+                let bgColor = "bg-emerald-50 border-emerald-200";
+                let statusIcon = "fa-check-circle text-emerald-500";
+                
+                if (hoursAssigned < debt) {
+                    statusColor = "text-amber-600 font-bold";
+                    bgColor = "bg-amber-50 border-amber-200";
+                    statusIcon = "fa-exclamation-circle text-amber-500";
+                }
+                if (hoursAssigned > debt) { 
+                    statusColor = "text-red-600 font-bold";
+                    bgColor = "bg-red-50 border-red-200";
+                    statusIcon = "fa-exclamation-triangle text-red-500";
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-lg shadow-sm p-4 relative hover:shadow-md transition";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-md">${doc.name}</h3>
+                            <div class="text-xs text-slate-500 mt-1"><i class="fas fa-users mr-1"></i>${doc.patients} paz. • <i class="fas fa-clock mr-1"></i>${doc.weeklyDebt}h standard</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editDoctor('${doc.id}')" class="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 rounded"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteDoctor('${doc.id}')" class="text-slate-400 hover:text-red-600 p-1 bg-slate-50 rounded"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="mt-2 ${bgColor} border rounded p-2 flex justify-between items-center text-sm">
+                        <span class="text-slate-600 font-medium">Ore assegnate (Sett.)</span>
+                        <div class="flex items-center gap-1">
+                            <span class="${statusColor}">${hoursAssigned} / ${debt}h</span>
+                            <i class="fas ${statusIcon}"></i>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // --- BUSINESS LOGIC: AVAILABILITY ---
+        function getAvailableDoctors(dateStr, period) {
+            const dateObj = new Date(dateStr);
+            const dayOfWeek = dateObj.getDay(); 
+            
+            if (dayOfWeek === 0 || dayOfWeek === 6) return []; 
+
+            return state.doctors.filter(doc => {
+                // 1. Check Standard Availability
+                const standardAvail = doc.availability[dayOfWeek];
+                if (!standardAvail || !standardAvail[period]) return false;
+
+                // 2. Check Unavailability (Leaves)
+                const isUnavailable = doc.unavailability.some(unav => {
+                    return dateStr >= unav.start && dateStr <= unav.end;
+                });
+                if (isUnavailable) return false;
+
+                // 3. Prevent assigning if doctor is already working in this exact period (in another location)
+                const isAlreadyWorkingThisPeriod = state.shifts.some(s => s.date === dateStr && s.period === period && s.doctorId === doc.id);
+                if (isAlreadyWorkingThisPeriod) return false;
+
+                return true;
+            });
+        }
+
+        function assignShift(date, period, locationId, doctorId) {
+            state.shifts.push({ date, period, locationId, doctorId });
+            saveState();
+            closeModals();
+            renderApp();
+        }
+
+        function removeShift(date, period, locationId) {
+            state.shifts = state.shifts.filter(s => !(s.date === date && s.period === period && s.locationId === locationId));
+            saveState();
+            renderApp();
+        }
+
+        // --- MODALS & UI INTERACTION ---
+        function openModal(id) {
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            document.getElementById(id).classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModals() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('doctorModal').classList.add('hidden');
+            document.getElementById('assignModal').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        }
+
+        function openAssignModal(dateStr, period, locationId) {
+            document.getElementById('assignDate').value = dateStr;
+            document.getElementById('assignPeriod').value = period;
+            document.getElementById('assignLocation').value = locationId;
+            
+            const loc = LOCATIONS.find(l => l.id === locationId);
+            const dateObj = new Date(dateStr);
+            const displayDate = `${DAYS[dateObj.getDay()]} ${dateObj.getDate()} ${MONTHS[dateObj.getMonth()]}`;
+            document.getElementById('assignDetails').innerHTML = `
+                <div class="font-bold text-blue-800 text-lg mb-1"><i class="fas fa-map-marker-alt mr-1"></i> ${loc.name}</div>
+                <div class="text-slate-600"><i class="fas fa-calendar-day mr-1"></i> ${displayDate}</div>
+                <div class="text-md mt-1 font-semibold ${PERIODS[period].color.split(' ')[1]}"><i class="fas ${PERIODS[period].icon} mr-1"></i> ${PERIODS[period].label}</div>
+            `;
+
+            const availableDocs = getAvailableDoctors(dateStr, period);
+            const listDiv = document.getElementById('availableDoctorsList');
+            const noDocsMsg = document.getElementById('noDoctorsMsg');
+            
+            listDiv.innerHTML = '';
+            if (availableDocs.length === 0) {
+                listDiv.classList.add('hidden');
+                noDocsMsg.classList.remove('hidden');
+            } else {
+                listDiv.classList.remove('hidden');
+                noDocsMsg.classList.add('hidden');
+                
+                availableDocs.forEach(doc => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md transition flex justify-between items-center group bg-white";
+                    btn.innerHTML = `
+                        <span class="font-bold text-slate-700 group-hover:text-blue-700 text-base">${doc.name}</span>
+                        <span class="text-xs bg-blue-100 text-blue-800 border border-blue-200 px-3 py-1.5 rounded-full font-semibold group-hover:bg-blue-600 group-hover:text-white transition">Assegna <i class="fas fa-check ml-1"></i></span>
+                    `;
+                    btn.onclick = () => assignShift(dateStr, period, locationId, doc.id);
+                    listDiv.appendChild(btn);
+                });
+            }
+
+            openModal('assignModal');
+        }
+
+        // Rest of the Code for Doctor Modal (Unchanged structurally, logic identical)
+        function renderAvailabilityGrid() {
+            const grid = document.getElementById('availabilityGrid');
+            grid.innerHTML = `
+                <div class="col-span-5 grid grid-cols-5 font-bold text-xs text-slate-500 mb-2 border-b pb-1">
+                    <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div>
+                </div>
+            `;
+            let morningRow = '<div class="col-span-5 grid grid-cols-5 gap-2 mb-2">';
+            for(let i=1; i<=5; i++) {
+                morningRow += `<label class="bg-amber-50 border border-amber-200 rounded p-2 cursor-pointer hover:bg-amber-100 flex flex-col items-center transition"><span class="text-[10px] text-amber-800 font-bold uppercase mb-2">Mattina</span><input type="checkbox" id="av_m_${i}" class="accent-amber-600 w-4 h-4"></label>`;
+            }
+            morningRow += '</div>';
+            
+            let afternoonRow = '<div class="col-span-5 grid grid-cols-5 gap-2">';
+            for(let i=1; i<=5; i++) {
+                afternoonRow += `<label class="bg-indigo-50 border border-indigo-200 rounded p-2 cursor-pointer hover:bg-indigo-100 flex flex-col items-center transition"><span class="text-[10px] text-indigo-800 font-bold uppercase mb-2">Pomeriggio</span><input type="checkbox" id="av_a_${i}" class="accent-indigo-600 w-4 h-4"></label>`;
+            }
+            afternoonRow += '</div>';
+
+            grid.innerHTML += morningRow + afternoonRow;
+        }
+
+        function renderUnavailabilityList() {
+            const ul = document.getElementById('unavList');
+            ul.innerHTML = '';
+            if (tempUnavailability.length === 0) {
+                ul.innerHTML = '<li class="text-slate-400 text-xs italic bg-slate-50 p-2 rounded border border-slate-100">Nessun periodo impostato.</li>';
+                return;
+            }
+            tempUnavailability.forEach((u, idx) => {
+                ul.innerHTML += `
+                    <li class="flex justify-between items-center bg-red-50 border border-red-100 rounded p-2 text-red-800 text-sm font-medium">
+                        <span><i class="fas fa-plane-departure mr-2 opacity-70"></i> Dal ${formatDateUI(u.start)} al ${formatDateUI(u.end)}</span>
+                        <button onclick="removeUnavailability(${idx})" class="text-red-400 hover:text-red-700 bg-white px-2 py-1 rounded shadow-sm border border-red-200 transition"><i class="fas fa-trash"></i></button>
+                    </li>
+                `;
+            });
+        }
+        
+        function formatDateUI(ds) {
+            const d = new Date(ds);
+            return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+        }
+
+        function addUnavailability() {
+            const s = document.getElementById('unavStart').value;
+            const e = document.getElementById('unavEnd').value;
+            if(s && e && s <= e) {
+                tempUnavailability.push({start: s, end: e});
+                renderUnavailabilityList();
+                document.getElementById('unavStart').value = '';
+                document.getElementById('unavEnd').value = '';
+            } else {
+                alert("Date non valide o mancanti.");
+            }
+        }
+        
+        function removeUnavailability(idx) {
+            tempUnavailability.splice(idx, 1);
+            renderUnavailabilityList();
+        }
+
+        function openDoctorModal() {
+            document.getElementById('doctorModalTitle').innerText = "Nuovo Medico RUAP";
+            document.getElementById('docId').value = '';
+            document.getElementById('docName').value = '';
+            document.getElementById('docPatients').value = 0;
+            document.getElementById('docDebt').value = 38;
+            tempUnavailability = [];
+            
+            renderAvailabilityGrid();
+            for(let i=1; i<=5; i++) document.getElementById(`av_m_${i}`).checked = true;
+
+            renderUnavailabilityList();
+            openModal('doctorModal');
+        }
+
+        function editDoctor(id) {
+            const doc = state.doctors.find(d => d.id === id);
+            if(!doc) return;
+
+            document.getElementById('doctorModalTitle').innerText = "Modifica Medico";
+            document.getElementById('docId').value = doc.id;
+            document.getElementById('docName').value = doc.name;
+            document.getElementById('docPatients').value = doc.patients;
+            document.getElementById('docDebt').value = doc.weeklyDebt;
+            tempUnavailability = JSON.parse(JSON.stringify(doc.unavailability)); 
+            
+            renderAvailabilityGrid();
+            for(let i=1; i<=5; i++) {
+                document.getElementById(`av_m_${i}`).checked = doc.availability[i].morning;
+                document.getElementById(`av_a_${i}`).checked = doc.availability[i].afternoon;
+            }
+
+            renderUnavailabilityList();
+            openModal('doctorModal');
+        }
+
+        function saveDoctor() {
+            const id = document.getElementById('docId').value || generateId();
+            const name = document.getElementById('docName').value.trim();
+            const patients = parseInt(document.getElementById('docPatients').value) || 0;
+            const weeklyDebt = parseInt(document.getElementById('docDebt').value) || 38;
+
+            if(!name) return alert("Inserire il nome del medico.");
+
+            const availability = {};
+            for(let i=1; i<=5; i++) {
+                availability[i] = {
+                    morning: document.getElementById(`av_m_${i}`).checked,
+                    afternoon: document.getElementById(`av_a_${i}`).checked
+                };
+            }
+
+            const docData = { id, name, patients, weeklyDebt, availability, unavailability: tempUnavailability };
+
+            const existingIdx = state.doctors.findIndex(d => d.id === id);
+            if(existingIdx >= 0) {
+                state.doctors[existingIdx] = docData;
+            } else {
+                state.doctors.push(docData);
+            }
+
+            saveState();
+            closeModals();
+            renderApp(); 
+        }
+
+        function deleteDoctor(id) {
+            if(confirm("Sei sicuro di voler eliminare questo medico? Verranno rimossi anche tutti i suoi turni (passati e futuri).")) {
+                state.doctors = state.doctors.filter(d => d.id !== id);
+                state.shifts = state.shifts.filter(s => s.doctorId !== id);
+                saveState();
+                renderApp();
+            }
+        }
+
+        // --- IMPORT / EXPORT ---
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({doctors: state.doctors, shifts: state.shifts}));
+            const dlNode = document.createElement('a');
+            dlNode.setAttribute("href", dataStr);
+            dlNode.setAttribute("download", `turni_ruap_${formatDate(new Date())}.json`);
+            document.body.appendChild(dlNode);
+            dlNode.click();
+            dlNode.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(parsed.doctors && parsed.shifts) {
+                        state.doctors = parsed.doctors;
+                        state.shifts = parsed.shifts;
+                        saveState();
+                        renderApp();
+                        alert("Dati importati con successo!");
+                    } else {
+                        alert("Formato file non valido.");
+                    }
+                } catch(err) {
+                    alert("Errore nella lettura del file JSON.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        // Boot
+        window.onload = init;
+    </script>
+</body>
+</html>
