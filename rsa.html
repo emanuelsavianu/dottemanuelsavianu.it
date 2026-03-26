@@ -35,10 +35,36 @@
             color: var(--text-dark);
             background-color: #555; 
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
             font-size: 10pt; 
             line-height: 1.4;
+        }
+
+        /* --- BARRA DI STAMPA (NON VISIBILE IN STAMPA) --- */
+        .print-bar {
+            width: 210mm;
+            max-width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        
+        .btn-print {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-print:hover {
+            background: var(--primary-light);
         }
 
         /* --- IMPOSTAZIONI FOGLIO A4 (DESKTOP) --- */
@@ -211,68 +237,58 @@
         @media (max-width: 800px) {
             body {
                 background-color: var(--white); 
-                padding: 0;
+                padding: 15px;
                 font-size: 11pt; 
             }
+
+            .print-bar { display: none; } /* Nascondi bottone stampa su mobile */
 
             .a4-page {
                 width: 100%;
                 min-height: auto;
-                padding: 15px;
+                padding: 0;
                 box-shadow: none;
             }
 
-            .content-grid {
-                grid-template-columns: 1fr; 
-            }
-
-            .section-card.full-width {
-                grid-column: span 1; 
-            }
-
-            .section-card.span-rows {
-                grid-row: auto; 
-            }
-
-            .split-boxes {
-                flex-direction: column; 
-            }
-
-            header h1 {
-                font-size: 22pt;
-            }
+            .content-grid { grid-template-columns: 1fr; }
+            .section-card.full-width { grid-column: span 1; }
+            .section-card.span-rows { grid-row: auto; }
+            .split-boxes { flex-direction: column; }
+            header h1 { font-size: 22pt; }
         }
 
         /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
         @page {
             size: A4;
-            margin: 0;
+            margin: 0; /* Rimuove i margini di default del browser */
         }
 
         @media print {
-            body { 
+            body, html { 
                 background: var(--white); 
                 padding: 0; 
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
             }
+            .print-bar { display: none !important; } /* Nasconde il bottone di stampa */
+            
             .a4-page { 
                 box-shadow: none; 
                 width: 210mm; 
-                height: auto; 
-                min-height: 297mm; 
-                padding: 12mm 15mm;
+                height: 297mm; /* Altezza forzata per 1 sola pagina */
+                max-height: 297mm;
+                overflow: hidden; /* Taglia eventuali pixel in eccesso che creerebbero la 2° pagina */
+                padding: 10mm 12mm; /* Margini leggermente ridotti in stampa */
+                page-break-after: avoid;
+                page-break-inside: avoid;
             }
-            .content-grid {
-                grid-template-columns: 1fr 1fr; 
-            }
-            .section-card.full-width {
-                grid-column: span 2; 
-            }
-            .section-card.span-rows {
-                grid-row: span 2; 
-            }
-            .split-boxes {
-                flex-direction: row; 
-            }
+            
+            .content-grid { grid-template-columns: 1fr 1fr; }
+            .section-card.full-width { grid-column: span 2; }
+            .section-card.span-rows { grid-row: span 2; }
+            .split-boxes { flex-direction: row; }
+            
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -281,6 +297,10 @@
     </style>
 </head>
 <body>
+
+    <div class="print-bar">
+        <button class="btn-print" onclick="window.print()">Stampa Documento / PDF</button>
+    </div>
 
     <div class="a4-page">
         
@@ -294,8 +314,7 @@
             
             <div class="section-card full-width">
                 <h3><span class="num">1</span> Il Ruolo della Continuità Assistenziale</h3>
-                <p>Il Medico di Continuità Assistenziale (ex Guardia Medica) interviene <strong>esclusivamente per prestazioni sanitarie non differibili</strong>. Vengono definite "non differibili" tutte quelle prestazioni, di natura clinica, psicologica, sociale od organizzativa, che richiedono un intervento medico finalizzato a una soluzione del caso contingente entro l’arco temporale del turno di servizio, che non può essere rinviato all'apertura dell’ambulatorio del medico curante.</p>
-                <p><strong>La non differibilità non comprende le situazioni di emergenza</strong>, per le quali è attivo il servizio di Emergenza Sanitaria Territoriale attivabile chiamando il 112. Il servizio non può in alcun modo vicariare l'assenza o la carenza di organico infermieristico all'interno delle Residenze Sanitarie Assistenziali (RSA) convenzionate e accreditate.</p>
+                <p>Il Medico di Continuità Assistenziale (ex Guardia Medica) interviene <strong>esclusivamente per situazioni cliniche che rivestono carattere di urgenza indifferibile</strong>. Il servizio rappresenta il presidio pubblico per le emergenze territoriali e non può in alcun modo vicariare l'assenza o la carenza di organico infermieristico all'interno delle Residenze Sanitarie Assistenziali (RSA) convenzionate e accreditate.</p>
             </div>
 
             <div class="section-card span-rows">
@@ -313,12 +332,12 @@
                 <h3><span class="num">3</span> Istruzioni Operative</h3>
                 <p>Di fronte a una richiesta impropria da parte del personale di una RSA (es. OSS che chiede l'intervento per somministrare una terapia causa assenza infermiere), il medico deve:</p>
                 <ul>
-                    <li><strong>Eseguire il Triage Telefonico:</strong> Verificare che la richiesta non rientri né tra le prestazioni non differibili né costituisca un'emergenza da affidare al 112.</li>
+                    <li><strong>Eseguire il Triage Telefonico:</strong> Verificare l'effettiva assenza di urgenza medica o di instabilità clinica acuta.</li>
                     <li><strong>Rifiutare l'Intervento Improprio:</strong> Spiegare che la somministrazione di routine è onere della RSA e atto infermieristico non delegabile.</li>
                     <li><strong>Registrare l'Evento:</strong> Annotare sul registro orario, struttura, motivo e ragioni clinico-giuridiche del rifiuto.</li>
                 </ul>
                 <div class="alert-box">
-                    <strong>Tutela del Pubblico Servizio:</strong> Recarsi in una struttura privata per terapie di routine o differibili distrae dal mandato primario e può integrare il reato di <em>Interruzione di Pubblico Servizio (Art. 340 c.p.)</em>.
+                    <strong>Tutela del Pubblico Servizio:</strong> Recarsi in una struttura privata per terapie di routine distrae dal mandato di urgenza e può integrare il reato di <em>Interruzione di Pubblico Servizio (Art. 340 c.p.)</em>.
                 </div>
             </div>
 
@@ -337,7 +356,7 @@
                     
                     <div class="box-right">
                         <p><strong>B) Denuncia Penale all'Autorità Giudiziaria</strong></p>
-                        <p>In virtù degli artt. 361 c.p. e 331 c.p.p., qualora le richieste inappropriate causino turbamento o interruzione del pubblico servizio territoriale, il medico ha <strong>l'obbligo di trasmettere denuncia formale</strong> alla Procura della Repubblica o ai Carabinieri (NAS).</p>
+                        <p>In virtù degli artt. 361 c.p. e 331 c.p.p., qualora le richieste causino turbamento o interruzione del pubblico servizio territoriale, il medico ha <strong>l'obbligo di trasmettere denuncia formale</strong> alla Procura della Repubblica o ai Carabinieri (NAS).</p>
                         <p style="font-size: 8.5pt; color: var(--danger); font-weight: bold; margin-top: 5px;">La segnalazione interna alla USL non sostituisce l'obbligo di denuncia penale in caso di reato.</p>
                     </div>
                 </div>
@@ -346,21 +365,10 @@
         </div>
 
         <div class="footer-note">
-            Documento generato ad uso personale- Si raccomanda di non diffonderlo.
+            Documento generato per la stampa - Si raccomanda l'affissione nelle sedi di Continuità Assistenziale.
         </div>
 
     </div>
 
-    <script>
-        window.addEventListener('load', function() {
-            // Controlla se la finestra è più larga del breakpoint mobile (800px)
-            if (window.innerWidth > 800) {
-                // Aspetta mezzo secondo per assicurarsi che font e stili CSS siano completamente caricati
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            }
-        });
-    </script>
 </body>
 </html>

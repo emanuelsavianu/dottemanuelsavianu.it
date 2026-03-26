@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="styles.css?v=11">
 
     <style>
-        /* --- FALLBACK VARIABILI (in caso non siano nel file styles.css) --- */
+        /* --- FALLBACK VARIABILI --- */
         :root {
             --primary: #1a2f4c;
             --primary-dark: #0f1a2a;
@@ -35,7 +35,7 @@
 
         /* --- IMPOSTAZIONI DI BASE PER DESKTOP --- */
         body {
-            background-color: #555; /* Sfondo scuro per risaltare il foglio su PC */
+            background-color: #555; 
             margin: 0;
             padding: 0;
             display: flex;
@@ -44,7 +44,6 @@
             min-height: 100vh;
         }
 
-        /* Il contenitore che simula il foglio A4 su Desktop */
         .doc-page {
             width: 210mm;
             min-height: 296mm;
@@ -227,49 +226,48 @@
 
         /* --- RESPONSIVITÀ PER SMARTPHONE E TABLET --- */
         @media (max-width: 800px) {
-            body {
-                background-color: var(--white); /* Rimuove lo sfondo grigio da pc */
-            }
-
+            body { background-color: var(--white); }
             .doc-page {
                 width: 100%;
                 min-height: auto;
                 margin: 0;
                 padding: 20px 15px 40px;
-                box-shadow: none; /* Rimuove l'ombra del foglio */
+                box-shadow: none; 
             }
-
             .doc-topbar {
                 flex-direction: column; 
-                align-items: stretch; /* Pulsanti a larghezza intera su mobile */
+                align-items: stretch; 
                 gap: 15px;
             }
-
-            .btn-print, .btn-back {
-                justify-content: center; /* Centra il testo nei pulsanti */
-            }
+            .btn-print, .btn-back { justify-content: center; }
         }
 
         /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
         @page {
             size: A4;
-            margin: 0;
+            margin: 0; /* Rimuove i margini di sistema che generano pagine vuote */
         }
 
         @media print {
-            body { 
+            body, html { 
                 background: var(--white) !important; 
-                margin: 0; 
-                padding: 0; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 210mm;
+                height: 297mm;
             }
             .doc-page { 
                 width: 210mm; 
-                min-height: 297mm; 
+                height: 297mm; /* Blocca il contenitore all'altezza di 1 pagina */
+                max-height: 297mm;
+                overflow: hidden; /* Evita sforamenti */
                 margin: 0; 
-                padding: 15mm 20mm;
+                padding: 12mm 15mm; /* Rimpicciolisce leggermente il padding interno per dare aria in stampa */
                 box-shadow: none;
+                page-break-after: avoid;
+                page-break-inside: avoid;
             }
-            /* Nascondiamo tutto ciò che non fa parte del documento formale */
+            /* Nasconde UI sito in stampa */
             header[role="banner"], 
             footer[role="contentinfo"], 
             .doc-topbar, 
@@ -383,18 +381,6 @@
 
 <script src="config.js"></script>
 <script src="app.js?v=9"></script>
-
-<script>
-    window.addEventListener('load', function() {
-        // Controlla se la finestra è più larga del breakpoint mobile (800px)
-        if (window.innerWidth > 800) {
-            // Aspetta mezzo secondo per assicurarsi che font e stili CSS siano completamente caricati
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        }
-    });
-</script>
 
 </body>
 </html>
