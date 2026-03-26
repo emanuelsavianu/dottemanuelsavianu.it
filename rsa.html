@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vademecum Operativo RSA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playball&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- VARIABILI DI BRAND --- */
+        :root {
+            --primary: #1a2f4c;
+            --primary-dark: #0f1a2a;
+            --primary-light: #285078;
+            --accent: #c29b57;
+            --bg-gradient-1: #f3efe6;
+            --text-dark: #1a2f4c;
+            --text-medium: #4a5568;
+            --white: #ffffff;
+            --border-color: #d1c7b3;
+            --danger: #dc2626;
+            --font-sans: 'Montserrat', sans-serif;
+            --font-serif: 'Playball', cursive;
+        }
+
+        /* --- RESET & IMPOSTAZIONI DI BASE --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--text-dark);
+            background-color: #555; /* Sfondo scuro per visualizzare il foglio a schermo */
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            font-size: 10.5pt; /* Dimensione ottimizzata per far stare tutto in un A4 */
+            line-height: 1.4;
+        }
+
+        /* --- IMPOSTAZIONI FOGLIO A4 --- */
+        .a4-page {
+            width: 210mm;
+            height: 296mm; /* Leggermente meno di 297mm per evitare salti di pagina */
+            background: var(--white);
+            padding: 12mm 15mm;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+            body { background: var(--white); padding: 0; }
+            .a4-page { 
+                box-shadow: none; 
+                width: 210mm; 
+                height: 297mm; 
+                padding: 12mm 15mm;
+            }
+            /* Forza la stampa dei colori di sfondo */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* --- HEADER --- */
+        header {
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-family: var(--font-serif);
+            font-size: 28pt;
+            color: var(--primary);
+            line-height: 1.1;
+            margin-bottom: 5px;
+        }
+
+        header h2 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            font-size: 9pt;
+            color: var(--danger);
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* --- LAYOUT A COLONNE --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        /* --- SEZIONI E CARTA --- */
+        .section-card {
+            background: var(--bg-gradient-1);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .section-card.full-width {
+            grid-column: span 2;
+        }
+
+        h3 {
+            font-size: 12pt;
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Numerazione dorata */
+        .num {
+            background: var(--primary);
+            color: var(--accent);
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        p {
+            margin-bottom: 8px;
+            text-align: justify;
+        }
+
+        ul {
+            padding-left: 15px;
+            margin-bottom: 8px;
+        }
+
+        li {
+            margin-bottom: 5px;
+            text-align: justify;
+        }
+
+        li strong {
+            color: var(--primary-dark);
+        }
+
+        /* --- BOX AVVISI SPECIALI --- */
+        .alert-box {
+            background-color: #fff0f0;
+            border-left: 4px solid var(--danger);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+        }
+        
+        .alert-box strong {
+            color: var(--danger);
+        }
+
+        .pec-box {
+            background: var(--white);
+            border: 1px solid var(--accent);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 9.5pt;
+            color: var(--primary);
+            margin: 5px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .footer-note {
+            text-align: center;
+            font-size: 8pt;
+            color: var(--text-medium);
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="a4-page">
+        
+        <header>
+            <h1>Vademecum Operativo</h1>
+            <h2>Interventi in RSA e Limiti del Servizio</h2>
+            <p>A uso esclusivo dei Medici di Continuità Assistenziale (Azienda USL Toscana Sud Est)</p>
+        </header>
+
+        <div class="content-grid">
+            
+            <div class="section-card full-width">
+                <h3><span class="num">1</span> Il Ruolo della Continuità Assistenziale</h3>
+                <p>Il Medico di Continuità Assistenziale (ex Guardia Medica) interviene <strong>esclusivamente per situazioni cliniche che rivestono carattere di urgenza indifferibile</strong>. Il servizio rappresenta il presidio pubblico per le emergenze territoriali e non può in alcun modo vicariare l'assenza o la carenza di organico infermieristico all'interno delle Residenze Sanitarie Assistenziali (RSA) convenzionate e accreditate.</p>
+            </div>
+
+            <div class="section-card" style="grid-row: span 2;">
+                <h3><span class="num">2</span> Prestazioni NON Erogabili</h3>
+                <p>Secondo le direttive e i regolamenti delle Aziende USL toscane, il medico di guardia ha il <strong>tassativo divieto</strong> di erogare in RSA (e a domicilio) le seguenti prestazioni:</p>
+                <ul>
+                    <li><strong>Somministrazione di farmaci che non seguono l'atto medico:</strong> è vietato recarsi in RSA per somministrare terapie di routine già prescritte nel Piano Assistenziale dell'ospite (es. insulina notturna, eparina, o paracetamolo per picchi febbrili già previsti).</li>
+                    <li><strong>Ripetizioni di prescrizioni:</strong> divieto di prescrivere terapie croniche differibili o non salvavita per coprire mancanze di magazzino della struttura.</li>
+                    <li><strong>Monitoraggio parametri:</strong> divieto di intervento per la mera misurazione della pressione arteriosa o di altri parametri vitali per semplice monitoraggio.</li>
+                    <li><strong>Ricoveri e trasporti programmati:</strong> divieto di compilare richieste di ricovero programmato o trasporti sanitari ordinari in ambulanza.</li>
+                </ul>
+            </div>
+
+            <div class="section-card">
+                <h3><span class="num">3</span> Istruzioni Operative</h3>
+                <p>Di fronte a una richiesta impropria da parte del personale di una RSA (es. OSS che chiede l'intervento per somministrare una terapia causa assenza infermiere), il medico deve:</p>
+                <ul>
+                    <li><strong>Eseguire il Triage Telefonico:</strong> Verificare l'effettiva assenza di urgenza medica o di instabilità clinica acuta.</li>
+                    <li><strong>Rifiutare l'Intervento Improprio:</strong> Spiegare che la somministrazione di routine è onere della RSA e atto infermieristico non delegabile.</li>
+                    <li><strong>Registrare l'Evento:</strong> Annotare sul registro orario, struttura, motivo e ragioni clinico-giuridiche del rifiuto.</li>
+                </ul>
+                <div class="alert-box">
+                    <strong>Tutela del Pubblico Servizio:</strong> Recarsi in una struttura privata per terapie di routine distrae dal mandato di urgenza e può integrare il reato di <em>Interruzione di Pubblico Servizio (Art. 340 c.p.)</em>.
+                </div>
+            </div>
+
+            <div class="section-card full-width">
+                <h3><span class="num">4</span> Come e A Chi Segnalare gli Abusi</h3>
+                <p>Qualora la RSA operi sistematicamente chiamate inappropriate, tentando di utilizzare la Continuità Assistenziale come proprio organico di supporto, il medico (in veste di Pubblico Ufficiale) ha precisi obblighi:</p>
+                
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <p><strong>A) Segnalazione Amministrativa Interna</strong></p>
+                        <p>Inviare esposto formale per innescare controlli ispettivi sui requisiti di accreditamento della RSA.</p>
+                        <div class="pec-box">PEC: ausltoscanasudest@postacert.toscana.it</div>
+                        <p style="font-size: 9pt;"><em>Destinatari:</em> C.A. Direzione Sanitaria, Direttore Zona Distretto (Aretina, Casentino, Valtiberina) e N.O.C.S.<br>
+                        <em>Alternativa:</em> Piattaforma "WhistleblowingPA" (D.Lgs. 24/2023).</p>
+                    </div>
+                    
+                    <div style="flex: 1; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <p><strong>B) Denuncia Penale all'Autorità Giudiziaria</strong></p>
+                        <p>In virtù degli artt. 361 c.p. e 331 c.p.p., qualora le richieste causino turbamento o interruzione del pubblico servizio territoriale, il medico ha <strong>l'obbligo di trasmettere denuncia formale</strong> alla Procura della Repubblica o ai Carabinieri (NAS).</p>
+                        <p style="font-size: 9pt; color: var(--danger); font-weight: bold; margin-top: 5px;">La segnalazione interna alla USL non sostituisce l'obbligo di denuncia penale in caso di reato.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer-note">
+            Documento generato per la stampa - Si raccomanda l'affissione nelle sedi di Continuità Assistenziale.
+        </div>
+
+    </div>
+
+</body>
+</html>
