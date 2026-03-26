@@ -33,59 +33,37 @@
         body {
             font-family: var(--font-sans);
             color: var(--text-dark);
-            background-color: #555; /* Sfondo scuro per visualizzare il foglio a schermo */
+            background-color: #555; 
             display: flex;
             justify-content: center;
             padding: 20px;
-            font-size: 10.5pt; /* Dimensione ottimizzata per far stare tutto in un A4 */
+            font-size: 10pt; 
             line-height: 1.4;
         }
 
-        /* --- IMPOSTAZIONI FOGLIO A4 --- */
+        /* --- IMPOSTAZIONI FOGLIO A4 (DESKTOP) --- */
         .a4-page {
             width: 210mm;
-            height: 296mm; /* Leggermente meno di 297mm per evitare salti di pagina */
+            min-height: 296mm; 
             background: var(--white);
             padding: 12mm 15mm;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             position: relative;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
-        }
-
-        /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
-        @page {
-            size: A4;
-            margin: 0;
-        }
-
-        @media print {
-            body { background: var(--white); padding: 0; }
-            .a4-page { 
-                box-shadow: none; 
-                width: 210mm; 
-                height: 297mm; 
-                padding: 12mm 15mm;
-            }
-            /* Forza la stampa dei colori di sfondo */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
         }
 
         /* --- HEADER --- */
         header {
             text-align: center;
             border-bottom: 3px solid var(--accent);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         header h1 {
             font-family: var(--font-serif);
-            font-size: 28pt;
+            font-size: 26pt; 
             color: var(--primary);
             line-height: 1.1;
             margin-bottom: 5px;
@@ -110,7 +88,7 @@
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px; 
             flex-grow: 1;
         }
 
@@ -119,16 +97,20 @@
             background: var(--bg-gradient-1);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 10px; 
+            margin-bottom: 8px;
         }
 
         .section-card.full-width {
             grid-column: span 2;
         }
 
+        .section-card.span-rows {
+            grid-row: span 2;
+        }
+
         h3 {
-            font-size: 12pt;
+            font-size: 11.5pt;
             color: var(--primary);
             border-bottom: 2px solid var(--accent);
             padding-bottom: 4px;
@@ -138,7 +120,6 @@
             gap: 5px;
         }
 
-        /* Numerazione dorata */
         .num {
             background: var(--primary);
             color: var(--accent);
@@ -148,8 +129,9 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            font-size: 10pt;
+            font-size: 9.5pt;
             font-weight: bold;
+            flex-shrink: 0;
         }
 
         p {
@@ -175,9 +157,9 @@
         .alert-box {
             background-color: #fff0f0;
             border-left: 4px solid var(--danger);
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
-            font-size: 9.5pt;
+            font-size: 9pt;
         }
         
         .alert-box strong {
@@ -187,7 +169,7 @@
         .pec-box {
             background: var(--white);
             border: 1px solid var(--accent);
-            padding: 8px;
+            padding: 6px;
             border-radius: 4px;
             font-family: monospace;
             font-size: 9.5pt;
@@ -196,16 +178,106 @@
             text-align: center;
             font-weight: bold;
         }
+
+        /* Layout interno sezione 4 */
+        .split-boxes {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .box-left {
+            flex: 1;
+        }
+
+        .box-right {
+            flex: 1;
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
         
         .footer-note {
             text-align: center;
             font-size: 8pt;
             color: var(--text-medium);
-            margin-top: auto;
-            padding-top: 10px;
+            margin-top: 10px;
+            padding-top: 8px;
             border-top: 1px solid var(--border-color);
         }
 
+        /* --- RESPONSIVITÀ PER SMARTPHONE E TABLET --- */
+        @media (max-width: 800px) {
+            body {
+                background-color: var(--white); /* Rimuove lo sfondo grigio da pc */
+                padding: 0;
+                font-size: 11pt; /* Testo leggermente più grande per il telefono */
+            }
+
+            .a4-page {
+                width: 100%;
+                min-height: auto;
+                padding: 15px;
+                box-shadow: none;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr; /* Colonna singola */
+            }
+
+            .section-card.full-width {
+                grid-column: span 1; /* Disattiva l'estensione su due colonne */
+            }
+
+            .section-card.span-rows {
+                grid-row: auto; /* Disattiva l'estensione su due righe */
+            }
+
+            .split-boxes {
+                flex-direction: column; /* Impila verticalmente i due box della sezione 4 */
+            }
+
+            header h1 {
+                font-size: 22pt;
+            }
+        }
+
+        /* --- REGOLE SPECIFICHE PER LA STAMPA FISICA --- */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+            body { 
+                background: var(--white); 
+                padding: 0; 
+            }
+            .a4-page { 
+                box-shadow: none; 
+                width: 210mm; 
+                height: auto; 
+                min-height: 297mm; 
+                padding: 12mm 15mm;
+            }
+            .content-grid {
+                grid-template-columns: 1fr 1fr; /* Forza il ripristino delle 2 colonne se stampato da un dispositivo stretto */
+            }
+            .section-card.full-width {
+                grid-column: span 2; 
+            }
+            .section-card.span-rows {
+                grid-row: span 2; 
+            }
+            .split-boxes {
+                flex-direction: row; 
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -225,7 +297,7 @@
                 <p>Il Medico di Continuità Assistenziale (ex Guardia Medica) interviene <strong>esclusivamente per situazioni cliniche che rivestono carattere di urgenza indifferibile</strong>. Il servizio rappresenta il presidio pubblico per le emergenze territoriali e non può in alcun modo vicariare l'assenza o la carenza di organico infermieristico all'interno delle Residenze Sanitarie Assistenziali (RSA) convenzionate e accreditate.</p>
             </div>
 
-            <div class="section-card" style="grid-row: span 2;">
+            <div class="section-card span-rows">
                 <h3><span class="num">2</span> Prestazioni NON Erogabili</h3>
                 <p>Secondo le direttive e i regolamenti delle Aziende USL toscane, il medico di guardia ha il <strong>tassativo divieto</strong> di erogare in RSA (e a domicilio) le seguenti prestazioni:</p>
                 <ul>
@@ -253,19 +325,19 @@
                 <h3><span class="num">4</span> Come e A Chi Segnalare gli Abusi</h3>
                 <p>Qualora la RSA operi sistematicamente chiamate inappropriate, tentando di utilizzare la Continuità Assistenziale come proprio organico di supporto, il medico (in veste di Pubblico Ufficiale) ha precisi obblighi:</p>
                 
-                <div style="display: flex; gap: 15px; margin-top: 10px;">
-                    <div style="flex: 1;">
+                <div class="split-boxes">
+                    <div class="box-left">
                         <p><strong>A) Segnalazione Amministrativa Interna</strong></p>
                         <p>Inviare esposto formale per innescare controlli ispettivi sui requisiti di accreditamento della RSA.</p>
                         <div class="pec-box">PEC: ausltoscanasudest@postacert.toscana.it</div>
-                        <p style="font-size: 9pt;"><em>Destinatari:</em> C.A. Direzione Sanitaria, Direttore Zona Distretto (Aretina, Casentino, Valtiberina) e N.O.C.S.<br>
+                        <p style="font-size: 8.5pt;"><em>Destinatari:</em> C.A. Direzione Sanitaria, Direttore Zona Distretto (Aretina, Casentino, Valtiberina) e N.O.C.S.<br>
                         <em>Alternativa:</em> Piattaforma "WhistleblowingPA" (D.Lgs. 24/2023).</p>
                     </div>
                     
-                    <div style="flex: 1; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <div class="box-right">
                         <p><strong>B) Denuncia Penale all'Autorità Giudiziaria</strong></p>
                         <p>In virtù degli artt. 361 c.p. e 331 c.p.p., qualora le richieste causino turbamento o interruzione del pubblico servizio territoriale, il medico ha <strong>l'obbligo di trasmettere denuncia formale</strong> alla Procura della Repubblica o ai Carabinieri (NAS).</p>
-                        <p style="font-size: 9pt; color: var(--danger); font-weight: bold; margin-top: 5px;">La segnalazione interna alla USL non sostituisce l'obbligo di denuncia penale in caso di reato.</p>
+                        <p style="font-size: 8.5pt; color: var(--danger); font-weight: bold; margin-top: 5px;">La segnalazione interna alla USL non sostituisce l'obbligo di denuncia penale in caso di reato.</p>
                     </div>
                 </div>
             </div>
@@ -278,5 +350,16 @@
 
     </div>
 
+    <script>
+        window.addEventListener('load', function() {
+            // Controlla se la finestra è più larga del breakpoint mobile (800px)
+            if (window.innerWidth > 800) {
+                // Aspetta mezzo secondo per assicurarsi che font e stili CSS siano completamente caricati
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            }
+        });
+    </script>
 </body>
 </html>
