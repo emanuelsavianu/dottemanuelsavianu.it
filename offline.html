@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Offline — Dott. Savianu</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #1a2f4c;
+            color: #f3efe6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.7;
+            margin-bottom: 36px;
+            line-height: 1.6;
+        }
+        .contacts {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 28px 32px;
+            max-width: 380px;
+            width: 100%;
+        }
+        .contacts h2 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #c29b57;
+            margin-bottom: 20px;
+        }
+        .contact-row {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .contact-item {
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 14px 18px;
+            text-align: left;
+        }
+        .contact-item .label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #c29b57;
+            margin-bottom: 4px;
+        }
+        .contact-item a {
+            color: #f3efe6;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .contact-item a:hover { color: #c29b57; }
+        .contact-item .sub {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 2px;
+        }
+        .retry-btn {
+            margin-top: 28px;
+            padding: 12px 28px;
+            background: #c29b57;
+            color: #0f1a2a;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .retry-btn:hover { opacity: 0.85; }
+    </style>
+</head>
+<body>
+    <div class="icon">📵</div>
+    <h1>Sei offline</h1>
+    <p class="subtitle">
+        Nessuna connessione internet rilevata.<br>
+        Ecco i contatti di emergenza disponibili offline.
+    </p>
+
+    <div class="contacts">
+        <h2>Contatti Essenziali</h2>
+        <div class="contact-row">
+            <div class="contact-item">
+                <div class="label">Segreteria Studio</div>
+                <a href="tel:0575910904">0575 910 904</a>
+                <div class="sub">Lun–Ven 09:30–12:30 · 15:30–19:00</div>
+            </div>
+            <div class="contact-item">
+                <div class="label">Guardia Medica (fuori orario)</div>
+                <a href="tel:116117">116 117</a>
+                <div class="sub">Continuità Assistenziale · Sempre attivo</div>
+            </div>
+            <div class="contact-item">
+                <div class="label">Emergenza Sanitaria</div>
+                <a href="tel:118">118</a>
+                <div class="sub">Ambulanza · Pericolo di vita</div>
+            </div>
+            <div class="contact-item">
+                <div class="label">Indirizzo Studio</div>
+                <div style="font-size: 1rem; font-weight: 600; margin-top: 2px;">Piazza Saione 3, Arezzo</div>
+                <div class="sub">Dal 27 Aprile 2026</div>
+            </div>
+        </div>
+    </div>
+
+    <a href="/" class="retry-btn" onclick="window.location.reload(); return false;">
+        Riprova la connessione
+    </a>
+</body>
+</html>

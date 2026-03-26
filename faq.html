@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex, nofollow">
+    <title>FAQ Pazienti — Dott. Savianu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="styles.css?v=11">
+
+    <style>
+        :root {
+            --primary: #1a2f4c;
+            --primary-dark: #0f1a2a;
+            --primary-light: #285078;
+            --accent: #c29b57;
+            --bg-gradient-1: #f3efe6;
+            --text-dark: #1a2f4c;
+            --text-medium: #4a5568;
+            --white: #ffffff;
+            --border-color: #d1c7b3;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --font-sans: 'Montserrat', sans-serif;
+            --font-serif: 'Playball', cursive;
+            --radius-md: 8px;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            background-color: #555;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 860px;
+            margin: 20px auto;
+            padding: 0 15px 60px;
+            box-sizing: border-box;
+        }
+
+        /* ---- TOP BAR ---- */
+        .doc-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: transparent;
+            color: #f3efe6;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ---- PAGE HEADER ---- */
+        .page-header {
+            background: var(--primary);
+            border-radius: 12px;
+            padding: 32px 36px;
+            margin-bottom: 28px;
+            text-align: center;
+            position: relative;
+        }
+        .page-header .icon-badge {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .page-header h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 400;
+            color: #f3efe6;
+            margin: 0 0 8px;
+        }
+        .page-header p {
+            font-size: 0.95rem;
+            color: rgba(243,239,230,0.75);
+            margin: 0;
+        }
+
+        /* ---- FAQ CATEGORY ---- */
+        .faq-category {
+            margin-bottom: 28px;
+        }
+        .faq-category-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        body.dark-mode .faq-category-title { border-bottom-color: var(--primary-light); }
+
+        /* ---- ACCORDION ---- */
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: var(--white);
+            margin-bottom: 8px;
+        }
+        body.dark-mode .accordion-item {
+            background: #0d1e33;
+            border-color: var(--primary-light);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--bg-gradient-1);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: left;
+            transition: background 0.2s ease;
+        }
+        body.dark-mode .accordion-header {
+            background: var(--primary);
+            color: #f3efe6;
+        }
+        .accordion-header:hover { background: #e8e2d6; }
+        body.dark-mode .accordion-header:hover { background: var(--primary-light); }
+
+        .accordion-header i.icon-cat {
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .accordion-header i.fa-chevron-down {
+            margin-left: auto;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+            color: var(--text-medium);
+        }
+        body.dark-mode .accordion-header i.fa-chevron-down { color: rgba(255,255,255,0.5); }
+        .accordion-header.open i.fa-chevron-down { transform: rotate(180deg); }
+
+        .accordion-body {
+            display: none;
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            background: var(--white);
+            font-size: 0.93rem;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+        body.dark-mode .accordion-body {
+            background: #0a1624;
+            border-top-color: var(--primary-light);
+            color: #f3efe6;
+        }
+        .accordion-body.open { display: block; }
+
+        .accordion-body p { margin: 0 0 12px; }
+        .accordion-body p:last-child { margin-bottom: 0; }
+        .accordion-body ul, .accordion-body ol {
+            padding-left: 20px;
+            margin: 8px 0 12px;
+        }
+        .accordion-body li { margin-bottom: 6px; }
+
+        .answer-highlight {
+            background: var(--bg-gradient-1);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-weight: 600;
+        }
+        body.dark-mode .answer-highlight {
+            background: var(--primary);
+            border-left-color: var(--accent);
+            color: #f3efe6;
+        }
+
+        .answer-alert {
+            background: #fff0f0;
+            border-left: 4px solid var(--danger);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+        }
+        body.dark-mode .answer-alert {
+            background: #2a0a0a;
+            border-left-color: #ff6b6b;
+            color: #ffbdbd;
+        }
+
+        .answer-ok {
+            background: #f0fdf4;
+            border-left: 4px solid var(--success);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+        }
+        body.dark-mode .answer-ok {
+            background: #0a2a14;
+            border-left-color: #4ade80;
+            color: #bbf7d0;
+        }
+
+        /* ---- FOOTER NOTE ---- */
+        .footer-note {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px 22px;
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-medium);
+            line-height: 1.7;
+        }
+        body.dark-mode .footer-note {
+            background: #0d1e33;
+            border-color: var(--primary-light);
+            color: rgba(243,239,230,0.7);
+        }
+
+        @media (max-width: 800px) {
+            body { background-color: var(--white); }
+            .page-wrapper { margin: 0; padding: 15px 15px 60px; }
+            .btn-back { color: var(--text-medium); border-color: var(--border-color); }
+            .page-header { border-radius: 8px; padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header role="banner">
+    <nav class="lang-switch" aria-label="Controlli pagina">
+        <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </nav>
+    <div class="header-content">
+        <h1 style="margin-bottom: 0;">Dott. Savianu Emanuel</h1>
+        <p style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px;">STUDIO MEDICO IPPOCRATE</p>
+        <p>Medico di Medicina Generale — Arezzo</p>
+    </div>
+</header>
+
+<div class="container" style="width: 100%; display: flex; justify-content: center;">
+    <main class="page-wrapper" role="main">
+
+        <div class="doc-topbar">
+            <a href="index.html#facsimili" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Torna al Portale
+            </a>
+        </div>
+
+        <div class="page-header">
+            <div class="icon-badge"><i class="fas fa-question-circle"></i></div>
+            <h1>Domande Frequenti</h1>
+            <p>Risposte alle domande più comuni dei pazienti dello Studio Medico Ippocrate</p>
+        </div>
+
+        <!-- ═══ RICETTE E PRESCRIZIONI ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-prescription"></i> Ricette e Prescrizioni
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-pills icon-cat"></i>
+                    <span>Come faccio a richiedere la ripetizione di una ricetta?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <div class="answer-highlight">Il metodo preferito è tramite MilleBook (app/web) o email alla segreteria.</div>
+                    <p>Puoi richiedere la ripetizione di una ricetta in questi modi:</p>
+                    <ol>
+                        <li><strong>MilleBook</strong> — Accedi all'app o al sito e invia la richiesta direttamente.</li>
+                        <li><strong>Email segreteria</strong> — Scrivi specificando nome, cognome, data di nascita e il farmaco da ripetere.</li>
+                        <li><strong>Telefono</strong> — Chiama la segreteria negli orari di apertura: 0575 910 904.</li>
+                    </ol>
+                    <p>Le ricette vengono evase di norma <strong>entro 2 giorni lavorativi</strong>. Le ricette dematerializzate non richiedono più il ritiro fisico: ricevi il NRE via SMS o email e puoi ritirare il farmaco direttamente in farmacia.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-receipt icon-cat"></i>
+                    <span>Qual è la differenza tra ricetta rossa, bianca e dematerializzata?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <ul>
+                        <li><strong>Ricetta rossa (SSN)</strong> — Prescritta a carico del Servizio Sanitario, soggetta a ticket (salvo esenzioni). Copre farmaci nel Prontuario farmaceutico nazionale.</li>
+                        <li><strong>Ricetta bianca</strong> — A carico del paziente (100% pagato dall'assistito). Viene usata per farmaci non rimborsabili dal SSN o su richiesta esplicita del paziente.</li>
+                        <li><strong>Dematerializzata (NRE)</strong> — Formato digitale della ricetta rossa: il medico invia il Numero Ricetta Elettronica (NRE) via SMS/email. Non serve alcun foglio fisico: basta mostrare il codice fiscale in farmacia.</li>
+                    </ul>
+                    <div class="answer-ok">La ricetta dematerializzata è valida su tutto il territorio nazionale e non scade entro 30 giorni come la cartacea.</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-clock icon-cat"></i>
+                    <span>Posso richiedere farmaci urgenti? Entro quanto arrivano?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Per farmaci cronici abitualmente prescritti, segnala eventuali urgenze nel messaggio: la segreteria informerà il medico e si cercherà di evadere la richiesta il prima possibile.</p>
+                    <div class="answer-alert"><strong>Attenzione:</strong> Non è possibile garantire tempi immediati in caso di assenza del medico, giornate di ambulatorio intenso o richieste multiple. Pianifica le tue terapie croniche con almeno <strong>5–7 giorni di anticipo</strong> per non restare senza farmaci.</div>
+                    <p>Per una vera urgenza clinica (sintomi acuti, copertura terapeutica indifferibile), chiama direttamente lo studio o, fuori orario, contatta la <strong>Guardia Medica: 116 117</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CERTIFICATI DI MALATTIA ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-file-medical"></i> Certificati di Malattia
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-file-medical icon-cat"></i>
+                    <span>Posso chiedere il certificato di malattia per telefono o email?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <div class="answer-alert"><strong>No.</strong> Il certificato INPS non può essere rilasciato senza visita medica.</div>
+                    <p>La legge (Circolare INPS n. 113/2013) impone che il certificato sia trasmesso <em>"all'atto della visita"</em>. Il medico che certifica senza aver visitato il paziente commette il reato di Falso Ideologico (Art. 481 c.p.).</p>
+                    <p>Devi presentarti in studio il <strong>primo giorno di malattia</strong>. L'INPS non riconosce copertura per i giorni precedenti alla visita.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-calendar-times icon-cat"></i>
+                    <span>Mi sono ammalato nel weekend o in un giorno festivo: cosa faccio?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Rivolgiti alla <strong>Continuità Assistenziale (Guardia Medica)</strong>, attiva nelle ore notturne, nei prefestivi e nei festivi.</p>
+                    <div class="answer-highlight">Numero unico Guardia Medica: <strong>116 117</strong></div>
+                    <p>La Guardia Medica può visitarti e rilasciarti il certificato di malattia con decorrenza dal giorno della visita, esattamente come farebbe il tuo medico di base.</p>
+                    <p>Il lunedì successivo non è necessario tornare dal tuo medico di famiglia se il certificato è già stato rilasciato dal medico di continuità assistenziale, salvo che le tue condizioni si siano aggravate.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-briefcase icon-cat"></i>
+                    <span>Lavoro come libero professionista: ho bisogno del certificato INPS?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Il certificato telematico INPS è obbligatorio <strong>solo per i lavoratori dipendenti</strong> (pubblici e privati) e alcune categorie di parasubordinati (es. cococo con indennità INPS).</p>
+                    <p>Se sei <strong>libero professionista, lavoratore autonomo o titolare di partita IVA</strong> senza obbligo INPS, tecnicamente non hai diritto all'indennità di malattia INPS e quindi il certificato telematico non è obbligatorio per la tua situazione.</p>
+                    <p>Tuttavia, potresti averne bisogno per il tuo commercialista, per una compagnia assicurativa privata, o per documentare l'assenza con un committente. In questo caso, il medico può rilasciare una <strong>certificazione medica su carta intestata</strong> (certificato bianco), che prevede comunque una visita.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ IMPEGNATIVE E VISITE SPECIALISTICHE ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-hospital-user"></i> Visite Specialistiche e Impegnative
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-stethoscope icon-cat"></i>
+                    <span>Per andare dallo specialista ho sempre bisogno dell'impegnativa del mio medico?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p><strong>Non sempre.</strong> In Toscana esistono due modalità di accesso alle visite specialistiche SSN:</p>
+                    <ul>
+                        <li><strong>Accesso tramite impegnativa MMG</strong> — La maggior parte delle specialistiche (cardiologia, pneumologia, neurologia, ortopedia, urologia, reumatologia, ecc.) richiedono l'impegnativa del medico di medicina generale per accedere col SSN.</li>
+                        <li><strong>Accesso diretto</strong> — Alcune specialità in Toscana sono prenotabili direttamente al CUP senza impegnativa, per prime visite di screening o patologie di competenza diretta. Verifica sempre col CUP per la tua situazione specifica.</li>
+                    </ul>
+                    <div class="answer-highlight">In caso di dubbio, chiedi prima alla segreteria o contatta il CUP (Tel. 800 001 100 o online su prenotaonline.toscana.it) prima di prenotare.</div>
+                    <p>Puoi sempre accedere privatamente (senza impegnativa) pagando la tariffa intera, oppure attraverso fondi sanitari integrativi se ne sei in possesso.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-tachometer-alt icon-cat"></i>
+                    <span>Cosa significano le classi di priorità (U, B, D, P) sulla mia impegnativa?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Il medico assegna una classe di priorità che indica la <strong>massima attesa accettabile</strong> prima della prestazione:</p>
+                    <ul>
+                        <li><strong>U — Urgente</strong>: entro <strong>72 ore</strong> (3 giorni). Per situazioni clinicamente urgenti ma non da Pronto Soccorso.</li>
+                        <li><strong>B — Breve</strong>: entro <strong>10 giorni</strong>. Per problemi che richiedono valutazione rapida senza essere emergenze.</li>
+                        <li><strong>D — Differibile</strong>: entro <strong>30 giorni</strong> per visite, <strong>60 giorni</strong> per esami strumentali e di laboratorio.</li>
+                        <li><strong>P — Programmabile</strong>: entro <strong>120 giorni</strong>. Per controlli programmati, follow-up, situazioni croniche stabili.</li>
+                    </ul>
+                    <div class="answer-alert">Se al CUP non ci sono disponibilità nei tempi della tua classe di priorità, hai diritto a essere contattato per essere inserito in una struttura alternativa (pubblica o privata accreditata) senza costi aggiuntivi.</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-file-alt icon-cat"></i>
+                    <span>Ho la relazione/referto dello specialista: devo tornare dal mio medico?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Non sempre è necessaria una visita di restituzione formale, ma è fortemente <strong>consigliata nei seguenti casi</strong>:</p>
+                    <ul>
+                        <li>Lo specialista ha modificato la terapia o avviato nuovi farmaci</li>
+                        <li>Lo specialista raccomanda ulteriori accertamenti o visite di controllo</li>
+                        <li>Hai dubbi su quello che lo specialista ha scritto o prescritto</li>
+                        <li>La tua condizione è peggiorata</li>
+                    </ul>
+                    <p>Puoi consegnare il referto anche alla segreteria: il medico lo valuta e ti contatta se ritiene necessario fissare una visita.</p>
+                    <div class="answer-ok">Per nuove prescrizioni di farmaci cronici derivanti dalla visita specialistica, prenota una visita ordinaria affinché il medico possa inserirle correttamente nella tua cartella clinica.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ESENZIONI TICKET ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-tag"></i> Esenzioni Ticket
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-tag icon-cat"></i>
+                    <span>Come faccio a sapere se ho diritto a un'esenzione dal ticket?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Le esenzioni ticket si dividono in tre grandi categorie:</p>
+                    <ul>
+                        <li><strong>Per reddito</strong> — Basate sul reddito familiare (ISEE). Includono disoccupati, titolari di pensione minima/sociale, famiglie a basso reddito.</li>
+                        <li><strong>Per patologia cronica o rara</strong> — Se hai una malattia cronica riconosciuta (diabete, ipertensione arteriosa grave, BPCO, ecc.) o una malattia rara, hai diritto all'esenzione per le prestazioni correlate alla tua patologia.</li>
+                        <li><strong>Per invalidità e disabilità</strong> — In base al grado di invalidità riconosciuta.</li>
+                    </ul>
+                    <div class="answer-highlight">Il tuo medico di base può prescrivere l'esenzione per patologia cronica dopo aver fatto la diagnosi. Per le esenzioni per reddito, devi fare domanda all'ASL Toscana Sud Est.</div>
+                    <p>Per verificare le esenzioni attive sulla tua tessera sanitaria, puoi accedere al Fascicolo Sanitario Elettronico (FSE) della Regione Toscana: <strong>fascicolosanitario.regione.toscana.it</strong></p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-heartbeat icon-cat"></i>
+                    <span>Ho una malattia cronica: l'esenzione copre tutto o solo alcune prestazioni?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>L'esenzione per patologia cronica è <strong>selettiva</strong>: copre solo le prestazioni sanitarie <em>correlate</em> alla patologia esente, non tutte le prestazioni in generale.</p>
+                    <p>Esempio: se sei esente per diabete mellito (codice 013), sei esente per gli esami del sangue correlati (glicemia, HbA1c, creatinina, profilo lipidico…) e per le visite diabetologiche, ma non per una visita ortopedica non correlata al diabete.</p>
+                    <div class="answer-ok">Quando prenoti una prestazione al CUP, specifica il <strong>codice esenzione</strong> (es. "013" per diabete) per non pagare il ticket sulle prestazioni coperte.</div>
+                    <p>I codici esenzione delle patologie croniche sono definiti dal DPCM 12/01/2017 (LEA - Livelli Essenziali di Assistenza) e sono uniformi su tutto il territorio nazionale.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PRIMA VISITA E ISCRIZIONE ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-user-plus"></i> Prima Visita e Iscrizione
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-user-plus icon-cat"></i>
+                    <span>Come mi iscrivo come nuovo paziente?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Per diventare paziente del Dott. Savianu:</p>
+                    <ol>
+                        <li>Prenota una <strong>"Prima Visita"</strong> tramite il pulsante dedicato sul portale (durata 45 minuti).</li>
+                        <li>Presentati allo studio con: <strong>tessera sanitaria, documento d'identità</strong> e, se disponibile, documentazione clinica precedente (lettere di dimissione, referti, elenco farmaci in uso).</li>
+                        <li>Il medico ti registrerà nel sistema gestionale (Millewin) durante la visita.</li>
+                    </ol>
+                    <div class="answer-highlight">I nuovi pazienti vengono registrati in studio durante la prima visita — non è possibile iscriversi solo telefonicamente o via email.</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-exchange-alt icon-cat"></i>
+                    <span>Posso cambiare medico di base? Come funziona?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Il cambio del medico di medicina generale in Toscana è <strong>libero e gratuito</strong>, effettuabile una volta l'anno (salvo motivi eccezionali).</p>
+                    <p>Come procedere:</p>
+                    <ol>
+                        <li>Recati allo sportello dell'<strong>ASL Toscana Sud Est</strong> più vicino (o accedi online tramite il portale regionale) con tessera sanitaria e documento.</li>
+                        <li>Scegli il nuovo medico dall'elenco degli iscritti della tua zona.</li>
+                        <li>Il cambio è effettivo dal giorno successivo alla richiesta.</li>
+                    </ol>
+                    <p>Non è necessario "disdire" col vecchio medico: il sistema aggiorna automaticamente la lista dei pazienti di entrambi i medici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ EMERGENZE E ASSENZE ═══ -->
+        <div class="faq-category">
+            <div class="faq-category-title">
+                <i class="fas fa-phone-alt"></i> Emergenze, Urgenze e Assenze
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-ambulance icon-cat"></i>
+                    <span>Quando devo chiamare il 118 e quando il 116 117?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <ul>
+                        <li><strong>118 — Emergenza</strong>: pericolo di vita imminente. Dolore toracico, difficoltà respiratoria grave, perdita di coscienza, ictus (debolezza improvvisa di un lato del corpo, difficoltà a parlare), trauma grave, emorragia abbondante.</li>
+                        <li><strong>116 117 — Guardia Medica (Continuità Assistenziale)</strong>: problemi urgenti ma non a rischio vita, fuori dagli orari di ambulatorio. Febbre alta, dolori acuti, problemi che non possono attendere l'apertura dello studio il giorno dopo.</li>
+                        <li><strong>Pronto Soccorso (PS)</strong>: in alternativa al 118 per urgenze che richiedono accertamenti (radiografie, esami urgenti) ma non necessariamente un'ambulanza.</li>
+                    </ul>
+                    <div class="answer-alert">In caso di dubbio, chiama il 116 117: un infermiere valuta telefonicamente e ti indirizza al servizio più appropriato.</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-calendar-minus icon-cat"></i>
+                    <span>Il medico è assente: cosa faccio se ho bisogno urgente?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>In caso di assenza del Dott. Savianu per ferie, malattia o aggiornamento, viene attivato un <strong>medico sostituto</strong>. La segreteria comunica i riferimenti del sostituto.</p>
+                    <p>Per urgenze durante l'assenza:</p>
+                    <ul>
+                        <li><strong>Orari di ambulatorio</strong>: contatta il medico sostituto.</li>
+                        <li><strong>Notturno, festivi e prefestivi</strong>: <strong>116 117</strong> (Guardia Medica).</li>
+                        <li><strong>Emergenze</strong>: <strong>118</strong> o Pronto Soccorso.</li>
+                    </ul>
+                    <div class="answer-ok">Le assenze programmate sono comunicate per tempo sul portale. Controlla la homepage per eventuali avvisi attivi.</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleFaq(this)" aria-expanded="false">
+                    <i class="fas fa-home icon-cat"></i>
+                    <span>Posso richiedere una visita domiciliare?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-body">
+                    <p>Sì. La visita domiciliare è dovuta quando il paziente è impossibilitato a raggiungere lo studio per motivi di salute (non semplice comodità).</p>
+                    <p>Come richiederla:</p>
+                    <ol>
+                        <li>Chiama la segreteria la mattina presto (ore 09:30–10:30 preferibilmente) per segnalare la necessità.</li>
+                        <li>Il medico effettua le visite domiciliari di norma nel primo pomeriggio, dopo l'ambulatorio mattutino.</li>
+                    </ol>
+                    <p>Per visite domiciliari urgenti in orario notturno o festivo, contatta il <strong>116 117</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <i class="fas fa-info-circle" style="color: var(--accent); margin-right: 6px;"></i>
+            Hai una domanda non risposta in questa pagina? Contatta la segreteria al <strong>0575 910 904</strong> oppure invia un messaggio tramite MilleBook.
+        </div>
+
+    </main>
+</div>
+
+<footer role="contentinfo">
+    <div class="footer-content">
+        <p>© <span id="current-year">2026</span> — Dr. Savianu Emanuel · Studio Medico Ippocrate, Arezzo</p>
+    </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js?v=9"></script>
+<script>
+    function toggleFaq(header) {
+        const body = header.nextElementSibling;
+        const isOpen = header.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.accordion-header').forEach(h => {
+            h.classList.remove('open');
+            h.setAttribute('aria-expanded', 'false');
+        });
+        document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
+        // Open clicked (if it was closed)
+        if (!isOpen) {
+            header.classList.add('open');
+            header.setAttribute('aria-expanded', 'true');
+            body.classList.add('open');
+        }
+    }
+</script>
+</body>
+</html>

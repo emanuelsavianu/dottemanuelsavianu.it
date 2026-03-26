@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v75 for metadata/accessibility refresh
-const CACHE_NAME = 'savianu-v144';
+// Cache version bumped to v145: added faq.html, esenzioni.html, impegnative.html, offline.html
+const CACHE_NAME = 'savianu-v145';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -13,6 +13,10 @@ const urlsToCache = [
   '/bronzelogo.png',
   '/cert-malattia.html',
   '/rsa.html',
+  '/faq.html',
+  '/esenzioni.html',
+  '/impegnative.html',
+  '/offline.html',
   '/calcolatore-ferie.html',
   '/calcolatoreferiegemini.html',
   '/ferie.html',

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Guida Esenzioni Ticket — Dott. Savianu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="styles.css?v=11">
+
+    <style>
+        :root {
+            --primary: #1a2f4c;
+            --primary-dark: #0f1a2a;
+            --primary-light: #285078;
+            --accent: #c29b57;
+            --bg-gradient-1: #f3efe6;
+            --text-dark: #1a2f4c;
+            --text-medium: #4a5568;
+            --white: #ffffff;
+            --border-color: #d1c7b3;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --font-sans: 'Montserrat', sans-serif;
+            --font-serif: 'Playball', cursive;
+            --radius-md: 8px;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            background-color: #555;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 860px;
+            margin: 20px auto;
+            padding: 0 15px 60px;
+            box-sizing: border-box;
+        }
+
+        .doc-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: transparent;
+            color: #f3efe6;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+        .page-header {
+            background: var(--primary);
+            border-radius: 12px;
+            padding: 32px 36px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .page-header .icon-badge {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .page-header h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 400;
+            color: #f3efe6;
+            margin: 0 0 8px;
+        }
+        .page-header p {
+            font-size: 0.95rem;
+            color: rgba(243,239,230,0.75);
+            margin: 0;
+        }
+
+        /* Sezioni */
+        .section-block {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        body.dark-mode .section-block {
+            background: #0d1e33;
+            border-color: var(--primary-light);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 24px;
+            background: var(--primary);
+            color: #f3efe6;
+        }
+        .section-title i { color: var(--accent); font-size: 1.2rem; }
+        .section-title h2 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+        .section-body {
+            padding: 22px 24px;
+            font-size: 0.93rem;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+        body.dark-mode .section-body { color: #f3efe6; }
+        .section-body p { margin: 0 0 12px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        /* Tabelle esenzioni */
+        .exemption-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            margin: 12px 0;
+        }
+        .exemption-table th {
+            background: var(--bg-gradient-1);
+            color: var(--primary);
+            font-weight: 700;
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        body.dark-mode .exemption-table th {
+            background: var(--primary-light);
+            color: #f3efe6;
+            border-bottom-color: var(--primary);
+        }
+        .exemption-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        body.dark-mode .exemption-table td {
+            border-bottom-color: var(--primary-light);
+        }
+        .exemption-table tr:last-child td { border-bottom: none; }
+        .exemption-table tr:hover td { background: rgba(194,155,87,0.06); }
+
+        .code-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--accent);
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        body.dark-mode .code-badge { background: var(--accent); color: var(--primary-dark); }
+
+        /* Info boxes */
+        .info-box {
+            background: var(--bg-gradient-1);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 14px 18px;
+            margin: 14px 0;
+            font-size: 0.92rem;
+        }
+        body.dark-mode .info-box { background: var(--primary); color: #f3efe6; }
+
+        .alert-box-inline {
+            background: #fff0f0;
+            border-left: 4px solid var(--danger);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+        body.dark-mode .alert-box-inline { background: #2a0a0a; color: #ffbdbd; }
+
+        /* Step list */
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0;
+        }
+        .step-list li {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        body.dark-mode .step-list li { border-bottom-color: var(--primary-light); }
+        .step-list li:last-child { border-bottom: none; }
+        .step-num {
+            flex-shrink: 0;
+            background: var(--primary);
+            color: var(--accent);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 800px) {
+            body { background-color: var(--white); }
+            .page-wrapper { margin: 0; padding: 15px 15px 60px; }
+            .btn-back { color: var(--text-medium); border-color: var(--border-color); }
+            .page-header { border-radius: 8px; padding: 24px 20px; }
+            .exemption-table { font-size: 0.82rem; }
+            .exemption-table th, .exemption-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header role="banner">
+    <nav class="lang-switch" aria-label="Controlli pagina">
+        <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </nav>
+    <div class="header-content">
+        <h1 style="margin-bottom: 0;">Dott. Savianu Emanuel</h1>
+        <p style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px;">STUDIO MEDICO IPPOCRATE</p>
+        <p>Medico di Medicina Generale — Arezzo</p>
+    </div>
+</header>
+
+<div class="container" style="width: 100%; display: flex; justify-content: center;">
+    <main class="page-wrapper" role="main">
+
+        <div class="doc-topbar">
+            <a href="index.html#facsimili" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Torna al Portale
+            </a>
+        </div>
+
+        <div class="page-header">
+            <div class="icon-badge"><i class="fas fa-tag"></i></div>
+            <h1>Guida alle Esenzioni Ticket</h1>
+            <p>Come funzionano, chi ne ha diritto e come richiederle in Toscana (AUSL Sud Est)</p>
+        </div>
+
+        <!-- ═══ COS'È IL TICKET ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <h2>Cos'è il Ticket Sanitario</h2>
+            </div>
+            <div class="section-body">
+                <p>Il <strong>ticket sanitario</strong> è la quota di partecipazione alla spesa che il cittadino paga per alcune prestazioni del Servizio Sanitario Nazionale (SSN): esami del sangue, diagnostica per immagini (RX, ecografie, TAC), visite specialistiche e alcune prestazioni di pronto soccorso non urgenti.</p>
+                <p>L'esenzione dal ticket elimina o riduce questa quota per le persone che rientrano in determinate categorie di reddito, età, invalidità o patologia.</p>
+                <div class="info-box">
+                    <strong>Nota Toscana:</strong> In Toscana il ticket è composto da una quota fissa per ricetta + una quota proporzionale per prestazione. L'esenzione può coprire entrambe le componenti.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CATEGORIE DI ESENZIONE ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-list-ul"></i>
+                <h2>Categorie di Esenzione</h2>
+            </div>
+            <div class="section-body">
+                <p>Le esenzioni si dividono in tre grandi gruppi:</p>
+
+                <p><strong>1. Esenzioni per Reddito</strong></p>
+                <table class="exemption-table">
+                    <thead>
+                        <tr>
+                            <th>Codice</th>
+                            <th>Categoria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="code-badge">E01</span></td>
+                            <td>Cittadini con reddito familiare lordo annuo ≤ €8.263,31 — o ≤ €11.362,05 se con coniuge, +€516,46 per ogni figlio a carico</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">E02</span></td>
+                            <td>Cittadini con più di 65 anni o minori di 6 anni con reddito familiare ≤ €36.151,98</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">E03</span></td>
+                            <td>Disoccupati e familiari a carico con reddito familiare ≤ €8.263,31</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">E04</span></td>
+                            <td>Titolari di pensione al minimo con più di 60 anni e familiari a carico, reddito familiare ≤ €8.263,31 (o ≤ €11.362,05 con coniuge)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="alert-box-inline">Le esenzioni per reddito hanno <strong>scadenza annuale</strong> e vanno rinnovate ogni anno all'ASL. In Toscana la scadenza è solitamente il 31 marzo.</div>
+
+                <p style="margin-top: 18px;"><strong>2. Esenzioni per Invalidità e Disabilità</strong></p>
+                <table class="exemption-table">
+                    <thead>
+                        <tr>
+                            <th>Codice</th>
+                            <th>Categoria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="code-badge">048</span></td>
+                            <td>Invalidi di guerra, di servizio, del lavoro con invalidità ≥ 80% — esenzione totale</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">050</span></td>
+                            <td>Invalidi civili con invalidità al 100% — esenzione totale</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">051</span></td>
+                            <td>Invalidi civili con invalidità dal 67% al 99%</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">052</span></td>
+                            <td>Ciechi parziali (residuo visivo ≤ 1/10)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code-badge">053</span></td>
+                            <td>Sordomuti</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 18px;"><strong>3. Esenzioni per Patologia Cronica o Rara</strong></p>
+                <p>Sono le più comuni. Se hai una malattia cronica riconosciuta, il tuo medico può attestare il codice di esenzione. L'esenzione vale <em>solo per le prestazioni correlate</em> alla patologia. Esempi principali (DPCM 12/01/2017 — LEA):</p>
+                <table class="exemption-table">
+                    <thead>
+                        <tr>
+                            <th>Codice</th>
+                            <th>Patologia Esente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="code-badge">001</span></td><td>Acromegalia e gigantismo ipofisario</td></tr>
+                        <tr><td><span class="code-badge">006</span></td><td>Artrite reumatoide — Lupus eritematoso sistemico — Spondilite anchilosante</td></tr>
+                        <tr><td><span class="code-badge">007</span></td><td>Asma bronchiale</td></tr>
+                        <tr><td><span class="code-badge">010</span></td><td>Broncopneumopatia cronica ostruttiva (BPCO)</td></tr>
+                        <tr><td><span class="code-badge">013</span></td><td>Diabete mellito (tipo 1 e tipo 2)</td></tr>
+                        <tr><td><span class="code-badge">021</span></td><td>Insufficienza cardiaca cronica — Cardiopatia ischemica</td></tr>
+                        <tr><td><span class="code-badge">024</span></td><td>Insufficienza renale cronica</td></tr>
+                        <tr><td><span class="code-badge">027</span></td><td>Ipertensione arteriosa (con danno d'organo)</td></tr>
+                        <tr><td><span class="code-badge">031</span></td><td>Morbo di Crohn — Rettocolite ulcerosa</td></tr>
+                        <tr><td><span class="code-badge">035</span></td><td>Neoplasie maligne (tumori) e tumori di comportamento incerto</td></tr>
+                        <tr><td><span class="code-badge">040</span></td><td>Sclerosi multipla</td></tr>
+                        <tr><td><span class="code-badge">044</span></td><td>Tiroidite di Hashimoto — Ipotiroidismo</td></tr>
+                        <tr><td><span class="code-badge">047</span></td><td>Psicosi (schizofrenia, disturbo bipolare, ecc.)</td></tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 0.85rem; color: var(--text-medium); margin-top: 6px;">Elenco parziale. Per la lista completa con tutte le prestazioni coperte: DPCM 12/01/2017 — Allegato 8.</p>
+
+                <p style="margin-top: 16px;"><strong>Malattie Rare (codici RN…)</strong></p>
+                <p>I pazienti affetti da malattie rare inserite nell'elenco ministeriale hanno esenzione totale per tutte le prestazioni correlate, identificata con codici che iniziano con <span class="code-badge">RN</span>. Rivolgersi al Centro di Riferimento Regionale per la propria patologia per ottenere la certificazione.</p>
+            </div>
+        </div>
+
+        <!-- ═══ COME OTTENERE L'ESENZIONE ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-clipboard-check"></i>
+                <h2>Come Richiedere o Rinnovare l'Esenzione</h2>
+            </div>
+            <div class="section-body">
+                <p><strong>Per esenzione per patologia cronica:</strong></p>
+                <ul class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <span>Il tuo medico di medicina generale certifica la diagnosi e attribuisce il codice di esenzione nella cartella clinica.</span>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <span>Il codice viene trasmesso telematicamente alla Regione Toscana e aggiornato sulla tessera sanitaria (può richiedere alcuni giorni lavorativi).</span>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <span>Quando prenoti una prestazione al CUP, comunica il codice di esenzione per non pagare il ticket sulle prestazioni correlate.</span>
+                    </li>
+                </ul>
+
+                <p style="margin-top: 16px;"><strong>Per esenzione per reddito (E01–E04):</strong></p>
+                <ul class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <span>Recati allo sportello ASL Toscana Sud Est di Arezzo (Via Curtatone 54) con tessera sanitaria e autocertificazione del reddito familiare.</span>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <span>Lo sportello rilascia il codice di esenzione con validità annuale (di norma fino al 31 marzo dell'anno successivo).</span>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <span>Rinnova l'esenzione ogni anno prima della scadenza presentando la stessa autocertificazione aggiornata.</span>
+                    </li>
+                </ul>
+
+                <div class="info-box" style="margin-top: 16px;">
+                    <strong>Verifica online:</strong> Puoi controllare le esenzioni attive sulla tua tessera sanitaria accedendo al <strong>Fascicolo Sanitario Elettronico</strong> della Regione Toscana su fascicolosanitario.regione.toscana.it con SPID o CIE.
+                </div>
+
+                <p style="margin-top: 16px;"><strong>Per esenzione da invalidità:</strong></p>
+                <p>L'esenzione è collegata al verbale INPS/ASL di riconoscimento dell'invalidità. L'aggiornamento sulla tessera sanitaria avviene automaticamente dopo il riconoscimento. Se non è aggiornata, contatta lo sportello ASL.</p>
+            </div>
+        </div>
+
+        <!-- ═══ USO CORRETTO ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>Uso Corretto dell'Esenzione</h2>
+            </div>
+            <div class="section-body">
+                <div class="alert-box-inline">
+                    <strong>Attenzione:</strong> Usare un codice di esenzione per prestazioni non correlate alla propria patologia esente è <strong>illecito</strong> e può essere oggetto di accertamento da parte dell'ASL con richiesta di rimborso del ticket e sanzioni.
+                </div>
+                <p>Ogni codice di esenzione per patologia è accompagnato da un elenco preciso di prestazioni coperte. Se non sei sicuro se una prestazione rientri nella tua esenzione, chiedi alla segreteria o al CUP prima di prenotare indicando il codice.</p>
+                <p>Le esenzioni per reddito scadono: se usi un codice scaduto, il sistema potrebbe richiedere il pagamento del ticket retroattivamente. Segna sempre la data di scadenza dell'esenzione.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer role="contentinfo">
+    <div class="footer-content">
+        <p>© <span id="current-year">2026</span> — Dr. Savianu Emanuel · Studio Medico Ippocrate, Arezzo</p>
+        <p style="font-size: 0.8rem; margin-top: 6px; opacity: 0.7;">Informazioni basate su DPCM 12/01/2017 (LEA) e normativa regionale toscana. Verificare sempre con la propria ASL per aggiornamenti.</p>
+    </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js?v=9"></script>
+</body>
+</html>

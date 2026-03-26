@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Guida Impegnative e CUP — Dott. Savianu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="styles.css?v=11">
+
+    <style>
+        :root {
+            --primary: #1a2f4c;
+            --primary-dark: #0f1a2a;
+            --primary-light: #285078;
+            --accent: #c29b57;
+            --bg-gradient-1: #f3efe6;
+            --text-dark: #1a2f4c;
+            --text-medium: #4a5568;
+            --white: #ffffff;
+            --border-color: #d1c7b3;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --font-sans: 'Montserrat', sans-serif;
+            --font-serif: 'Playball', cursive;
+            --radius-md: 8px;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            background-color: #555;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 860px;
+            margin: 20px auto;
+            padding: 0 15px 60px;
+            box-sizing: border-box;
+        }
+
+        .doc-topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: transparent;
+            color: #f3efe6;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+        .page-header {
+            background: var(--primary);
+            border-radius: 12px;
+            padding: 32px 36px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .page-header .icon-badge { font-size: 2.5rem; color: var(--accent); margin-bottom: 12px; }
+        .page-header h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 400;
+            color: #f3efe6;
+            margin: 0 0 8px;
+        }
+        .page-header p { font-size: 0.95rem; color: rgba(243,239,230,0.75); margin: 0; }
+
+        .section-block {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        body.dark-mode .section-block { background: #0d1e33; border-color: var(--primary-light); }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 24px;
+            background: var(--primary);
+            color: #f3efe6;
+        }
+        .section-title i { color: var(--accent); font-size: 1.2rem; }
+        .section-title h2 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+        .section-body {
+            padding: 22px 24px;
+            font-size: 0.93rem;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+        body.dark-mode .section-body { color: #f3efe6; }
+        .section-body p { margin: 0 0 12px; }
+        .section-body p:last-child { margin-bottom: 0; }
+        .section-body ul, .section-body ol { padding-left: 22px; margin: 8px 0 12px; }
+        .section-body li { margin-bottom: 6px; }
+
+        /* Griglia priorità */
+        .priority-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 14px 0;
+        }
+        @media (max-width: 600px) { .priority-grid { grid-template-columns: 1fr; } }
+
+        .priority-card {
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            border: 2px solid transparent;
+        }
+        .priority-card.urgent { background: #fff5f5; border-color: #fca5a5; }
+        .priority-card.short  { background: #fffbeb; border-color: #fcd34d; }
+        .priority-card.defer  { background: #f0fdf4; border-color: #86efac; }
+        .priority-card.sched  { background: #eff6ff; border-color: #93c5fd; }
+
+        body.dark-mode .priority-card.urgent { background: #2a0a0a; border-color: #b91c1c; }
+        body.dark-mode .priority-card.short  { background: #2a200a; border-color: #d97706; }
+        body.dark-mode .priority-card.defer  { background: #0a2a14; border-color: #15803d; }
+        body.dark-mode .priority-card.sched  { background: #0a1a2a; border-color: #1d4ed8; }
+
+        .priority-code {
+            font-size: 1.8rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .priority-card.urgent .priority-code { color: var(--danger); }
+        .priority-card.short .priority-code  { color: #d97706; }
+        .priority-card.defer .priority-code  { color: #15803d; }
+        .priority-card.sched .priority-code  { color: #1d4ed8; }
+
+        body.dark-mode .priority-card.urgent .priority-code { color: #fca5a5; }
+        body.dark-mode .priority-card.short .priority-code  { color: #fcd34d; }
+        body.dark-mode .priority-card.defer .priority-code  { color: #86efac; }
+        body.dark-mode .priority-card.sched .priority-code  { color: #93c5fd; }
+
+        .priority-card h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 4px; color: var(--text-dark); }
+        body.dark-mode .priority-card h3 { color: #f3efe6; }
+        .priority-card .timing { font-size: 0.88rem; font-weight: 600; color: var(--text-medium); margin-bottom: 6px; }
+        body.dark-mode .priority-card .timing { color: rgba(255,255,255,0.6); }
+        .priority-card p { font-size: 0.85rem; color: var(--text-medium); margin: 0; line-height: 1.5; }
+        body.dark-mode .priority-card p { color: rgba(255,255,255,0.55); }
+
+        /* Tabella branche */
+        .branch-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            margin: 12px 0;
+        }
+        .branch-table th {
+            background: var(--bg-gradient-1);
+            color: var(--primary);
+            font-weight: 700;
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        body.dark-mode .branch-table th { background: var(--primary-light); color: #f3efe6; border-bottom-color: var(--primary); }
+        .branch-table td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        body.dark-mode .branch-table td { border-bottom-color: var(--primary-light); }
+        .branch-table tr:last-child td { border-bottom: none; }
+        .branch-table tr:hover td { background: rgba(194,155,87,0.05); }
+
+        .badge-required {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .badge-direct {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        body.dark-mode .badge-required { background: #450a0a; color: #fca5a5; }
+        body.dark-mode .badge-direct { background: #052e16; color: #86efac; }
+
+        .info-box {
+            background: var(--bg-gradient-1);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 14px 18px;
+            margin: 14px 0;
+            font-size: 0.92rem;
+        }
+        body.dark-mode .info-box { background: var(--primary); color: #f3efe6; }
+
+        .alert-box-inline {
+            background: #fff0f0;
+            border-left: 4px solid var(--danger);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+        body.dark-mode .alert-box-inline { background: #2a0a0a; color: #ffbdbd; }
+
+        /* CUP contact box */
+        .cup-box {
+            background: var(--primary);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            margin: 16px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .cup-method {
+            flex: 1;
+            min-width: 160px;
+        }
+        .cup-method .cup-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .cup-method .cup-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f3efe6;
+        }
+        .cup-method .cup-sub { font-size: 0.8rem; color: rgba(243,239,230,0.6); margin-top: 2px; }
+
+        @media (max-width: 800px) {
+            body { background-color: var(--white); }
+            .page-wrapper { margin: 0; padding: 15px 15px 60px; }
+            .btn-back { color: var(--text-medium); border-color: var(--border-color); }
+            .page-header { border-radius: 8px; padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header role="banner">
+    <nav class="lang-switch" aria-label="Controlli pagina">
+        <button onclick="toggleDarkMode()" class="lang-btn" id="btn-dark" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </nav>
+    <div class="header-content">
+        <h1 style="margin-bottom: 0;">Dott. Savianu Emanuel</h1>
+        <p style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px;">STUDIO MEDICO IPPOCRATE</p>
+        <p>Medico di Medicina Generale — Arezzo</p>
+    </div>
+</header>
+
+<div class="container" style="width: 100%; display: flex; justify-content: center;">
+    <main class="page-wrapper" role="main">
+
+        <div class="doc-topbar">
+            <a href="index.html#facsimili" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Torna al Portale
+            </a>
+        </div>
+
+        <div class="page-header">
+            <div class="icon-badge"><i class="fas fa-hospital-user"></i></div>
+            <h1>Visite Specialistiche e CUP</h1>
+            <p>Guida alle impegnative, alle classi di priorità e alla prenotazione delle visite specialistiche SSN</p>
+        </div>
+
+        <!-- ═══ COSA È L'IMPEGNATIVA ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-file-prescription"></i>
+                <h2>Cos'è l'Impegnativa (Richiesta SSN)</h2>
+            </div>
+            <div class="section-body">
+                <p>L'<strong>impegnativa</strong> (termine ufficiale: <em>ricetta SSN per prestazione specialistica</em>) è il documento che il tuo medico di medicina generale emette per autorizzarti ad accedere a una visita specialistica, un esame diagnostico o di laboratorio <strong>a carico del SSN</strong> (con pagamento del solo ticket, se dovuto).</p>
+                <p>Con l'impegnativa in mano, prenoti la prestazione al <strong>CUP</strong> (Centro Unico di Prenotazione) o tramite il portale online della Regione Toscana, scegliendo la struttura pubblica o privata accreditata di preferenza.</p>
+                <div class="info-box">
+                    <strong>Dematerializzazione:</strong> Dal 2015 le impegnative sono progressivamente diventate digitali: il medico trasmette la richiesta telematicamente e tu ricevi il numero NRE (Numero Ricetta Elettronica) da esibire al CUP o alla struttura — non serve il foglio di carta.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CLASSI DI PRIORITÀ ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <h2>Classi di Priorità — Cosa Significano</h2>
+            </div>
+            <div class="section-body">
+                <p>Il medico assegna una <strong>classe di priorità</strong> che indica il tempo massimo accettabile per ricevere la prestazione. Le strutture SSN sono tenute a rispettare questi tempi:</p>
+
+                <div class="priority-grid">
+                    <div class="priority-card urgent">
+                        <div class="priority-code">U</div>
+                        <h3>Urgente</h3>
+                        <div class="timing">Entro 72 ore (3 giorni)</div>
+                        <p>Situazione clinicamente urgente che non può attendere ma non richiede il Pronto Soccorso.</p>
+                    </div>
+                    <div class="priority-card short">
+                        <div class="priority-code">B</div>
+                        <h3>Breve</h3>
+                        <div class="timing">Entro 10 giorni</div>
+                        <p>Problemi che richiedono valutazione rapida per potenziale progressione o dubbio diagnostico.</p>
+                    </div>
+                    <div class="priority-card defer">
+                        <div class="priority-code">D</div>
+                        <h3>Differibile</h3>
+                        <div class="timing">Entro 30 gg (visite) / 60 gg (diagnostica)</div>
+                        <p>Situazioni clinicamente rilevanti ma non urgenti; la condizione è stabile.</p>
+                    </div>
+                    <div class="priority-card sched">
+                        <div class="priority-code">P</div>
+                        <h3>Programmabile</h3>
+                        <div class="timing">Entro 120 giorni</div>
+                        <p>Controlli programmati, follow-up, patologie croniche stabili in percorso noto.</p>
+                    </div>
+                </div>
+
+                <div class="alert-box-inline">
+                    <strong>Garanzia tempi di attesa:</strong> Se il CUP non ha disponibilità nei tempi previsti dalla tua classe di priorità, hai diritto a essere inserito in una struttura alternativa (pubblica o privata accreditata) nella stessa Regione, senza costi aggiuntivi per te. Chiedi al CUP di attivare la <strong>"garanzia dei tempi massimi di attesa"</strong>.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ IMPEGNATIVA O ACCESSO DIRETTO ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-stethoscope"></i>
+                <h2>Impegnativa o Accesso Diretto?</h2>
+            </div>
+            <div class="section-body">
+                <p>Non tutte le visite specialistiche richiedono l'impegnativa del medico di base. In Toscana alcune branche specialistiche hanno un canale di <strong>accesso diretto</strong>:</p>
+
+                <table class="branch-table">
+                    <thead>
+                        <tr>
+                            <th>Specialità</th>
+                            <th>Modalità di Accesso</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Medicina Generale (MMG)</strong></td>
+                            <td><span class="badge-direct">Accesso Diretto</span></td>
+                            <td>Sei già iscritto — prenota tramite MilleBook</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cardiologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>ECG, ecocardiogramma, Holter: richiedono impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ortopedia / Traumatologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>Per traumi acuti valuta PS o PI se urgente</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Neurologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pneumologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>Spirometria, visita pneumologica</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Urologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gastroenterologia / Endoscopia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>Gastroscopia, colonscopia: impegnativa obbligatoria</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Oculistica</strong></td>
+                            <td><span class="badge-direct">Accesso Diretto (screening)</span></td>
+                            <td>Prima visita oculistica può essere in accesso diretto; controlli per patologia nota richiedono impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ginecologia / Ostetricia</strong></td>
+                            <td><span class="badge-direct">Accesso Diretto</span></td>
+                            <td>Prima visita ginecologica e Pap test in accesso diretto; follow-up di patologia richiede impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dermatologia</strong></td>
+                            <td><span class="badge-direct">Accesso Diretto (primo accesso)</span></td>
+                            <td>Prima visita dermatologica, mappatura nei: diretto; trattamenti e follow-up: impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Otorinolaringoiatria (ORL)</strong></td>
+                            <td><span class="badge-direct">Accesso Diretto (primo accesso)</span></td>
+                            <td>Prima visita ORL di solito diretta; audiometria e follow-up: impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Diabetologia / Endocrinologia</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Psicologia / Psichiatria</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>CSM di Arezzo per accesso al percorso di Salute Mentale</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Laboratorio (esami del sangue)</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG</span></td>
+                            <td>Esami di laboratorio SSN richiedono sempre impegnativa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Radiologia (RX, ECO, TAC, RMN)</strong></td>
+                            <td><span class="badge-required">Impegnativa MMG o Specialista</span></td>
+                            <td>Le impegnative possono essere emesse anche dallo specialista che ha in cura il paziente</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 0.82rem; color: var(--text-medium); margin-top: 8px;">Le modalità di accesso diretto possono variare per singola ASL e si aggiornano periodicamente. Verifica sempre con il CUP prima di prenotare.</p>
+            </div>
+        </div>
+
+        <!-- ═══ COME PRENOTARE AL CUP ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-calendar-plus"></i>
+                <h2>Come Prenotare al CUP di Arezzo</h2>
+            </div>
+            <div class="section-body">
+                <div class="cup-box">
+                    <div class="cup-method">
+                        <div class="cup-label">Telefono</div>
+                        <div class="cup-value">800 001 100</div>
+                        <div class="cup-sub">Numero verde gratuito · Lun–Ven 08:00–18:00, Sab 08:00–13:00</div>
+                    </div>
+                    <div class="cup-method">
+                        <div class="cup-label">Online</div>
+                        <div class="cup-value">prenotaonline.toscana.it</div>
+                        <div class="cup-sub">Con SPID o CNS · Disponibile 24h</div>
+                    </div>
+                    <div class="cup-method">
+                        <div class="cup-label">Sportello fisico</div>
+                        <div class="cup-value">Via Curtatone 54</div>
+                        <div class="cup-sub">Arezzo · Lun–Ven 08:00–13:00</div>
+                    </div>
+                    <div class="cup-method">
+                        <div class="cup-label">Farmacie aderenti</div>
+                        <div class="cup-value">FarmaCUP</div>
+                        <div class="cup-sub">Molte farmacie di Arezzo prenotano prestazioni SSN</div>
+                    </div>
+                </div>
+
+                <p><strong>Cosa ti serve per prenotare:</strong></p>
+                <ul>
+                    <li><strong>Tessera Sanitaria</strong> (codice fiscale)</li>
+                    <li><strong>Numero NRE</strong> dell'impegnativa (oppure il foglio cartaceo se ancora in formato cartaceo)</li>
+                    <li>Il codice di <strong>esenzione ticket</strong>, se ne hai diritto</li>
+                </ul>
+
+                <div class="info-box">
+                    <strong>Suggerimento:</strong> Le impegnative SSN hanno una <strong>validità di 30 giorni</strong> dalla data di emissione per effettuare la prenotazione. Se scade, il tuo medico deve riemetterla. Le ricette dematerializzate scadono anch'esse, controlla sempre la data.
+                </div>
+
+                <p><strong>Disdetta appuntamento:</strong> Se non puoi presentarti, <strong>disdici entro 48 ore</strong> dal tuo appuntamento, pena la possibile perdita del diritto all'esenzione per quella prestazione. Puoi disdire allo stesso numero o sportello dove hai prenotato.</p>
+            </div>
+        </div>
+
+        <!-- ═══ SECONDO PARERE ═══ -->
+        <div class="section-block">
+            <div class="section-title">
+                <i class="fas fa-comments"></i>
+                <h2>Accesso Privato e Secondo Parere</h2>
+            </div>
+            <div class="section-body">
+                <p>Hai sempre il diritto di scegliere l'<strong>accesso privato</strong> a uno specialista, senza impegnativa SSN, pagando la tariffa intera. In questo caso:</p>
+                <ul>
+                    <li>Non è necessaria l'impegnativa del medico di base</li>
+                    <li>Puoi scegliere qualsiasi professionista</li>
+                    <li>Paghi la tariffa privata (tariffario del professionista, non quello SSN)</li>
+                    <li>La spesa può essere in parte detraibile dalla dichiarazione dei redditi (art. 15 TUIR)</li>
+                </ul>
+                <p>Se hai un <strong>fondo sanitario integrativo</strong> (es. Fondo Metasalute, Fondo Previndai, polizza assicurativa privata), verifica prima le coperture: spesso coprono visite specialistiche senza impegnativa MMG e con rimborso parziale o totale della spesa.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer role="contentinfo">
+    <div class="footer-content">
+        <p>© <span id="current-year">2026</span> — Dr. Savianu Emanuel · Studio Medico Ippocrate, Arezzo</p>
+        <p style="font-size: 0.8rem; margin-top: 6px; opacity: 0.7;">Informazioni valide per AUSL Toscana Sud Est. Per aggiornamenti sui tempi di attesa e modalità di accesso diretto, verificare sempre con il CUP al momento della prenotazione.</p>
+    </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js?v=9"></script>
+</body>
+</html>
