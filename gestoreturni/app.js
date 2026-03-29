@@ -940,37 +940,11 @@ function renderStep6() {
 
 function init() {
   loadFromStorage();
-  if (state.staff.length === 0) {
-    state.config.roles = [{
-      id: 'role-doctor',
-      name: 'Medico',
-      color: '#3b82f6'
-    }];
-    state.config.shifts = [{
-      id: 'shift-mat',
-      label: 'Mattina',
-      startTime: '08:00',
-      endTime: '14:00',
-      hours: 6,
-      icon: '🌅'
-    }];
-    state.config.activities = [{
-      id: 'activity-default',
-      name: 'M.S.Savino',
-      location: 'M.S.Savino',
-      requirements: [{ roleId: 'role-doctor', count: 1 }]
-    }];
-    state.staff = [{
-      id: generateId(),
-      name: 'Dott. Savianu',
-      roleId: 'role-doctor',
-      maxWeeklyHours: 24,
-      color: '#3b82f6',
-      unavailability: []
-    }];
-    saveToStorage();
+  if (state.staff.length === 0 && state.config.activities.length === 0) {
+    startWizard();
+  } else {
+    renderAll();
   }
-  renderAll();
 }
 
 // ====================================================
