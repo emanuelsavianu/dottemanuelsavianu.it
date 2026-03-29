@@ -633,6 +633,16 @@ function startWizard() {
   renderWizardStep();
 }
 
+function restartWizard() {
+  localStorage.removeItem(STORAGE_CONFIG);
+  localStorage.removeItem(STORAGE_STAFF);
+  localStorage.removeItem(STORAGE_ASSIGNMENTS);
+  state.config = { roles: [], shifts: [], activities: [], defaultWeekView: false, showWeekends: false };
+  state.staff = [];
+  state.assignments = {};
+  startWizard();
+}
+
 function renderWizardStep() {
   const pct = (wizardStep / WIZARD_TOTAL * 100).toFixed(2);
   document.getElementById('wizard-progress-bar').style.width = `${pct}%`;
@@ -985,6 +995,7 @@ function closeSettingsModal() {
 
 document.getElementById('settings-close').addEventListener('click', closeSettingsModal);
 document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+document.getElementById('btn-restart-wizard').addEventListener('click', restartWizard);
 
 document.querySelectorAll('.settings-tab').forEach(btn => {
   btn.addEventListener('click', () => {
