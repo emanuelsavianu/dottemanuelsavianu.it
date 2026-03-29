@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Gestore Turni Universale Configurabile — Dott. Emanuel Savianu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body.dark-mode { background: #0f172a !important; color: #e2e8f0; }
+    body.dark-mode .bg-white { background: #1e293b !important; }
+    body.dark-mode .bg-slate-50 { background: #1e293b !important; }
+    body.dark-mode .text-slate-800 { color: #e2e8f0 !important; }
+    body.dark-mode .border-slate-200 { border-color: #334155 !important; }
+    #assign-dropdown { z-index: 9999; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
+
+<header class="bg-brand-800 text-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-calendar-check text-blue-300 text-xl"></i>
+      <h1 class="font-bold text-lg">Gestore Turni Universale Configurabile</h1>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <button id="btn-gemini-assign" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Assegna
+      </button>
+      <button id="btn-dark-mode" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-sm">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <button id="btn-settings" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-gear"></i> Impostazioni
+      </button>
+      <button id="btn-export" class="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-file-export"></i> Export
+      </button>
+      <label class="bg-slate-500 hover:bg-slate-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer">
+        <i class="fa-solid fa-file-import"></i> Import
+        <input type="file" id="import-file" accept=".json" class="hidden" />
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-screen-xl mx-auto px-4 py-6 grid grid-cols-4 gap-4">
+  <aside class="col-span-1 bg-white rounded-xl shadow p-4">
+    <h2 class="font-bold text-lg mb-4">Personale</h2>
+    <div id="sidebar-staff" class="space-y-2"></div>
+  </aside>
+  <main class="col-span-3">
+    <div id="cal-container" class="bg-white rounded-xl shadow p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="cal-title" class="font-bold text-xl"></h2>
+        <div class="flex gap-2">
+          <button id="cal-prev" class="bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded-lg text-sm"><i class="fa-solid fa-chevron-left"></i></button>
+          <button id="cal-today" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1 rounded-lg text-sm">Oggi</button>
+          <button id="cal-next" class="bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded-lg text-sm"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div id="cal-grid" class="space-y-4"></div>
+    </div>
+  </main>
+</div>
+
+<div id="settings-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+      <h2 class="font-bold text-xl">Impostazioni Struttura</h2>
+      <button id="settings-close" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div id="settings-content" class="p-4">
+  <div class="flex gap-4 border-b mb-4">
+    <button class="settings-tab active px-4 py-2 border-b-2 border-brand-600 font-medium text-brand-600" data-tab="roles">
+      <i class="fa-solid fa-user-tie"></i> Ruoli
+    </button>
+    <button class="settings-tab px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="shifts">
+      <i class="fa-solid fa-clock"></i> Turni
+    </button>
+    <button class="settings-tab px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="activities">
+      <i class="fa-solid fa-building"></i> Attività
+    </button>
+    <button class="settings-tab px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="staff">
+      <i class="fa-solid fa-users"></i> Personale
+    </button>
+  </div>
+
+  <div id="tab-roles" class="settings-tab-content">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">Ruoli Professionali</h3>
+      <button id="btn-add-role" class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-plus"></i> Aggiungi Ruolo
+      </button>
+    </div>
+    <div id="roles-list" class="space-y-2"></div>
+  </div>
+
+  <div id="tab-shifts" class="settings-tab-content hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">Turni (Fasce Orarie)</h3>
+      <button id="btn-add-shift" class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-plus"></i> Aggiungi Turno
+      </button>
+    </div>
+    <div id="shifts-list" class="space-y-2"></div>
+  </div>
+
+  <div id="tab-activities" class="settings-tab-content hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">Sedi / Attività</h3>
+      <button id="btn-add-activity" class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-plus"></i> Aggiungi Sede
+      </button>
+    </div>
+    <div id="activities-list" class="space-y-2"></div>
+  </div>
+
+  <div id="tab-staff" class="settings-tab-content hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">Personale</h3>
+      <button id="btn-add-staff" class="bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+        <i class="fa-solid fa-plus"></i> Aggiungi Membro
+      </button>
+    </div>
+    <div id="staff-list" class="space-y-2"></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div id="assign-dropdown" class="hidden fixed bg-white rounded-lg shadow-lg border border-slate-200 z-50 min-w-64 max-h-96 overflow-y-auto">
+  <div class="sticky top-0 bg-slate-100 border-b p-3 font-bold text-sm text-slate-700">
+    <div id="assign-slot-label"></div>
+  </div>
+  <div id="assign-list" class="p-2"></div>
+  <div id="assign-remove-wrap" class="hidden border-t p-2">
+    <button id="assign-remove" class="w-full text-red-600 hover:bg-red-50 px-3 py-2 rounded text-sm text-left">
+      <i class="fa-solid fa-trash-can"></i> Rimuovi assegnazione
+    </button>
+  </div>
+</div>
+
+<div id="gemini-loading" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 flex flex-col items-center gap-4">
+    <div class="animate-spin"><i class="fa-solid fa-spinner text-2xl text-brand-600"></i></div>
+    <p class="text-sm font-medium">Gemini sta assegnando i turni...</p>
+  </div>
+</div>
+
+<footer style="text-align: center; padding: 20px; margin-top: 40px; font-size: 0.85rem; color: #64748b; border-top: 1px solid #e2e8f0;">
+  <p style="margin: 0;">© 2026 Dott. Emanuel Savianu — Gestore Turni Universale Configurabile</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v145: added faq.html, esenzioni.html, impegnative.html, offline.html
-const CACHE_NAME = 'savianu-v145';
+// Cache version bumped to v146: added gestoreturni/gestoreturni.html and gestoreturni/app.js
+const CACHE_NAME = 'savianu-v146';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -21,7 +21,9 @@ const urlsToCache = [
   '/calcolatoreferiegemini.html',
   '/ferie.html',
   '/installazione.html',
-  '/xsegretarie.html'
+  '/xsegretarie.html',
+  '/gestoreturni/gestoreturni.html',
+  '/gestoreturni/app.js'
 ];
 
 // Helper: Check if request is same-origin
