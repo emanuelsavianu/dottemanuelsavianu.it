@@ -126,6 +126,20 @@
       <span><i class="fas fa-clock mr-1"></i> <b id="total-hours">0</b>h tot.</span>
     </div>
 
+    <!-- Filtro AFT (Facoltativo) -->
+    <div class="mb-3">
+      <label class="text-xs font-bold text-slate-600 uppercase tracking-widest mb-1 block">Filtra per AFT</label>
+      <select id="filter-aft" class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <option value="">-- Tutti --</option>
+        <option value="1">AFT 1</option>
+        <option value="2">AFT 2</option>
+        <option value="3">AFT 3</option>
+        <option value="4">AFT 4</option>
+        <option value="5">AFT 5</option>
+        <option value="none">Non assegnati</option>
+      </select>
+    </div>
+
     <!-- Search -->
     <input type="text" id="doctor-search" placeholder="🔍 Cerca medico..."
       class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs mb-3 focus:outline-none focus:ring-2 focus:ring-brand-500" />
@@ -275,6 +289,33 @@
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1">Colore Calendario</label>
         <div id="color-picker" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- AFT (Aggregazione Funzionale Territoriale) -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+          <span>AFT (Aggregazione Territoriale)</span>
+          <span class="font-normal text-slate-400 text-xs">(Facoltativo)</span>
+        </label>
+        <select id="modal-aft" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">-- Nessuna (non assegnato) --</option>
+          <option value="1">AFT 1</option>
+          <option value="2">AFT 2</option>
+          <option value="3">AFT 3</option>
+          <option value="4">AFT 4</option>
+          <option value="5">AFT 5</option>
+        </select>
+      </div>
+
+      <!-- Anzianità di Servizio -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+          <span>Anzianità di Servizio</span>
+          <span class="font-normal text-slate-400 text-xs">(Facoltativo)</span>
+        </label>
+        <input type="number" id="modal-seniority" placeholder="Es. 5" min="0" max="60"
+          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        <p class="text-xs text-slate-400 mt-1">Anni di servizio nel SSN</p>
       </div>
     </div>
     <!-- Footer modale -->
@@ -913,8 +954,9 @@ function renderSidebar() {
     return;
   }
 
-  // Leggi filtro ricerca corrente
+  // Leggi filtri correnti
   const searchVal = (document.getElementById('doctor-search').value || '').toLowerCase().trim();
+  const aftFilter = (document.getElementById('filter-aft').value || '').trim();
 
   // Mantieni placeSummary e aggiungi le carte medici dopo
   const docCardsSection = document.createElement('div');
@@ -923,6 +965,12 @@ function renderSidebar() {
   state.doctors.forEach(doc => {
     // Filtra per ricerca
     if (searchVal && !doc.name.toLowerCase().includes(searchVal)) return;
+
+    // Filtra per AFT
+    if (aftFilter) {
+      if (aftFilter === 'none' && doc.aft) return; // Mostra solo i non assegnati
+      if (aftFilter !== 'none' && doc.aft !== aftFilter) return; // Mostra solo quella AFT
+    }
 
     const color = getDoctorColor(doc);
     const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
@@ -966,6 +1014,11 @@ function renderSidebar() {
           ${isOver ? '<i class="fa-solid fa-triangle-exclamation ml-1"></i>' : ''}
           ${isComplete && !isOver ? '<i class="fa-solid fa-circle-check ml-1"></i>' : ''}
         </span>
+      </div>
+      <!-- AFT e Anzianità badges -->
+      <div class="flex gap-1.5 mb-2 flex-wrap">
+        ${doc.aft ? `<span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">AFT ${doc.aft}</span>` : ''}
+        ${doc.seniority ? `<span class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">${doc.seniority}a</span>` : ''}
       </div>
       <!-- Barra di progresso -->
       <div class="w-full bg-slate-200 rounded-full h-2">
@@ -1262,6 +1315,8 @@ function openDoctorModal(doctorId = null) {
   document.getElementById('modal-name').value = '';
   document.getElementById('modal-patients').value = '';
   document.getElementById('modal-hours').value = '38';
+  document.getElementById('modal-aft').value = '';
+  document.getElementById('modal-seniority').value = '';
 
   // Genera tabella disponibilità
   renderAvailTable(null);
@@ -1291,6 +1346,9 @@ function openDoctorModal(doctorId = null) {
     else badge.textContent = 'oltre 1.200 pazienti → 0h';
     renderAvailTable(doc.availability);
     renderColorPicker(doc.colorIndex ?? 0);
+    // AFT e Anzianità
+    document.getElementById('modal-aft').value = doc.aft || '';
+    document.getElementById('modal-seniority').value = doc.seniority || '';
     // Periodi di indisponibilità
     (doc.unavailPeriods || []).forEach(p => addUnavailPeriodRow(p));
   } else {
@@ -1380,6 +1438,8 @@ document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('modal-name').value.trim();
   const patients = parseInt(document.getElementById('modal-patients').value) || 0;
   const hours = parseInt(document.getElementById('modal-hours').value) || 38;
+  const aft = document.getElementById('modal-aft').value || '';
+  const seniority = parseInt(document.getElementById('modal-seniority').value) || null;
 
   if (!name) {
     showToast('Inserisci il nome del medico.', 'warning');
@@ -1418,7 +1478,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
       state.doctors[idx] = {
         ...state.doctors[idx],
         name, patients, weeklyHours: hours,
-        availability, colorIndex, unavailPeriods
+        availability, colorIndex, unavailPeriods, aft, seniority
       };
     }
   } else {
@@ -1426,7 +1486,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
     state.doctors.push({
       id: generateId(),
       name, patients, weeklyHours: hours,
-      availability, colorIndex, unavailPeriods
+      availability, colorIndex, unavailPeriods, aft, seniority
     });
   }
 
@@ -1557,10 +1617,14 @@ document.getElementById('btn-undo').addEventListener('click', undoAction);
 document.getElementById('btn-redo').addEventListener('click', redoAction);
 
 // ====================================================
-// RICERCA MEDICI SIDEBAR
+// RICERCA E FILTRI MEDICI SIDEBAR
 // ====================================================
 
 document.getElementById('doctor-search').addEventListener('input', () => {
+  renderSidebar();
+});
+
+document.getElementById('filter-aft').addEventListener('change', () => {
   renderSidebar();
 });
 
