@@ -711,6 +711,233 @@ function finishWizard() {
   renderAll();
 }
 
+function renderStep1() {
+  document.getElementById('wizard-step-content').innerHTML = `
+    <div class="text-center py-4">
+      <div class="text-6xl mb-6">📅</div>
+      <h1 class="text-2xl font-bold text-slate-800 mb-4">Benvenuto nel tuo Gestore Turni!</h1>
+      <p class="text-lg text-slate-500 leading-relaxed">
+        Impostiamo tutto in pochi semplici passaggi.<br>Ci vorranno meno di 2 minuti.
+      </p>
+    </div>
+  `;
+}
+
+function renderStep2() {
+  const chipsHtml = wRoles.map(r => `
+    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-semibold text-base" style="background:${r.color}">
+      ${r.name}
+      ${wRoles.length > 1 ? `<button class="w-remove-role opacity-75 hover:opacity-100 ml-1" data-id="${r.id}" style="line-height:1">×</button>` : ''}
+    </span>
+  `).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1 class="text-2xl font-bold text-slate-800 mb-2">Chi lavorerà in questi turni?</h1>
+    <p class="text-lg text-slate-500 mb-5">Il ruolo <strong>Medico</strong> è già aggiunto. Puoi aggiungerne altri o andare avanti.</p>
+    <div id="w-roles-chips" class="flex flex-wrap gap-2 mb-5">${chipsHtml}</div>
+    <div class="flex flex-wrap gap-3 mb-5">
+      <button id="w-add-infermiere" class="py-3 px-5 rounded-xl border-2 border-brand-200 text-brand-700 font-bold text-base hover:bg-brand-50 transition-colors">+ Infermiere</button>
+      <button id="w-add-oss" class="py-3 px-5 rounded-xl border-2 border-brand-200 text-brand-700 font-bold text-base hover:bg-brand-50 transition-colors">+ OSS</button>
+    </div>
+    <div class="flex gap-2">
+      <input id="w-role-input" type="text" placeholder="Altro ruolo..."
+        class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+      <button id="w-role-add" class="py-3 px-5 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 transition-colors text-base">+ Aggiungi</button>
+    </div>
+  `;
+
+  function addRole(name) {
+    if (!name || wRoles.find(r => r.name.toLowerCase() === name.toLowerCase())) return;
+    wRoles.push({ id: generateId(), name, color: COLOR_PALETTE[wRoles.length % COLOR_PALETTE.length].hex });
+    renderStep2(); updateWizardNextState();
+  }
+
+  document.getElementById('w-add-infermiere').addEventListener('click', () => addRole('Infermiere'));
+  document.getElementById('w-add-oss').addEventListener('click', () => addRole('OSS'));
+  document.getElementById('w-role-add').addEventListener('click', () => {
+    addRole(document.getElementById('w-role-input').value.trim());
+  });
+  document.getElementById('w-role-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addRole(e.target.value.trim());
+  });
+  document.querySelectorAll('.w-remove-role').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wRoles = wRoles.filter(r => r.id !== btn.dataset.id);
+      renderStep2(); updateWizardNextState();
+    });
+  });
+}
+
+function renderStep3() {
+  const chipsHtml = wShifts.map(s => `
+    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-100 text-brand-800 font-semibold text-base">
+      ${s.icon} ${s.label} (${s.startTime}–${s.endTime})
+      ${wShifts.length > 1 ? `<button class="w-remove-shift opacity-75 hover:opacity-100 ml-1" data-id="${s.id}" style="line-height:1">×</button>` : ''}
+    </span>
+  `).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1 class="text-2xl font-bold text-slate-800 mb-2">Quali sono gli orari di lavoro?</h1>
+    <p class="text-lg text-slate-500 mb-4">Usa i turni standard oppure crea i tuoi.</p>
+    <button id="w-use-standard" class="w-full py-4 px-6 rounded-xl bg-green-50 border-2 border-green-300 text-green-800 font-bold text-lg hover:bg-green-100 transition-colors mb-5 text-left">
+      ✅ Usa turni standard<br>
+      <span class="text-base font-normal text-green-700">Mattina 08:00–14:00 · Pomeriggio 14:00–20:00</span>
+    </button>
+    ${wShifts.length > 0 ? `<div class="flex flex-wrap gap-2 mb-5">${chipsHtml}</div>` : ''}
+    <p class="text-base font-semibold text-slate-400 mb-3">Oppure aggiungi un turno personalizzato:</p>
+    <div class="flex flex-col gap-2">
+      <input id="w-shift-label" type="text" placeholder="Nome turno (es. Notte)"
+        class="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+      <div class="flex gap-2 items-center">
+        <input id="w-shift-start" type="time" value="08:00"
+          class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+        <span class="text-slate-400 font-bold">→</span>
+        <input id="w-shift-end" type="time" value="14:00"
+          class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+      </div>
+      <button id="w-shift-add" class="py-3 px-5 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 transition-colors text-base">+ Aggiungi turno</button>
+    </div>
+  `;
+
+  document.getElementById('w-use-standard').addEventListener('click', () => {
+    wShifts = [
+      { id: generateId(), label: 'Mattina',    startTime: '08:00', endTime: '14:00', hours: 6, icon: '🌅' },
+      { id: generateId(), label: 'Pomeriggio', startTime: '14:00', endTime: '20:00', hours: 6, icon: '🌇' }
+    ];
+    renderStep3(); updateWizardNextState();
+  });
+
+  document.getElementById('w-shift-add').addEventListener('click', () => {
+    const label = document.getElementById('w-shift-label').value.trim();
+    const start = document.getElementById('w-shift-start').value;
+    const end   = document.getElementById('w-shift-end').value;
+    if (!label || !start || !end) return;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let hours = (eh * 60 + em - sh * 60 - sm) / 60;
+    if (hours <= 0) hours += 24;
+    const iconMap = { mattina: '🌅', pomeriggio: '🌇', notte: '🌙' };
+    const icon = iconMap[label.toLowerCase()] || '⏰';
+    wShifts.push({ id: generateId(), label, startTime: start, endTime: end, hours: parseFloat(hours.toFixed(1)), icon });
+    renderStep3(); updateWizardNextState();
+  });
+
+  document.querySelectorAll('.w-remove-shift').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wShifts = wShifts.filter(s => s.id !== btn.dataset.id);
+      renderStep3(); updateWizardNextState();
+    });
+  });
+}
+
+function renderStep4() {
+  const chipsHtml = wActivities.map(a => `
+    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 text-amber-800 font-semibold text-base">
+      🏥 ${a.name}
+      <button class="w-remove-activity opacity-75 hover:opacity-100 ml-1" data-id="${a.id}" style="line-height:1">×</button>
+    </span>
+  `).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1 class="text-2xl font-bold text-slate-800 mb-2">Dove si svolgono i turni?</h1>
+    <p class="text-lg text-slate-500 mb-5">Scrivi il nome della tua sede o reparto.</p>
+    ${wActivities.length > 0 ? `<div class="flex flex-wrap gap-2 mb-5">${chipsHtml}</div>` : ''}
+    <div class="flex gap-2">
+      <input id="w-activity-input" type="text" placeholder="es. M.S. Savino, Guardia Medica..."
+        class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+      <button id="w-activity-add" class="py-3 px-5 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 transition-colors text-base">+ Aggiungi</button>
+    </div>
+    ${wActivities.length === 0 ? '<p class="text-sm text-rose-500 mt-3 font-medium">⚠️ Aggiungi almeno una sede per continuare.</p>' : ''}
+  `;
+
+  function addActivity() {
+    const val = document.getElementById('w-activity-input').value.trim();
+    if (!val) return;
+    wActivities.push({ id: generateId(), name: val });
+    renderStep4(); updateWizardNextState();
+  }
+
+  document.getElementById('w-activity-add').addEventListener('click', addActivity);
+  document.getElementById('w-activity-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addActivity();
+  });
+  document.querySelectorAll('.w-remove-activity').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wActivities = wActivities.filter(a => a.id !== btn.dataset.id);
+      renderStep4(); updateWizardNextState();
+    });
+  });
+}
+
+function renderStep5() {
+  const roleOptions = wRoles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  const staffHtml = wStaff.map(s => {
+    const role = wRoles.find(r => r.id === s.roleId);
+    return `
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${s.color}"></div>
+        <span class="flex-1 font-semibold text-slate-700 text-base">${s.name}</span>
+        <span class="text-sm px-3 py-1 rounded-full text-white" style="background:${role?.color || '#64748b'}">${role?.name || ''}</span>
+        <button class="w-remove-staff text-slate-400 hover:text-rose-500 text-xl font-bold leading-none" data-id="${s.id}">×</button>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1 class="text-2xl font-bold text-slate-800 mb-2">Aggiungiamo i tuoi colleghi</h1>
+    <p class="text-lg text-slate-500 mb-5">Puoi saltare questo passaggio e aggiungere il personale in seguito dalle Impostazioni.</p>
+    <div class="flex flex-col gap-2 mb-5">
+      <input id="w-staff-name" type="text" placeholder="Nome e cognome..."
+        class="border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">
+      <div class="flex gap-2">
+        <select id="w-staff-role" class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-brand-400">${roleOptions}</select>
+        <button id="w-staff-add" class="py-3 px-5 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition-colors text-base">+ Aggiungi</button>
+      </div>
+    </div>
+    ${wStaff.length > 0
+      ? `<div class="divide-y divide-slate-100">${staffHtml}</div>`
+      : '<p class="text-slate-400 text-base italic">Nessun collega aggiunto ancora.</p>'}
+  `;
+
+  function addStaff() {
+    const name = document.getElementById('w-staff-name').value.trim();
+    const roleId = document.getElementById('w-staff-role').value;
+    if (!name) return;
+    wStaff.push({ id: generateId(), name, roleId, color: COLOR_PALETTE[wStaff.length % COLOR_PALETTE.length].hex });
+    renderStep5();
+  }
+
+  document.getElementById('w-staff-add').addEventListener('click', addStaff);
+  document.getElementById('w-staff-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addStaff();
+  });
+  document.querySelectorAll('.w-remove-staff').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wStaff = wStaff.filter(s => s.id !== btn.dataset.id);
+      renderStep5();
+    });
+  });
+}
+
+function renderStep6() {
+  document.getElementById('wizard-step-content').innerHTML = `
+    <div class="text-center py-4">
+      <div class="text-6xl mb-6">✅</div>
+      <h1 class="text-2xl font-bold text-slate-800 mb-4">Tutto pronto!</h1>
+      <p class="text-lg text-slate-500 mb-8">
+        ${wRoles.length} ruol${wRoles.length === 1 ? 'o' : 'i'} &middot;
+        ${wShifts.length} turn${wShifts.length === 1 ? 'o' : 'i'} &middot;
+        ${wActivities.length} sed${wActivities.length === 1 ? 'e' : 'i'} &middot;
+        ${wStaff.length} collegh${wStaff.length === 1 ? 'i' : 'i'}
+      </p>
+      <button id="w-finish" class="w-full py-5 px-8 rounded-2xl bg-green-600 text-white font-bold text-xl hover:bg-green-700 transition-colors shadow-lg">
+        Inizia a usare il programma →
+      </button>
+    </div>
+  `;
+  document.getElementById('w-finish').addEventListener('click', finishWizard);
+}
+
 function init() {
   loadFromStorage();
   if (state.staff.length === 0) {
