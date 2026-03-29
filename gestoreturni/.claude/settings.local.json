@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"refactor: rename Gemini auto-assign to auto-assign in HTML:*)",
+      "Bash(git commit -m \"fix: replace Gemini API auto-assign with local greedy algorithm:*)",
+      "Bash(git commit -m \"feat: add onboarding wizard modal HTML structure:*)",
+      "Bash(git commit -m \"fix: add ARIA attributes to wizard modal for accessibility:*)",
+      "Bash(node:*)",
+      "Bash(git commit -m \"feat: add wizard state variables and core functions:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(pkill:*)",
+      "Bash(xargs kill:*)",
+      "Bash(git commit -m \"feat: add all 6 wizard step renderer functions:*)",
+      "Bash(git commit -m \"feat: add onboarding wizard for first-time setup:*)",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_handle_dialog"
+    ]
+  }
+}
