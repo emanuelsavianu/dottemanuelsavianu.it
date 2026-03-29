@@ -634,12 +634,14 @@ function startWizard() {
 }
 
 function restartWizard() {
+  if (!confirm('Ricominciare la configurazione guidata?\n\nATTENZIONE: tutti i dati (turni, personale, sedi) verranno cancellati.')) return;
   localStorage.removeItem(STORAGE_CONFIG);
   localStorage.removeItem(STORAGE_STAFF);
   localStorage.removeItem(STORAGE_ASSIGNMENTS);
   state.config = { roles: [], shifts: [], activities: [], defaultWeekView: false, showWeekends: false };
   state.staff = [];
   state.assignments = {};
+  closeSettingsModal();
   startWizard();
 }
 
