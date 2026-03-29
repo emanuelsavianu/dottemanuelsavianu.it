@@ -38,8 +38,8 @@
       <h1 class="font-bold text-lg">Gestore Turni Universale Configurabile</h1>
     </div>
     <div class="flex gap-2 flex-wrap">
-      <button id="btn-gemini-assign" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Assegna
+      <button id="btn-auto-assign" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Assegna Automaticamente
       </button>
       <button id="btn-dark-mode" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-sm">
         <i class="fa-solid fa-moon"></i>
@@ -155,10 +155,10 @@
   </div>
 </div>
 
-<div id="gemini-loading" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+<div id="auto-assign-loading" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
   <div class="bg-white rounded-lg p-6 flex flex-col items-center gap-4">
     <div class="animate-spin"><i class="fa-solid fa-spinner text-2xl text-brand-600"></i></div>
-    <p class="text-sm font-medium">Gemini sta assegnando i turni...</p>
+    <p class="text-sm font-medium">Assegnazione in corso...</p>
   </div>
 </div>
 
