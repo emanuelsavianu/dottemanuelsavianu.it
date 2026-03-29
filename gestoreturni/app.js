@@ -612,6 +612,105 @@ function autoAssign() {
 
 document.getElementById('btn-auto-assign').addEventListener('click', autoAssign);
 
+// ====================================================
+// ONBOARDING WIZARD
+// ====================================================
+
+let wizardStep = 1;
+const WIZARD_TOTAL = 6;
+let wRoles = [];
+let wShifts = [];
+let wActivities = [];
+let wStaff = [];
+
+function startWizard() {
+  wRoles = [{ id: generateId(), name: 'Medico', color: COLOR_PALETTE[0].hex }];
+  wShifts = [];
+  wActivities = [];
+  wStaff = [];
+  wizardStep = 1;
+  document.getElementById('onboarding-wizard').classList.remove('hidden');
+  renderWizardStep();
+}
+
+function renderWizardStep() {
+  const pct = (wizardStep / WIZARD_TOTAL * 100).toFixed(2);
+  document.getElementById('wizard-progress-bar').style.width = `${pct}%`;
+  document.getElementById('wizard-step-label').textContent = `Passo ${wizardStep} di ${WIZARD_TOTAL}`;
+
+  // Clone buttons to remove previous event listeners
+  ['wizard-back', 'wizard-next'].forEach(id => {
+    const el = document.getElementById(id);
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+  });
+
+  const backBtn = document.getElementById('wizard-back');
+  const nextBtn = document.getElementById('wizard-next');
+
+  backBtn.classList.toggle('hidden', wizardStep === 1);
+  nextBtn.classList.toggle('hidden', wizardStep === 6);
+
+  const stepFns = [null, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6];
+  stepFns[wizardStep]();
+
+  backBtn.addEventListener('click', () => { wizardStep--; renderWizardStep(); });
+
+  if (wizardStep < 6) {
+    updateWizardNextState();
+    nextBtn.addEventListener('click', () => {
+      if (wizardAdvance()) { wizardStep++; renderWizardStep(); }
+    });
+  }
+}
+
+function updateWizardNextState() {
+  const nextBtn = document.getElementById('wizard-next');
+  if (!nextBtn) return;
+  const valid =
+    (wizardStep === 2 && wRoles.length >= 1) ||
+    (wizardStep === 3 && wShifts.length >= 1) ||
+    (wizardStep === 4 && wActivities.length >= 1) ||
+    (wizardStep === 1 || wizardStep === 5);
+  nextBtn.disabled = !valid;
+}
+
+function wizardAdvance() {
+  // Step 4: auto-add typed text if present
+  if (wizardStep === 4) {
+    const input = document.getElementById('w-activity-input');
+    if (input && input.value.trim()) {
+      wActivities.push({ id: generateId(), name: input.value.trim() });
+    }
+  }
+  if (wizardStep === 2 && wRoles.length < 1) return false;
+  if (wizardStep === 3 && wShifts.length < 1) return false;
+  if (wizardStep === 4 && wActivities.length < 1) return false;
+  return true;
+}
+
+function finishWizard() {
+  state.config.roles = wRoles;
+  state.config.shifts = wShifts;
+  state.config.activities = wActivities.map(a => ({
+    id: a.id,
+    name: a.name,
+    location: a.name,
+    requirements: wRoles.length > 0 ? [{ roleId: wRoles[0].id, count: 1 }] : []
+  }));
+  state.staff = wStaff.map(s => ({
+    id: s.id,
+    name: s.name,
+    roleId: s.roleId,
+    color: s.color,
+    maxWeeklyHours: 38,
+    unavailability: []
+  }));
+  saveToStorage();
+  document.getElementById('onboarding-wizard').classList.add('hidden');
+  renderAll();
+}
+
 function init() {
   loadFromStorage();
   if (state.staff.length === 0) {
