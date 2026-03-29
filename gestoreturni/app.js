@@ -1242,6 +1242,92 @@ document.getElementById('btn-add-activity').addEventListener('click', () => {
 });
 
 // ====================================================
+// UNAVAILABILITY MODAL
+// ====================================================
+
+let currentUnavailStaffId = null;
+
+function openUnavailabilityModal(staffId) {
+  currentUnavailStaffId = staffId;
+  const staff = getStaffById(staffId);
+  if (!staff) return;
+  document.getElementById('unavail-modal-title').textContent = staff.name;
+  document.getElementById('unavail-modal-subtitle').textContent = 'Ferie e periodi di indisponibilità';
+  document.getElementById('unavail-from').value = '';
+  document.getElementById('unavail-to').value = '';
+  document.getElementById('unavail-note').value = '';
+  renderUnavailabilityList();
+  document.getElementById('unavailability-modal').classList.remove('hidden');
+}
+
+function closeUnavailabilityModal() {
+  document.getElementById('unavailability-modal').classList.add('hidden');
+  currentUnavailStaffId = null;
+}
+
+function renderUnavailabilityList() {
+  const staff = getStaffById(currentUnavailStaffId);
+  const container = document.getElementById('unavail-list');
+  if (!staff || staff.unavailability.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-sm italic text-center py-4">Nessun periodo registrato.</p>';
+    return;
+  }
+  const typeLabel = { ferie: '🏖️ Ferie', malattia: '🤒 Malattia', indisponibile: '🚫 Indisponibile' };
+  container.innerHTML = [...staff.unavailability]
+    .sort((a, b) => a.from.localeCompare(b.from))
+    .map(u => `
+      <div class="flex items-start justify-between p-3 border border-slate-200 rounded-lg mb-2 bg-white">
+        <div>
+          <p class="font-semibold text-sm text-slate-800">${typeLabel[u.type] || u.type}</p>
+          <p class="text-sm text-slate-600">${formatDateIT(u.from)} → ${formatDateIT(u.to)}</p>
+          ${u.note ? `<p class="text-xs text-slate-400 mt-0.5">${u.note}</p>` : ''}
+        </div>
+        <button class="text-slate-400 hover:text-red-500 text-sm ml-2 mt-0.5" onclick="deleteUnavailability('${u.id}')">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    `).join('');
+}
+
+function formatDateIT(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function addUnavailability() {
+  const staff = getStaffById(currentUnavailStaffId);
+  if (!staff) return;
+  const from = document.getElementById('unavail-from').value;
+  const to = document.getElementById('unavail-to').value;
+  const type = document.getElementById('unavail-type').value;
+  const note = document.getElementById('unavail-note').value.trim();
+  if (!from || !to) { alert('Seleziona data inizio e fine.'); return; }
+  if (to < from) { alert('La data di fine deve essere uguale o successiva alla data di inizio.'); return; }
+  staff.unavailability.push({ id: generateId(), type, from, to, note });
+  saveToStorage();
+  renderUnavailabilityList();
+  renderStaffList();
+  renderAll();
+  document.getElementById('unavail-from').value = '';
+  document.getElementById('unavail-to').value = '';
+  document.getElementById('unavail-note').value = '';
+}
+
+function deleteUnavailability(periodId) {
+  const staff = getStaffById(currentUnavailStaffId);
+  if (!staff) return;
+  staff.unavailability = staff.unavailability.filter(u => u.id !== periodId);
+  saveToStorage();
+  renderUnavailabilityList();
+  renderStaffList();
+  renderAll();
+}
+
+document.getElementById('unavail-close').addEventListener('click', closeUnavailabilityModal);
+document.getElementById('unavail-add').addEventListener('click', addUnavailability);
+
+// ====================================================
 // STAFF CRUD
 // ====================================================
 function renderStaffList() {
@@ -1265,9 +1351,10 @@ function renderStaffList() {
           <p class="text-xs text-slate-500">${role?.name} — ${staff.maxWeeklyHours}h/week</p>
         </div>
       </div>
-      <div class="flex gap-1">
-        <button class="text-slate-400 hover:text-brand-600 text-sm" onclick="editStaff('${staff.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
-        <button class="text-slate-400 hover:text-red-500 text-sm" onclick="deleteStaff('${staff.id}')"><i class="fa-solid fa-trash-can"></i></button>
+      <div class="flex gap-1 items-center">
+        <button class="text-slate-400 hover:text-amber-500 text-sm px-1" onclick="openUnavailabilityModal('${staff.id}')" title="Gestisci indisponibilità"><i class="fa-solid fa-calendar-xmark"></i>${staff.unavailability.length > 0 ? `<span class="ml-1 text-xs bg-amber-100 text-amber-700 rounded px-1">${staff.unavailability.length}</span>` : ''}</button>
+        <button class="text-slate-400 hover:text-brand-600 text-sm px-1" onclick="editStaff('${staff.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="text-slate-400 hover:text-red-500 text-sm px-1" onclick="deleteStaff('${staff.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
     `;
     list.appendChild(div);
