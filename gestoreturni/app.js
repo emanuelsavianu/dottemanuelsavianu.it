@@ -546,90 +546,71 @@ function renderSidebar() {
 }
 
 // ====================================================
-// GEMINI AI INTEGRATION
+// AUTO-ASSIGN (algoritmo locale, nessuna API richiesta)
 // ====================================================
 
-const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
-
-async function callGeminiToAssign() {
+function autoAssign() {
   if (state.staff.length === 0) {
-    alert('Aggiungi prima del personale');
+    alert('Aggiungi prima del personale nelle Impostazioni');
     return;
   }
 
   const year = state.calYear;
   const month = state.calMonth;
   const lastDay = new Date(year, month + 1, 0).getDate();
+  let count = 0;
 
-  const emptySlots = [];
   for (let day = 1; day <= lastDay; day++) {
     const cellDate = new Date(year, month, day);
     const jsDay = cellDate.getDay();
     if (jsDay === 0 || jsDay === 6) continue;
     const dateKey = toDateKey(cellDate);
+    const weekStart = getWeekStart(cellDate);
 
     state.config.activities.forEach(activity => {
-      state.config.shifts.forEach((shift, shiftIdx) => {
-        (activity.requirements[0]?.count || 1) > 0 && Array.from({ length: activity.requirements[0]?.count || 1 }).forEach((_, slot) => {
+      state.config.shifts.forEach(shift => {
+        const required = activity.requirements[0]?.count || 1;
+        const requiredRoleId = activity.requirements[0]?.roleId;
+
+        for (let slot = 0; slot < required; slot++) {
           const slotKey = `${dateKey}_${shift.id}_${activity.id}_${slot}`;
-          if (!state.assignments[slotKey]) emptySlots.push(slotKey);
-        });
+          if (state.assignments[slotKey]) continue;
+
+          const candidates = state.staff.filter(s => {
+            if (requiredRoleId && s.roleId !== requiredRoleId) return false;
+            if (!isStaffAvailable(s.id, dateKey)) return false;
+            // Non assegnare se già in turno in questo stesso shift (qualsiasi attività/slot)
+            const prefix = `${dateKey}_${shift.id}_`;
+            const alreadyBusy = Object.entries(state.assignments)
+              .some(([k, v]) => v === s.id && k.startsWith(prefix));
+            return !alreadyBusy;
+          });
+
+          if (candidates.length === 0) continue;
+
+          // Scegli chi ha meno ore settimanali assegnate
+          candidates.sort((a, b) =>
+            getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
+          );
+
+          state.assignments[slotKey] = candidates[0].id;
+          count++;
+        }
       });
     });
   }
 
-  if (emptySlots.length === 0) {
+  if (count === 0) {
     alert('Non ci sono turni vuoti da assegnare');
     return;
   }
 
-  document.getElementById('gemini-loading').classList.remove('hidden');
-
-  const promptData = {
-    task: 'Assegna il personale ai turni vuoti',
-    rules: 'Non assegnare lo stesso personale a due attività diverse nello stesso turno. Rispetta i limiti orari settimanali. Restituisci un JSON con chiave = slotKey e valore = staffId.',
-    staff: state.staff.map(s => ({ id: s.id, name: s.name, roleId: s.roleId, maxWeeklyHours: s.maxWeeklyHours })),
-    emptySlots,
-    alreadyAssigned: state.assignments
-  };
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: JSON.stringify(promptData) }] }],
-        generationConfig: { response_mime_type: 'application/json', temperature: 0.2 }
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.error) throw new Error(data.error.message);
-
-    const newAssignments = JSON.parse(data.candidates[0].content.parts[0].text);
-    const emptySlotsSet = new Set(emptySlots);
-    let count = 0;
-
-    for (const [key, staffId] of Object.entries(newAssignments)) {
-      if (emptySlotsSet.has(key)) {
-        state.assignments[key] = staffId;
-        count++;
-      }
-    }
-
-    saveToStorage();
-    renderAll();
-    alert(`Gemini ha assegnato ${count} turni`);
-  } catch (err) {
-    console.error(err);
-    alert(`Errore AI: ${err.message}`);
-  } finally {
-    document.getElementById('gemini-loading').classList.add('hidden');
-  }
+  saveToStorage();
+  renderAll();
+  alert(`Assegnati ${count} turni automaticamente`);
 }
 
-document.getElementById('btn-gemini-assign').addEventListener('click', callGeminiToAssign);
+document.getElementById('btn-auto-assign').addEventListener('click', autoAssign);
 
 function init() {
   loadFromStorage();
