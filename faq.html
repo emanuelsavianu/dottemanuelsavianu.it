@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="styles.css?v=11">
+    <link rel="stylesheet" href="styles.css?v=12">
 
     <style>
         :root {
@@ -294,6 +294,14 @@
             <div class="icon-badge"><i class="fas fa-question-circle"></i></div>
             <h1>Domande Frequenti</h1>
             <p>Risposte alle domande più comuni dei pazienti dello Studio Medico Ippocrate</p>
+        </div>
+
+        <!-- FAQ Filter -->
+        <div class="search-container" style="max-width: 600px; margin: 0 auto 30px;">
+            <div class="search-input-group">
+                <i class="fas fa-search search-input-icon" aria-hidden="true"></i>
+                <input type="text" id="search-faq" class="search-input" placeholder="Cerca tra le domande frequenti..." aria-label="Filtra domande frequenti">
+            </div>
         </div>
 
         <!-- ═══ RICETTE E PRESCRIZIONI ═══ -->
@@ -612,24 +620,6 @@
 </footer>
 
 <script src="config.js"></script>
-<script src="app.js?v=9"></script>
-<script>
-    function toggleFaq(header) {
-        const body = header.nextElementSibling;
-        const isOpen = header.classList.contains('open');
-        // Close all
-        document.querySelectorAll('.accordion-header').forEach(h => {
-            h.classList.remove('open');
-            h.setAttribute('aria-expanded', 'false');
-        });
-        document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
-        // Open clicked (if it was closed)
-        if (!isOpen) {
-            header.classList.add('open');
-            header.setAttribute('aria-expanded', 'true');
-            body.classList.add('open');
-        }
-    }
-</script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
