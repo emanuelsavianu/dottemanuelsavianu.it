@@ -30,7 +30,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="styles.css?v=11">
+    <link rel="stylesheet" href="styles.css?v=12">
 
 
 <style>
@@ -520,6 +520,15 @@
                     <i class="fas fa-tools" aria-hidden="true"></i>
                     <h2>Strumenti e Risorse</h2>
                 </div>
+
+                <!-- Strumenti Filter -->
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <div class="search-input-group">
+                        <i class="fas fa-search search-input-icon" aria-hidden="true"></i>
+                        <input type="text" id="search-tools" class="search-input" placeholder="Cerca tra gli strumenti..." aria-label="Filtra strumenti e risorse">
+                    </div>
+                </div>
+
                 <div class="action-grid tools-grid-auto">
                     <a href="https://portalemedico.ssr.toscana.it/portale/"
                        target="_blank" rel="noopener noreferrer"
@@ -1106,7 +1115,7 @@
 </footer>
 
 <script src="config.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 
 <script>
     if ('serviceWorker' in navigator) {
@@ -1117,23 +1126,6 @@
         });
     }
 
-    function toggleAccordion(header) {
-        const content = header.nextElementSibling;
-        const isActive = header.classList.contains('active');
-        const allHeaders = document.querySelectorAll('.accordion-header');
-        const allContents = document.querySelectorAll('.accordion-content');
-
-        allHeaders.forEach(h => h.classList.remove('active'));
-        allContents.forEach(c => c.classList.remove('active'));
-
-        if (!isActive) {
-            header.classList.add('active');
-            content.classList.add('active');
-            header.setAttribute('aria-expanded', 'true');
-        } else {
-            header.setAttribute('aria-expanded', 'false');
-        }
-    }
 
     function togglePirCard() {
         const card = document.getElementById('pir-card');

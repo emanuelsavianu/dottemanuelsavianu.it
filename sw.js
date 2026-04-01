@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
 // Cache version bumped to v146: added gestoreturni/gestoreturni.html and gestoreturni/app.js
-const CACHE_NAME = 'savianu-v146';
+const CACHE_NAME = 'savianu-v147';
 const urlsToCache = [
   '/',
   '/index.html',
