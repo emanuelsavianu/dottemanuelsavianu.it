@@ -473,4 +473,110 @@ window.addEventListener('load', function() {
         const modal = document.querySelector('.welcome-card');
         if (modal) trapFocus(modal);
     }
+
+    // Initialize new UX features
+    initBackToTop();
+    initGlobalFilters();
 });
+
+// --- UNIFIED ACCORDION LOGIC ---
+function toggleAccordion(header) {
+    const content = header.nextElementSibling;
+    const activeClass = 'active';
+    const openClass = 'open';
+
+    const isActive = header.classList.contains(activeClass) || header.classList.contains(openClass);
+
+    // Close all accordions on the page for exclusivity
+    document.querySelectorAll('.accordion-header').forEach(h => {
+        h.classList.remove(activeClass, openClass);
+        h.setAttribute('aria-expanded', 'false');
+        if (h.nextElementSibling) {
+            h.nextElementSibling.classList.remove(activeClass, openClass);
+            // Some old styles might use display: none/block
+            if (h.nextElementSibling.style.display === 'block') {
+                h.nextElementSibling.style.display = 'none';
+            }
+        }
+    });
+
+    if (!isActive) {
+        header.classList.add(activeClass, openClass);
+        header.setAttribute('aria-expanded', 'true');
+        if (content) {
+            content.classList.add(activeClass, openClass);
+        }
+    }
+}
+
+// Map toggleFaq to the same unified logic
+const toggleFaq = toggleAccordion;
+
+// --- BACK TO TOP ---
+function initBackToTop() {
+    // Avoid double injection
+    if (document.querySelector('.back-to-top')) return;
+
+    const btn = document.createElement('button');
+    btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+    btn.className = 'back-to-top';
+    btn.setAttribute('aria-label', 'Torna all\'inizio');
+    btn.setAttribute('title', 'Torna all\'inizio della pagina');
+    document.body.appendChild(btn);
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+// --- LIVE FILTERS ---
+function initGlobalFilters() {
+    // 1. Filter for index.html "Strumenti e Risorse"
+    initLiveFilter('search-tools', '.tools-grid-auto a', 'span');
+
+    // 2. Filter for faq.html
+    initLiveFilter('search-faq', '.accordion-item', '.accordion-header span', '.faq-category');
+
+    // 3. Filter for esenzioni.html
+    initLiveFilter('search-esenzioni', '.exemption-table tr:not(:first-child)', '', '.section-block');
+
+    // 4. Filter for impegnative.html
+    initLiveFilter('search-impegnative', '.branch-table tr:not(:first-child)', '', '.section-block');
+}
+
+function initLiveFilter(inputId, itemsSelector, textSelector, parentToHideSelector) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    input.addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        const items = document.querySelectorAll(itemsSelector);
+
+        items.forEach(item => {
+            const textElement = textSelector ? item.querySelector(textSelector) : item;
+            const text = textElement ? textElement.textContent.toLowerCase() : '';
+
+            if (text.includes(term)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Optional: show/hide sections/categories if all their items are hidden
+        if (parentToHideSelector) {
+            document.querySelectorAll(parentToHideSelector).forEach(parent => {
+                const hasVisible = Array.from(parent.querySelectorAll(itemsSelector)).some(i => i.style.display !== 'none');
+                parent.style.display = hasVisible ? '' : 'none';
+            });
+        }
+    });
+}
