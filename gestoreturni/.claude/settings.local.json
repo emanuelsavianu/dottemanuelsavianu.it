@@ -23,7 +23,11 @@
       "mcp__plugin_playwright_playwright__browser_run_code",
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_handle_dialog",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d[0][''''text''''][:8000]\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d[0][''''text''''][:8000]\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3847/gestoreturni.html)",
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(npx serve:* change /model to haiku)"
     ]
   }
 }
