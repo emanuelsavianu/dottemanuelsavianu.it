@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v148: added colleghi/visite-private/protocollo pages; removed deleted logo files and offline.html
-const CACHE_NAME = 'savianu-v148';
+// Cache version bumped to v149: added faq-riforma.html
+const CACHE_NAME = 'savianu-v149';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,6 +11,7 @@ const urlsToCache = [
   '/colleghi.html',
   '/visite-private.html',
   '/protocollo-certificati-inps.html',
+  '/faq-riforma.html',
   '/cert-malattia.html',
   '/rsa.html',
   '/faq.html',

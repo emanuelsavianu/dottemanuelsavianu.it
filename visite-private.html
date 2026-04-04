@@ -261,6 +261,211 @@
         .hero-desc    { animation: fadeSlideUp 0.5s ease 0.20s both; }
         .btn-cta-hero { animation: fadeSlideUp 0.5s ease 0.28s both; }
 
+        /* ── FAQ Section (inline) ── */
+        .faq-inline-section {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 20px 60px;
+        }
+        .faq-inline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-color);
+        }
+        .faq-inline-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .faq-inline-heading h2 {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-weight: 700;
+            color: var(--primary);
+        }
+        body.dark-mode .faq-inline-heading h2 { color: #f3efe6; }
+        .faq-inline-heading .section-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 50px;
+            padding: 3px 10px;
+        }
+        .faq-fullpage-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 7px 14px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .faq-fullpage-link:hover { background: var(--accent); color: #ffffff; opacity: 1; }
+
+        /* Inline search */
+        .faq-inline-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 10px 18px;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+        .faq-inline-search:focus-within { border-color: var(--accent); }
+        .faq-inline-search i { color: var(--accent); font-size: 0.85rem; flex-shrink: 0; }
+        .faq-inline-search input {
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text-dark);
+            width: 100%;
+        }
+        .faq-inline-search input::placeholder { color: var(--text-medium); }
+
+        /* Pills */
+        .faq-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-bottom: 28px;
+        }
+        .faq-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-medium);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .faq-pill:hover { border-color: var(--accent); color: var(--primary); }
+        .faq-pill--active { background: var(--primary); color: #ffffff !important; border-color: var(--primary); }
+        body.dark-mode .faq-pill { background: #162438; color: var(--accent); border-color: var(--primary-light); }
+        body.dark-mode .faq-pill--active { background: var(--primary-light); border-color: var(--primary-light); color: #f3efe6 !important; }
+
+        /* FAQ sections inline */
+        .faq-isection { margin-bottom: 32px; }
+        .faq-isection-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid var(--accent);
+        }
+        body.dark-mode .faq-isection-title { color: #f3efe6; }
+        .isection-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            color: #fff;
+            font-size: 0.75rem;
+        }
+        .isection-dot--p { background: var(--primary); }
+        .isection-dot--c { background: var(--accent); }
+        .isection-dot--v { background: #2a7f56; }
+        .isection-dot--d { background: #1565c0; }
+        .isection-dot--s { background: #7b4fa6; }
+
+        /* FAQ items inline */
+        .faq-iitem {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .faq-iitem:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+        .faq-iquestion {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.86rem;
+            color: var(--primary);
+            gap: 12px;
+            user-select: none;
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+        body.dark-mode .faq-iquestion { color: #f3efe6; }
+        .faq-iquestion:hover { color: var(--accent); }
+        .faq-iquestion .ichevron {
+            font-size: 0.68rem;
+            color: var(--accent);
+            transition: transform 0.3s;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+        .faq-iitem.open .ichevron { transform: rotate(180deg); }
+        .faq-ianswer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .faq-ianswer-inner {
+            padding: 0 16px 16px;
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            line-height: 1.75;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+        .faq-ianswer-inner strong { color: var(--primary); }
+        body.dark-mode .faq-ianswer-inner strong { color: #e0b976; }
+        .faq-ianswer-inner ul { margin: 8px 0; padding-left: 18px; }
+        .faq-ianswer-inner li { margin-bottom: 5px; }
+        .faq-ianswer-inner .ibox {
+            background: var(--bg-gradient-1);
+            border-left: 3px solid var(--accent);
+            padding: 9px 12px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 12px 0 0;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+        }
+        .faq-ianswer-inner .ibox i { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+        body.dark-mode .faq-ianswer-inner .ibox { background: rgba(194,155,87,0.08); }
+
+        .faq-inline-no-results {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-medium);
+            font-size: 0.88rem;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 480px) {
             .page-topbar { padding: 14px 16px; }
@@ -353,6 +558,292 @@
 
     </section>
 
+    <!-- ── FAQ Riforma ─────────────────────────────────────── -->
+    <section class="faq-inline-section" id="faq-riforma" aria-label="Domande frequenti sulla nuova riforma dell'invalidità">
+
+        <div class="faq-inline-header">
+            <div class="faq-inline-heading">
+                <h2>Domande Frequenti sulla Riforma</h2>
+                <span class="section-badge">D.Lgs. 62/2024 · Arezzo</span>
+            </div>
+            <a href="faq-riforma.html" class="faq-fullpage-link" aria-label="Apri la guida completa con tutte le 22 domande">
+                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                Guida completa
+            </a>
+        </div>
+
+        <div class="faq-inline-search" role="search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="faq-isearch" placeholder="Cerca tra le domande sulla riforma…" aria-label="Cerca tra le domande frequenti sulla riforma">
+        </div>
+
+        <nav class="faq-pills" aria-label="Filtra per argomento">
+            <button class="faq-pill faq-pill--active" onclick="iFaqFilter('all')" data-isection="all"><i class="fa-solid fa-border-all" aria-hidden="true"></i> Tutte</button>
+            <button class="faq-pill" onclick="iFaqFilter('procedura')" data-isection="procedura"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Procedura</button>
+            <button class="faq-pill" onclick="iFaqFilter('certificato')" data-isection="certificato"><i class="fa-solid fa-file-medical" aria-hidden="true"></i> Certificato</button>
+            <button class="faq-pill" onclick="iFaqFilter('visita')" data-isection="visita"><i class="fa-solid fa-hospital-user" aria-hidden="true"></i> La Visita</button>
+            <button class="faq-pill" onclick="iFaqFilter('diritti')" data-isection="diritti"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Diritti</button>
+            <button class="faq-pill" onclick="iFaqFilter('speciale')" data-isection="speciale"><i class="fa-solid fa-star" aria-hidden="true"></i> Innovazioni</button>
+        </nav>
+
+        <!-- Sezione 1 -->
+        <div class="faq-isection" id="ifaq-procedura" data-isection="procedura">
+            <h3 class="faq-isection-title"><span class="isection-dot isection-dot--p" aria-hidden="true"><i class="fa-solid fa-rotate"></i></span> La Nuova Procedura</h3>
+
+            <div class="faq-iitem" data-isection="procedura">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cosa cambia dal 1° marzo 2026 per i cittadini di Arezzo?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Dal <strong>1° marzo 2026</strong> Arezzo entra nella sperimentazione della <strong>Riforma della Disabilità (D.Lgs. 62/2024)</strong>. La burocrazia viene dimezzata: l'INPS gestisce tutto. Basta che il vostro medico invii all'INPS il nuovo <strong>"Certificato Medico Introduttivo"</strong> tramite computer per avviare automaticamente la pratica.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="procedura">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Dopo essere stato dal medico, devo ancora andare al Patronato a fare la domanda?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>No, non serve più.</strong> L'invio telematico del certificato da parte del medico <strong>fa partire automaticamente tutta la pratica</strong>. Non è necessaria nessuna altra domanda amministrativa all'INPS.
+                    <div class="ibox"><i class="fa-solid fa-circle-check"></i><span>Il Patronato resta utile per gestire i dati IBAN e per eventuali ricorsi.</span></div>
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="procedura">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Il mio medico mi ha fatto il vecchio certificato a febbraio 2026. Cosa devo fare?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Se il certificato è datato prima del <strong>28 febbraio 2026</strong>, siete nel vecchio sistema. Dovete inviare la domanda all'INPS tramite Patronato entro quella data. Dal 1° marzo i vecchi certificati non abbinati a una domanda non sono più validi.
+                    <div class="ibox"><i class="fa-solid fa-triangle-exclamation"></i><span>Contattate subito il vostro Patronato se avete un vecchio certificato di gennaio o febbraio 2026.</span></div>
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Sezione 2 -->
+        <div class="faq-isection" id="ifaq-certificato" data-isection="certificato">
+            <h3 class="faq-isection-title"><span class="isection-dot isection-dot--c" aria-hidden="true"><i class="fa-solid fa-file-medical"></i></span> Il Certificato Medico</h3>
+
+            <div class="faq-iitem" data-isection="certificato">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Quali documenti devo portare al medico?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Portate tutta la vostra <strong>documentazione medica recente</strong>: referti di visite specialistiche, esami strumentali (TAC, radiografie, analisi), lettere di dimissioni ospedaliere e l'elenco dei farmaci in uso. Più è completa, più precisa sarà la valutazione INPS.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="certificato">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cosa mi rilascia il medico alla fine della visita?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Il medico vi consegna l'<strong>"Attestato di trasmissione"</strong> con il <strong>numero di protocollo ufficiale</strong> che conferma l'avvio della pratica INPS.
+                    <div class="ibox"><i class="fa-solid fa-bookmark"></i><span><strong>Conservatelo con cura:</strong> è la prova che la vostra domanda è stata inviata correttamente.</span></div>
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="certificato">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Devo per forza andare dal medico di famiglia o posso rivolgermi a uno specialista?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>Possono rilasciare il certificato</strong> anche specialisti ASL/ospedalieri, pediatri, medici di strutture private accreditate e liberi professionisti autorizzati INPS — come il Dott. Savianu.
+                    <div class="ibox"><i class="fa-solid fa-star"></i><span>Se siete ricoverati, il medico del reparto può avviare la pratica prima delle dimissioni.</span></div>
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Sezione 3 -->
+        <div class="faq-isection" id="ifaq-visita" data-isection="visita">
+            <h3 class="faq-isection-title"><span class="isection-dot isection-dot--v" aria-hidden="true"><i class="fa-solid fa-hospital-user"></i></span> La Visita con l'INPS</h3>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cosa succede dopo l'invio del certificato? Devo fare qualcosa?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>Non dovete fare nulla.</strong> Attendete a casa: l'INPS vi invierà una <strong>raccomandata</strong> con giorno, ora e luogo della visita medica collegiale.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>È obbligatoria la visita di persona all'INPS?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    No. Se la documentazione è chiara, potete chiedere la valutazione <strong>"sugli atti"</strong> senza presentarsi di persona. Sarà la Commissione INPS a decidere se le carte sono sufficienti.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Posso aggiungere nuovi esami dopo l'invio del certificato?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Sì. Avete tempo fino a <strong>7 giorni prima della visita</strong> per inviare ulteriori referti di strutture pubbliche o private accreditate.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Non posso muovermi da casa. Cosa succede?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Il vostro medico può segnalare l'<strong>"intrasportabilità"</strong> entro 7 giorni dalla convocazione: verrà concordata una <strong>visita domiciliare</strong>. Se avete altri impedimenti (es. ricovero), avvisate per chiedere una nuova data.
+                    <div class="ibox"><i class="fa-solid fa-triangle-exclamation"></i><span>Se non vi presentate senza avvisare, la pratica viene annullata.</span></div>
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cos'è il questionario WHODAS che mi faranno durante la visita?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Il <strong>WHODAS 2.0</strong> è un questionario internazionale sulle difficoltà quotidiane degli ultimi 30 giorni: lavarsi, vestirsi, muoversi, ricordare. Valuta <em>come la malattia incide sulla vita quotidiana</em>, non solo la diagnosi.
+                    <div class="ibox"><i class="fa-solid fa-people-arrows"></i><span>Un familiare o caregiver può rispondere al posto vostro se necessario.</span></div>
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="visita">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Posso farmi accompagnare durante la visita INPS?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>Sì.</strong> Avete il diritto di farvi assistere dal vostro <strong>medico di fiducia o da uno psicologo</strong>. Al questionario WHODAS può rispondere al posto vostro un familiare o il caregiver.
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Sezione 4 -->
+        <div class="faq-isection" id="ifaq-diritti" data-isection="diritti">
+            <h3 class="faq-isection-title"><span class="isection-dot isection-dot--d" aria-hidden="true"><i class="fa-solid fa-scale-balanced"></i></span> Tempi, Esiti e Diritti</h3>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Quanto tempo ci vorrà per la risposta dell'INPS?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Al massimo <strong>90 giorni</strong> dall'invio del certificato. Per <strong>patologie oncologiche</strong>, la corsia preferenziale riduce i tempi a soli <strong>15 giorni</strong>.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Ho un tumore, devo aspettare comunque 90 giorni?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>No.</strong> Le patologie oncologiche hanno una corsia preferenziale: la pratica si conclude entro <strong>15 giorni</strong> dall'invio del certificato.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Se mi riconoscono l'invalidità, come ricevo i pagamenti?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Dovrete comunicare all'INPS (online o tramite Patronato) i vostri <strong>dati IBAN e reddituali</strong>. Gli arretrati partono dal mese successivo all'invio del primo certificato.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>E se l'INPS mi nega l'invalidità o riconosce una percentuale troppo bassa?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Avete <strong>6 mesi</strong> per fare ricorso tramite avvocato, Patronato o Sindacato, o richiedere un <strong>Accertamento Tecnico Preventivo</strong> (perizia del Tribunale).
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Ho già l'invalidità da anni. Rischio di perderla con questa riforma?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>Assolutamente no.</strong> La riforma prevede la <strong>"non regressione"</strong>: chi ha già un verbale o riceve una prestazione non perde nulla e non viene richiamato a visita.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>La Legge 104 esiste ancora?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>Sì, le agevolazioni restano invariate.</strong> Cambiano solo le parole: "handicappato" diventa <em>"persona con necessità di sostegno"</em>. I benefici non cambiano.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="diritti">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Il nuovo verbale INPS ha una scadenza?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    <strong>No.</strong> Il nuovo verbale è a <strong>validità illimitata</strong>. L'INPS potrà richiedere una revisione solo in casi eccezionali stabiliti dal Ministero.
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Sezione 5 -->
+        <div class="faq-isection" id="ifaq-speciale" data-isection="speciale">
+            <h3 class="faq-isection-title"><span class="isection-dot isection-dot--s" aria-hidden="true"><i class="fa-solid fa-star"></i></span> Innovazioni e Casi Speciali</h3>
+
+            <div class="faq-iitem" data-isection="speciale">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cos'è il "Progetto di Vita" di cui si sente parlare?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Dopo il riconoscimento INPS, potrete chiedere un <strong>Progetto di Vita su misura</strong>: ASL, Comune e altri enti costruiranno insieme a voi e alla vostra famiglia un piano integrato di risorse mediche, assistenziali e aiuti a casa per permettervi di vivere con dignità.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="speciale">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Cos'è il "Budget di Progetto" in parole semplici?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Un piano personalizzato che riunisce tutte le risorse sanitarie, economiche e di assistenza domiciliare in un <strong>unico budget dedicato a voi</strong>. Non sarete lasciati soli con il foglio dell'invalidità.
+                </div></div>
+            </div>
+
+            <div class="faq-iitem" data-isection="speciale">
+                <button type="button" class="faq-iquestion" aria-expanded="false" onclick="iFaqToggle(this)">
+                    <span>Ho più di 70 anni e non sono autosufficiente. La procedura è la stessa?</span>
+                    <i class="fa-solid fa-chevron-down ichevron" aria-hidden="true"></i>
+                </button>
+                <div class="faq-ianswer"><div class="faq-ianswer-inner">
+                    Per gli over 70 non autosufficienti esiste un percorso <strong>specifico e più tutelante</strong> (decreto anziani). Il vostro medico o Patronato sapranno quale canale attivare.
+                    <div class="ibox"><i class="fa-solid fa-circle-info"></i><span>Se siete over 70 ma chiedete l'invalidità senza la condizione di non autosufficienza, seguite la procedura standard.</span></div>
+                </div></div>
+            </div>
+        </div>
+
+        <p id="faq-inline-no-results" class="faq-inline-no-results" aria-live="polite" hidden>
+            Nessuna domanda trovata. Prova con parole diverse o seleziona "Tutte".
+        </p>
+
+    </section>
+
     <!-- ── Footer ────────────────────────────────────────────── -->
     <footer class="page-footer">
         <span>Studio Medico Ippocrate &mdash; Via Ubaldo Pasqui 38, Arezzo (dal 1° Maggio: Piazza Saione 3) &mdash; Tel. <a href="tel:+3905751713428">0575 171 3428</a></span><br>
@@ -365,5 +856,86 @@
 </div>
 
 <script src="app.js"></script>
+<script>
+    // ── Inline FAQ accordion ──
+    function iFaqToggle(btn) {
+        var item = btn.closest('.faq-iitem');
+        var answer = item.querySelector('.faq-ianswer');
+        var isOpen = item.classList.contains('open');
+
+        document.querySelectorAll('#faq-riforma .faq-iitem.open').forEach(function(o) {
+            o.classList.remove('open');
+            o.querySelector('.faq-ianswer').style.maxHeight = null;
+            o.querySelector('.faq-iquestion').setAttribute('aria-expanded', 'false');
+        });
+
+        if (!isOpen) {
+            item.classList.add('open');
+            answer.style.maxHeight = answer.scrollHeight + 'px';
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    // ── Inline FAQ search ──
+    var iFaqSearch = document.getElementById('faq-isearch');
+    var iFaqNoRes  = document.getElementById('faq-inline-no-results');
+
+    if (iFaqSearch) {
+        iFaqSearch.addEventListener('input', function() {
+            var term = this.value.toLowerCase().trim();
+            var visible = 0;
+
+            document.querySelectorAll('.faq-pills .faq-pill').forEach(function(p) {
+                p.classList.toggle('faq-pill--active', p.dataset.isection === 'all');
+            });
+
+            document.querySelectorAll('#faq-riforma .faq-iitem').forEach(function(item) {
+                var q = item.querySelector('.faq-iquestion span');
+                var a = item.querySelector('.faq-ianswer-inner');
+                var text = (q ? q.textContent : '') + ' ' + (a ? a.textContent : '');
+                var match = !term || text.toLowerCase().includes(term);
+                item.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+
+            document.querySelectorAll('#faq-riforma .faq-isection').forEach(function(sec) {
+                var hasVis = Array.from(sec.querySelectorAll('.faq-iitem')).some(function(i) {
+                    return i.style.display !== 'none';
+                });
+                sec.style.display = hasVis ? '' : 'none';
+            });
+
+            iFaqNoRes.hidden = visible > 0;
+        });
+    }
+
+    // ── Inline FAQ section filter ──
+    function iFaqFilter(section) {
+        document.querySelectorAll('.faq-pills .faq-pill').forEach(function(p) {
+            p.classList.toggle('faq-pill--active', p.dataset.isection === section);
+        });
+
+        if (section === 'all') {
+            document.querySelectorAll('#faq-riforma .faq-isection, #faq-riforma .faq-iitem').forEach(function(el) {
+                el.style.display = '';
+            });
+        } else {
+            document.querySelectorAll('#faq-riforma .faq-isection').forEach(function(sec) {
+                sec.style.display = (sec.dataset.isection === section) ? '' : 'none';
+            });
+            document.querySelectorAll('#faq-riforma .faq-iitem').forEach(function(i) {
+                i.style.display = '';
+            });
+        }
+
+        if (iFaqSearch) iFaqSearch.value = '';
+        iFaqNoRes.hidden = true;
+
+        var target = section === 'all'
+            ? document.getElementById('faq-riforma')
+            : document.getElementById('ifaq-' + section);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+</script>
 </body>
 </html>
