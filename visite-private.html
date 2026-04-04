@@ -69,26 +69,32 @@
             gap: 6px;
             font-size: 0.8rem;
             font-weight: 600;
-            color: var(--text-medium);
+            color: var(--text-dark);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 7px 13px;
             text-decoration: none;
-            transition: border-color 0.2s, color 0.2s;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            background: transparent;
         }
         .btn-back:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+        body.dark-mode .btn-back { color: #f3efe6; }
+        body.dark-mode .btn-back:hover { color: var(--accent); border-color: var(--accent); }
+
         .btn-dark-toggle {
-            background: none;
+            background: transparent;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 8px 13px;
             cursor: pointer;
             font-size: 0.85rem;
-            color: var(--text-medium);
-            transition: border-color 0.2s, color 0.2s;
+            color: var(--text-dark);
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
             line-height: 1;
         }
         .btn-dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+        body.dark-mode .btn-dark-toggle { color: #f3efe6; }
+        body.dark-mode .btn-dark-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
         /* ── Hero section ── */
         .page-hero {
