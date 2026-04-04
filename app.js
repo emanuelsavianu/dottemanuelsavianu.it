@@ -256,7 +256,7 @@ function setLanguage(lang) {
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (translations[lang]?.[key]) el.innerHTML = translations[lang][key];
+        if (translations[lang]?.[key]) el.textContent = translations[lang][key];
     });
 }
 
@@ -323,9 +323,10 @@ function trapFocus(modal) {
     if (!anchor) return;
     const badge = document.createElement('span');
     badge.className = isOpen ? 'badge-open' : 'badge-closed';
-    badge.innerHTML = isOpen
-        ? '<i class="fas fa-circle"></i> Aperto ora'
-        : '<i class="fas fa-circle"></i> Chiuso';
+    badge.textContent = isOpen ? ' Aperto ora' : ' Chiuso';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-circle';
+    badge.prepend(icon);
     anchor.parentNode.appendChild(badge);
 })();
 
