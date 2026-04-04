@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+
+    <title>FAQ Nuova Riforma | Dr. Savianu Emanuel</title>
+    <meta name="description" content="Domande frequenti sulla Nuova Riforma dell'Invalidità Civile – Area Arezzo.">
+
+    <meta name="geo.region" content="IT-AR" />
+    <meta name="geo.placename" content="Arezzo" />
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://savianu.it/faq.html">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="it_IT">
+    <meta property="og:site_name" content="Studio Medico Ippocrate">
+    <meta property="og:title" content="FAQ Nuova Riforma | Dr. Savianu Emanuel">
+    <meta property="og:description" content="FAQ sulla Nuova Riforma dell'Invalidità Civile per i pazienti dello Studio Medico Ippocrate ad Arezzo.">
+    <meta property="og:url" content="https://savianu.it/faq.html">
+    <meta property="og:image" content="https://savianu.it/logo.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FAQ Nuova Riforma | Dr. Savianu Emanuel">
+    <meta name="twitter:description" content="FAQ sulla Nuova Riforma dell'Invalidità Civile per i pazienti dello Studio Medico Ippocrate ad Arezzo.">
+    <meta name="twitter:image" content="https://savianu.it/logo.png">
+
+    <meta name="theme-color" content="#1a2f4c">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+
+    <link rel="stylesheet" href="styles.css?v=17">
+
+    <style>
+        .faq-hero {
+            background: var(--primary);
+            border-bottom: 4px solid var(--accent);
+            color: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+            margin: -60px 0 30px 0;
+            position: relative;
+            z-index: 10;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        .faq-hero h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent);
+            font-family: var(--font-sans);
+        }
+        .faq-hero p {
+            font-size: 1rem;
+            opacity: 0.9;
+            color: #ffffff;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .faq-section {
+            margin-bottom: 25px;
+        }
+        .faq-section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .faq-section-title i {
+            font-size: 1.1rem;
+            color: var(--accent);
+            background: var(--primary);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .faq-item {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .faq-item:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent);
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary);
+            gap: 12px;
+            user-select: none;
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            font-family: inherit;
+        }
+        .faq-question:hover {
+            color: var(--accent);
+        }
+        .faq-question .chevron {
+            font-size: 0.8rem;
+            color: var(--accent);
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .faq-item.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .faq-answer-inner {
+            padding: 0 20px 20px;
+            font-size: 0.95rem;
+            color: var(--text-medium);
+            line-height: 1.7;
+            border-top: 1px solid var(--bg-gradient-1);
+            padding-top: 15px;
+        }
+        .faq-answer-inner strong {
+            color: var(--primary);
+        }
+        .faq-answer-inner .highlight-box {
+            background: var(--bg-gradient-1);
+            border-left: 4px solid var(--accent);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding: 8px 0;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        @media (max-width: 600px) {
+            .faq-hero { padding: 30px 15px; margin-top: -60px; }
+            .faq-container { padding: 0 12px 60px; }
+            .faq-question { padding: 15px; font-size: 0.95rem; }
+            .faq-answer-inner { padding: 0 15px 15px; padding-top: 12px; }
+        }
+
+        body.dark-mode .faq-section-title { color: var(--accent); }
+        body.dark-mode .faq-question { color: var(--accent); }
+        body.dark-mode .faq-question:hover { color: var(--text-dark); }
+        body.dark-mode .faq-answer-inner strong { color: var(--accent); }
+        body.dark-mode .faq-answer-inner .highlight-box { background: var(--bg-gradient-2); }
+        body.dark-mode .back-link { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<header role="banner" class="faq-hero">
+    <h1>Domande Frequenti (FAQ)</h1>
+    <p>La Nuova Riforma dell'Invalidità Civile</p>
+</header>
+
+<div class="faq-container">
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Torna al sito principale</a>
+
+    <nav class="faq-nav" aria-label="Navigazione FAQ">
+        <a href="#procedura">La Procedura</a>
+        <a href="#medico">Certificato Medico</a>
+        <a href="#visita">La Visita</a>
+        <a href="#esito">Esito e Pagamenti</a>
+    </nav>
+
+    <section class="faq-section" id="procedura">
+        <h2 class="faq-section-title"><i class="fas fa-file-alt"></i> La Nuova Procedura</h2>
+        <!-- FAQ 1 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>1. Cosa cambia ad Arezzo dal 1° marzo 2026?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    A partire dal 1° marzo 2026, Arezzo entra nella sperimentazione della nuova Riforma. La burocrazia è dimezzata: l'INPS gestisce tutto. Basta che il vostro medico invii telematicamente il nuovo "Certificato Medico Introduttivo".
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 2 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>2. Devo ancora andare al Patronato?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    No, non serve più. L'invio del certificato da parte del vostro medico fa partire automaticamente tutta la pratica. Non dovrete fare altre domande amministrative.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section" id="medico">
+        <h2 class="faq-section-title"><i class="fas fa-user-md"></i> Certificato Medico</h2>
+        <!-- FAQ 3 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>3. Quali documenti portare dal medico?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Portate tutta la documentazione recente: referti di visite specialistiche, esami strumentali (TAC, radiografie, analisi), lettere di dimissioni e l'elenco dei farmaci in uso.
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 4 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>4. Cosa mi rilascia il medico?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Il medico vi consegna l' "Attestato di trasmissione", un foglio con il numero di protocollo ufficiale che conferma l'avvio della pratica. Conservatelo con cura.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section" id="visita">
+        <h2 class="faq-section-title"><i class="fas fa-calendar-check"></i> La Visita</h2>
+        <!-- FAQ 5 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>5. Cosa succede dopo l'invio del certificato?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Non dovete fare nulla. Attendete a casa: riceverete una raccomandata dall'INPS con data, ora e luogo della visita medica collegiale.
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 6 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>6. Posso evitare la visita di persona?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Sì, se la documentazione medica è molto chiara, si può chiedere la valutazione "sugli atti". Sarà poi la Commissione INPS a decidere se è comunque necessaria la vostra presenza.
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 8 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>7. Posso aggiungere esami dopo la visita?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Sì, potete inviare o consegnare ulteriori referti (di strutture pubbliche o accreditate) fino a 7 giorni prima della data fissata per la visita.
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 10 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>8. E se non posso muovermi da casa?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    Se non potete essere trasportati, il vostro medico deve segnalare l'intrasportabilità entro 7 giorni dalla convocazione. Verrà quindi concordata una visita domiciliare.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section" id="esito">
+        <h2 class="faq-section-title"><i class="fas fa-euro-sign"></i> Esito e Pagamenti</h2>
+        <!-- FAQ 7 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>9. Tempi per la risposta?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    La pratica si conclude al massimo entro 90 giorni dall'invio del certificato. Per patologie oncologiche, i tempi sono ridotti a 15 giorni.
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 9 -->
+        <div class="faq-item">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
+                <span>10. Come ricevo l'assegno o l'accompagnamento?</span>
+                <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">
+                    In caso di riconoscimento, dovrete comunicare all'INPS (online o tramite Patronato) i vostri dati IBAN e reddituali. Gli arretrati decorrono dal mese successivo all'invio del certificato iniziale.
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function toggleFaq(el) {
+        var item = el.parentElement;
+        var answer = item.querySelector('.faq-answer');
+        var isOpen = item.classList.contains('open');
+
+        document.querySelectorAll('.faq-item.open').forEach(function(openItem) {
+            var openButton = openItem.querySelector('.faq-question');
+            openItem.classList.remove('open');
+            openItem.querySelector('.faq-answer').style.maxHeight = null;
+            if (openButton) openButton.setAttribute('aria-expanded', 'false');
+        });
+
+        if (!isOpen) {
+            item.classList.add('open');
+            answer.style.maxHeight = answer.scrollHeight + 'px';
+            el.setAttribute('aria-expanded', 'true');
+        }
+    }
+</script>
+
+</body>
+</html>

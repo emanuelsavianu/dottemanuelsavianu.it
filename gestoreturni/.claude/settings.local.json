@@ -27,7 +27,7 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3847/gestoreturni.html)",
       "Bash(curl:*)",
       "Bash(ls:*)",
-      "Bash(npx serve:* change /model to haiku)"
+      "Skill(claude-md-management:revise-claude-md)"
     ]
   }
 }
