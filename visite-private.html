@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+
+    <title>Certificati INPS e Invalidità Arezzo | Dott. Savianu | Visita a 100€</title>
+    <meta name="description" content="Rilascio rapido certificati introduttivi INPS per invalidità civile ad Arezzo (D.Lgs. 62/2024). Dott. Savianu, ex medico ANMIC. Tariffa 100€ omnicomprensiva con fattura. Prenota online.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="it_IT">
+    <meta property="og:title" content="Certificati INPS e Invalidità Arezzo | Dott. Savianu | Visita a 100€">
+    <meta property="og:description" content="Rilascio certificati introduttivi INPS per invalidità ad Arezzo. Ex medico ANMIC, tariffa 100€ con fattura. Studio Medico Ippocrate. Prenota online ora.">
+    <meta property="og:url" content="https://dottemanuelsavianu.it/visite-private.html">
+    <meta name="robots" content="index, follow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
+
+    <meta name="theme-color" content="#1a2f4c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playball&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="styles.css?v=12">
+
+    <style>
+        /* ── Visite Private Page ─────────────────────────────── */
+
+        .page-wrapper {
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top bar (shared pattern) ── */
+        .page-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-brand span {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+        body.dark-mode .topbar-brand span { color: var(--accent); }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 7px 13px;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+        .btn-dark-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 13px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            transition: border-color 0.2s, color 0.2s;
+            line-height: 1;
+        }
+        .btn-dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Hero section ── */
+        .page-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 56px 28px 52px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Subtle decorative circle behind hero */
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            background: rgba(194, 155, 87, 0.08);
+            pointer-events: none;
+        }
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 14px;
+        }
+        .hero-eyebrow i { font-size: 0.75rem; }
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            color: #ffffff;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+        .hero-desc {
+            font-size: clamp(0.85rem, 2vw, 0.95rem);
+            color: rgba(255,255,255,0.82);
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+        /* CTA button */
+        .btn-cta-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent);
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 14px 30px;
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s;
+            box-shadow: 0 6px 20px rgba(194, 155, 87, 0.4);
+        }
+        .btn-cta-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(194, 155, 87, 0.5);
+            background: #d4ac62;
+            opacity: 1;
+        }
+        .btn-cta-hero i { font-size: 0.85rem; }
+
+        /* ── Booking section ── */
+        .booking-section {
+            flex: 1;
+            padding: 48px 20px 56px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .booking-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 14px;
+        }
+        .booking-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .booking-title {
+            font-family: var(--font-sans);
+            font-size: clamp(1.1rem, 3vw, 1.3rem);
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+        body.dark-mode .booking-title { color: #f3efe6; }
+
+        /* Disclaimer box */
+        .booking-disclaimer {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            font-size: 0.78rem;
+            color: var(--text-medium);
+            line-height: 1.6;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .booking-disclaimer i {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Calendar iframe wrapper — aspect-ratio based for responsive height */
+        .calendar-frame {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            background: var(--white);
+            position: relative;
+            padding-top: 75%;
+        }
+        .calendar-frame iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        @media (min-width: 600px) {
+            .calendar-frame { padding-top: 0; height: 620px; }
+            .calendar-frame iframe { position: static; height: 100%; }
+        }
+
+        /* ── Footer ── */
+        .page-footer {
+            text-align: center;
+            padding: 14px 24px;
+            font-size: 0.7rem;
+            color: var(--text-medium);
+            border-top: 1px solid var(--border-color);
+        }
+        .page-footer a { color: var(--accent); text-decoration: underline; }
+
+        /* ── Entrance animations ── */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .hero-eyebrow { animation: fadeSlideUp 0.5s ease 0.05s both; }
+        .hero-title   { animation: fadeSlideUp 0.5s ease 0.12s both; }
+        .hero-desc    { animation: fadeSlideUp 0.5s ease 0.20s both; }
+        .btn-cta-hero { animation: fadeSlideUp 0.5s ease 0.28s both; }
+
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            .page-topbar { padding: 14px 16px; }
+            .topbar-brand span { display: none; }
+            .page-hero { padding: 40px 16px 36px; }
+            .booking-section { padding: 32px 16px 40px; }
+        }
+    </style>
+</head>
+<body>
+<a href="#calendario" class="skip-link">Vai al calendario prenotazioni</a>
+
+<div class="page-wrapper">
+
+    <!-- ── Top bar ────────────────────────────────────────────── -->
+    <header class="page-topbar">
+        <div class="topbar-brand">
+            <span>Studio Medico Ippocrate</span>
+        </div>
+        <div class="topbar-actions">
+            <a href="index.html" class="btn-back" aria-label="Torna alla pagina iniziale">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Torna indietro</span>
+            </a>
+            <button id="btn-dark" class="btn-dark-toggle" onclick="toggleDarkMode()" aria-label="Attiva/Disattiva modalità scura">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Hero ──────────────────────────────────────────────── -->
+    <section class="page-hero" aria-labelledby="hero-heading">
+        <p class="hero-eyebrow">
+            <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+            Certificatore Telematico INPS · Libera Professione
+        </p>
+        <h1 class="hero-title" id="hero-heading">Consulenze Medico-Legali<br>e Invalidità ad Arezzo</h1>
+        <p class="hero-desc">
+            Offro consulenze specialistiche per il riconoscimento dell'invalidità civile, della Legge 104/92
+            e pratiche INPS ai sensi del D.Lgs. 62/2024. Ex medico di categoria ANMIC presso le commissioni
+            Medico Legali. Tariffa omnicomprensiva: <strong>100€</strong> con fattura.
+        </p>
+        <a href="#calendario" class="btn-cta-hero" aria-label="Prenota subito la tua visita o consulenza">
+            <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+            Prenota subito la tua visita o consulenza
+        </a>
+    </section>
+
+    <!-- ── Booking ────────────────────────────────────────────── -->
+    <section class="booking-section" id="calendario" aria-label="Calendario prenotazioni">
+
+        <div class="booking-label">
+            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+            Calendario disponibilità
+        </div>
+
+        <h2 class="booking-title">Scegli giorno e orario disponibile</h2>
+
+        <div class="booking-disclaimer" role="note">
+            <i class="fa-solid fa-file-medical" aria-hidden="true"></i>
+            <div>
+                <strong>Certificati Introduttivi INPS — Invalidità Civile (D.Lgs. 62/2024)</strong><br>
+                Rilascio il <em>certificato introduttivo telematico</em> necessario per avviare la pratica di invalidità civile,
+                disabilità INPS e Legge 104/92. Grazie all'esperienza maturata come medico di categoria <strong>ANMIC</strong>
+                presso le commissioni Medico Legali, garantisco una valutazione completa e documentata della patologia.<br>
+                Servizio particolarmente indicato per assistiti di <strong>patronati e CAF</strong>.<br>
+                <strong>Tariffa: 100€</strong> omnicomprensiva &mdash; fattura rilasciata.
+                Prenotazioni: <a href="https://savianu.it" style="color:var(--accent)">savianu.it</a>
+                o Tel. <a href="tel:+3905751713428" style="color:var(--accent)">0575 171 3428</a>.
+            </div>
+        </div>
+
+        <div class="booking-disclaimer" role="note">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <span>
+                La prenotazione avviene direttamente tramite Google Calendar.
+                Riceverai una conferma via e-mail all'indirizzo fornito.
+                Per urgenze o informazioni, contattami al <a href="tel:+3905751713428" style="color:var(--accent)">0575 171 3428</a>
+                o tramite il portale <a href="https://savianu.it" style="color:var(--accent)">savianu.it</a>.
+            </span>
+        </div>
+
+        <div class="calendar-frame">
+            <iframe
+                src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ3doNfY80zH2XLETLNnYnaqXyu6ImECj_O5_WciNc6aBVZKQbtGYBK57W1g84TT7bvrHMUFzOhn?gv=true"
+                frameborder="0"
+                title="Calendario prenotazioni visite private">
+            </iframe>
+        </div>
+
+    </section>
+
+    <!-- ── Footer ────────────────────────────────────────────── -->
+    <footer class="page-footer">
+        <span>Studio Medico Ippocrate &mdash; Via Ubaldo Pasqui 38, Arezzo (dal 1° Maggio: Piazza Saione 3) &mdash; Tel. <a href="tel:+3905751713428">0575 171 3428</a></span><br>
+        <span>&copy; <span id="current-year"></span> Dott. Emanuel Savianu &mdash; </span>
+        <a href="privacy.html">Informativa Privacy</a>
+        <span> &mdash; </span>
+        <a href="index.html">Home</a>
+    </footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

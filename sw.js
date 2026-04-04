@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v146: added gestoreturni/gestoreturni.html and gestoreturni/app.js
-const CACHE_NAME = 'savianu-v147';
+// Cache version bumped to v148: added colleghi/visite-private/protocollo pages; removed deleted logo files and offline.html
+const CACHE_NAME = 'savianu-v148';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,15 +8,14 @@ const urlsToCache = [
   '/styles.css',
   '/app.js',
   '/config.js',
-  '/logo.png',
-  '/bluelogo.png',
-  '/bronzelogo.png',
+  '/colleghi.html',
+  '/visite-private.html',
+  '/protocollo-certificati-inps.html',
   '/cert-malattia.html',
   '/rsa.html',
   '/faq.html',
   '/esenzioni.html',
   '/impegnative.html',
-  '/offline.html',
   '/calcolatore-ferie.html',
   '/calcolatoreferiegemini.html',
   '/ferie.html',
@@ -46,7 +45,7 @@ function networkFirst(request) {
       return response;
     })
     .catch(() => {
-      return caches.match(request) || caches.match('/offline.html');
+      return caches.match(request) || caches.match('/');
     });
 }
 
@@ -69,7 +68,7 @@ function cacheFirst(request) {
           return response;
         });
     })
-    .catch(() => caches.match('/offline.html'));
+    .catch(() => caches.match('/'));
 }
 
 // Message handler — page sends SKIP_WAITING to activate update toast-triggered SW

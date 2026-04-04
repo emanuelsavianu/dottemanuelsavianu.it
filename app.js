@@ -311,6 +311,7 @@ function trapFocus(modal) {
 
 // --- OPEN/CLOSED BADGE ---
 (function() {
+    if (typeof CONFIG === 'undefined') return;
     const SCHEDULE = CONFIG.SCHEDULE;
     const now = new Date();
     const day = now.getDay();
@@ -330,6 +331,7 @@ function trapFocus(modal) {
 
 // --- FERIE BANNER LOGIC ---
 (function() {
+    if (typeof CONFIG === 'undefined') return;
     const banner = document.getElementById('ferie-banner');
     const textEl = document.getElementById('ferie-banner-text');
     if (!banner || !textEl) return;
