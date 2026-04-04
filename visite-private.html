@@ -466,12 +466,46 @@
             font-size: 0.88rem;
         }
 
+        /* ── Floating FAQ Button ── */
+        .floating-faq-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(26, 47, 76, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 999;
+        }
+        .floating-faq-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 28px rgba(26, 47, 76, 0.6);
+        }
+        .floating-faq-btn:active { transform: scale(0.95); }
+        body.dark-mode .floating-faq-btn {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            box-shadow: 0 6px 20px rgba(224, 185, 118, 0.3);
+        }
+        body.dark-mode .floating-faq-btn:hover {
+            box-shadow: 0 10px 28px rgba(224, 185, 118, 0.5);
+        }
+
         /* ── Responsive ── */
         @media (max-width: 480px) {
             .page-topbar { padding: 14px 16px; }
             .topbar-brand span { display: none; }
             .page-hero { padding: 40px 16px 36px; }
             .booking-section { padding: 32px 16px 40px; }
+            .floating-faq-btn { bottom: 20px; right: 20px; width: 52px; height: 52px; font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -523,30 +557,6 @@
         </div>
 
         <h2 class="booking-title">Scegli giorno e orario disponibile</h2>
-
-        <div class="booking-disclaimer" role="note">
-            <i class="fa-solid fa-file-medical" aria-hidden="true"></i>
-            <div>
-                <strong>Certificati Introduttivi INPS — Invalidità Civile (D.Lgs. 62/2024)</strong><br>
-                Rilascio il <em>certificato introduttivo telematico</em> necessario per avviare la pratica di invalidità civile,
-                disabilità INPS e Legge 104/92. Grazie all'esperienza maturata come medico di categoria <strong>ANMIC</strong>
-                presso le commissioni Medico Legali, garantisco una valutazione completa e documentata della patologia.<br>
-                Servizio particolarmente indicato per assistiti di <strong>patronati e CAF</strong>.<br>
-                <strong>Tariffa: 100€</strong> omnicomprensiva &mdash; fattura rilasciata.
-                Prenotazioni: <a href="https://savianu.it" style="color:var(--accent)">savianu.it</a>
-                o Tel. <a href="tel:+3905751713428" style="color:var(--accent)">0575 171 3428</a>.
-            </div>
-        </div>
-
-        <div class="booking-disclaimer" role="note">
-            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-            <span>
-                La prenotazione avviene direttamente tramite Google Calendar.
-                Riceverai una conferma via e-mail all'indirizzo fornito.
-                Per urgenze o informazioni, contattami al <a href="tel:+3905751713428" style="color:var(--accent)">0575 171 3428</a>
-                o tramite il portale <a href="https://savianu.it" style="color:var(--accent)">savianu.it</a>.
-            </span>
-        </div>
 
         <div class="calendar-frame">
             <iframe
@@ -844,6 +854,11 @@
 
     </section>
 
+    <!-- ── Floating FAQ Button ────────────────────────── -->
+    <button id="floating-faq-btn" class="floating-faq-btn" onclick="scrollToFaq()" aria-label="Apri le domande frequenti sulla riforma dell'invalidità" title="Domande frequenti">
+        <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+    </button>
+
     <!-- ── Footer ────────────────────────────────────────────── -->
     <footer class="page-footer">
         <span>Studio Medico Ippocrate &mdash; Via Ubaldo Pasqui 38, Arezzo (dal 1° Maggio: Piazza Saione 3) &mdash; Tel. <a href="tel:+3905751713428">0575 171 3428</a></span><br>
@@ -857,6 +872,16 @@
 
 <script src="app.js"></script>
 <script>
+    // ── Scroll to FAQ ──
+    function scrollToFaq() {
+        var faqSection = document.getElementById('faq-riforma');
+        if (faqSection) {
+            faqSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var searchInput = document.getElementById('faq-isearch');
+            if (searchInput) setTimeout(function() { searchInput.focus(); }, 600);
+        }
+    }
+
     // ── Inline FAQ accordion ──
     function iFaqToggle(btn) {
         var item = btn.closest('.faq-iitem');
