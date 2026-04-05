@@ -170,7 +170,18 @@ Il sito è **indicizzabile** per Local SEO su Arezzo. Tutte le pagine permettono
 
 **Google snippet vs meta description:** Google può ignorare la meta description e usare il testo visibile della pagina per gli snippet di ricerca. Per escludere un elemento HTML dagli snippet: `<div data-nosnippet>...</div>`. Per aggiornare lo snippet dopo una modifica: Google Search Console → URL Inspection → "Request Indexing" (1–7 giorni).
 
-**Meta tag limits:** Title ≤60 chars, description ≤155 chars. Le pagine esistenti avevano meta tag over-limit (es. title 73 chars) — verificare sempre quando si modificano i meta tag.
+**Meta tag limits (SERP Display):** Title ≤60 chars (Google displays 50–60 on desktop, truncates on mobile). Description 150–155 chars (truncates after ~155 on mobile). Trim aggressive — verificare sempre quando si modificano i meta tag.
+
+## Social Sharing Images (og:image)
+- `bluelogo.png` — Navy medical caduceus icon (Physician, general pages). Use on `index.html`, main landing pages.
+- `bronzelogo.png` — Gold medical caduceus icon (certificates, services). Use on `visite-private.html`, `certificato-invalidita-civile.html`, `faq-riforma.html`.
+Add `<meta property="og:image" content="https://dottemanuelsavianu.it/bluelogo.png">` to pages for social preview cards (LinkedIn, WhatsApp, Facebook sharing).
+
+## Sitemap & noindex Pages
+Pages with `meta name="robots" content="noindex, nofollow"` should NOT be in `sitemap.xml`. Remove internal/legal pages (colleghi.html, privacy.html, offline.html) from sitemap to avoid mixed crawler signals. Keep sitemap for publicly indexable pages only.
+
+## Fixing Orphaned Pages (No Internal Links)
+If a page has zero internal links pointing to it (rsa.html, xsegretarie.html, installazione.html, impegnative.html, esenzioni.html), add navigation in relevant hub page (e.g., `colleghi.html` Facsimili section). Use consistent pattern: `.action-grid tools-grid-auto` wrapper + `.btn-main btn-prenota` links with icon + title + `<small>` descriptor.
 
 ## GEO (Generative Engine Optimization) — AI Search Visibility
 **Key files:** `llms.txt` (ChatGPT/Perplexity site guide), `robots.txt` (AI crawler allow/deny), canonical URLs (`<link rel="canonical">` in head).
