@@ -284,7 +284,7 @@
             flex-shrink: 0;
         }
 
-        /* Calendar iframe wrapper — aspect-ratio based for responsive height */
+        /* Calendar iframe wrapper */
         .calendar-frame {
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
@@ -293,15 +293,16 @@
             background: var(--white);
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 900px;
         }
         .calendar-frame iframe {
             width: 100%;
             height: 100%;
             border: 0;
+            display: block;
         }
         @media (max-width: 600px) {
-            .calendar-frame { height: 500px; }
+            .calendar-frame { height: 750px; }
         }
 
         /* ── Footer ── */

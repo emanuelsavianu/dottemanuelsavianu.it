@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v156: SEO improvements to certificato-invalidita-civile.html (LocalBusiness schema, step section, FAQ expansion, fix invalid HTML)
-const CACHE_NAME = 'savianu-v156';
+// Cache version bumped to v157: fix double scrollbar on calendar iframe (height 600→900px desktop, 500→750px mobile)
+const CACHE_NAME = 'savianu-v157';
 const urlsToCache = [
   '/',
   '/index.html',
