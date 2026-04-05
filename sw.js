@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v150: GEO optimization (llms.txt, sitemap, schemas, hero expansion)
-const CACHE_NAME = 'savianu-v150';
+// Cache version bumped to v151: Added certificato-invalidita-civile.html page + updated index.html & visite-private.html
+const CACHE_NAME = 'savianu-v151';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -10,6 +10,7 @@ const urlsToCache = [
   '/config.js',
   '/colleghi.html',
   '/visite-private.html',
+  '/certificato-invalidita-civile.html',
   '/protocollo-certificati-inps.html',
   '/faq-riforma.html',
   '/cert-malattia.html',
