@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v149: added faq-riforma.html
-const CACHE_NAME = 'savianu-v149';
+// Cache version bumped to v150: GEO optimization (llms.txt, sitemap, schemas, hero expansion)
+const CACHE_NAME = 'savianu-v150';
 const urlsToCache = [
   '/',
   '/index.html',

@@ -2,59 +2,116 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://dottemanuelsavianu.it/</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/faq.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/faq-riforma.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/calcolatore-ferie.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/calcolatoreferiegemini.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/ferie.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/gestoreturni/gestoreturni.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/colleghi.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/impegnative.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/esenzioni.html</loc>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/protocollo-certificati-inps.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/visite-private.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/faq-riforma.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/faq.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/protocollo-certificati-inps.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/calcolatore-ferie.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/calcolatoreferiegemini.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/ferie.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/gestoreturni/gestoreturni.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/colleghi.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/impegnative.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://dottemanuelsavianu.it/esenzioni.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/cert-malattia.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/installazione.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/rsa.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/xsegretarie.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/RUAP/index.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/privacy.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/offline.html</loc>
+    <lastmod>2026-04-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
   </url>
 </urlset>

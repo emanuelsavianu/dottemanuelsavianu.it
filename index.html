@@ -28,27 +28,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="styles.css?v=12">
 
+    <link rel="canonical" href="https://dottemanuelsavianu.it/">
+
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Physician",
-      "name": "Dott. Emanuel Savianu",
-      "medicalSpecialty": ["Medicina Generale", "Medicina Legale", "Certificazioni INPS"],
-      "description": "Medico di Medicina Generale e Certificatore telematico INPS in libera professione. Ex medico di categoria ANMIC presso le commissioni Medico Legali. Rilascio certificati introduttivi per pratiche di invalidità ai sensi del D.Lgs. 62/2024.",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Via Ubaldo Pasqui 38",
-        "addressLocality": "Arezzo",
-        "postalCode": "52100",
-        "addressRegion": "Toscana",
-        "addressCountry": "IT"
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Physician",
+        "name": "Dott. Emanuel Savianu",
+        "medicalSpecialty": ["Medicina Generale", "Medicina Legale", "Certificazioni INPS"],
+        "description": "Medico di Medicina Generale e Certificatore telematico INPS in libera professione ad Arezzo. Ex medico di categoria ANMIC presso le commissioni Medico Legali. Rilascio certificati introduttivi per pratiche di invalidità ai sensi del D.Lgs. 62/2024.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Via Ubaldo Pasqui 38",
+          "addressLocality": "Arezzo",
+          "postalCode": "52100",
+          "addressRegion": "Toscana",
+          "addressCountry": "IT"
+        },
+        "telephone": "+3905751713428",
+        "url": "https://dottemanuelsavianu.it",
+        "priceRange": "100€",
+        "areaServed": "Arezzo e provincia",
+        "hasMap": "https://maps.google.com/?q=Via+Ubaldo+Pasqui+38+Arezzo",
+        "sameAs": [
+          "https://maps.google.com/?q=Studio+Medico+Ippocrate+Via+Ubaldo+Pasqui+38+Arezzo"
+        ],
+        "worksFor": {
+          "@type": "MedicalClinic",
+          "name": "Studio Medico Ippocrate"
+        }
       },
-      "telephone": "+3905751713428",
-      "url": "https://dottemanuelsavianu.it",
-      "priceRange": "100€",
-      "areaServed": "Arezzo e provincia",
-      "hasMap": "https://maps.google.com/?q=Via+Ubaldo+Pasqui+38+Arezzo"
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "MedicalClinic",
+        "name": "Studio Medico Ippocrate",
+        "medicalSpecialty": "General Practice",
+        "description": "Studio medico del Dott. Emanuel Savianu, Medico di Medicina Generale e Certificatore INPS ad Arezzo.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Via Ubaldo Pasqui 38",
+          "addressLocality": "Arezzo",
+          "postalCode": "52100",
+          "addressRegion": "Toscana",
+          "addressCountry": "IT"
+        },
+        "telephone": "+3905751713428",
+        "url": "https://dottemanuelsavianu.it",
+        "openingHours": ["Mo 08:00-13:00", "Tu 08:00-13:00", "We 08:00-13:00", "Th 08:00-13:00", "Fr 08:00-13:00"],
+        "hasMap": "https://maps.google.com/?q=Via+Ubaldo+Pasqui+38+Arezzo"
+      }
+    ]
     </script>
 
     <style>
@@ -127,8 +157,19 @@
             color: var(--text-medium);
             font-weight: 500;
             max-width: 500px;
-            margin: 10px auto 44px;
+            margin: 10px auto 16px;
         }
+
+        .triage-bio {
+            font-size: 0.78rem;
+            color: var(--text-medium);
+            line-height: 1.7;
+            max-width: 640px;
+            margin: 0 auto 32px;
+            text-align: center;
+        }
+        .triage-bio strong { color: var(--primary); font-weight: 600; }
+        body.dark-mode .triage-bio strong { color: #e0b976; }
 
         /* ── 3-card grid ── */
         .triage-grid {
@@ -319,6 +360,14 @@
         <h1 class="triage-name">Dott. Emanuel Savianu — Arezzo</h1>
 
         <p class="triage-prompt">Benvenuto. Per poterti aiutare al meglio, indicami chi sei:</p>
+
+        <p class="triage-bio" id="chi-sono">
+            Il <strong>Dott. Emanuel Savianu</strong> è Medico di Medicina Generale e Certificatore telematico INPS in libera professione ad Arezzo.
+            Ex medico di categoria ANMIC presso le commissioni Medico Legali, rilascia <strong>certificati introduttivi per l'invalidità civile</strong> (D.Lgs.&nbsp;62/2024),
+            consulenze per la Legge&nbsp;104/92 e visite medico-legali. Dal <strong>1°&nbsp;marzo 2026</strong> Arezzo è nella sperimentazione pilota della riforma disabilità:
+            basta il certificato digitale del medico per avviare la pratica INPS — senza passare dal Patronato.
+            Tariffa omnicomprensiva: <strong>100&nbsp;€</strong> con fattura. Studio Medico Ippocrate, Via Ubaldo Pasqui&nbsp;38, Arezzo. Tel.&nbsp;0575&nbsp;171&nbsp;3428.
+        </p>
 
         <div class="triage-grid" role="list">
 
