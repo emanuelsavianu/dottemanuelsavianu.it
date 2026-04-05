@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v158: wide-screen calendar layout — 1380px max-width, sticky contacts card, 820px height at ≥1200px
-const CACHE_NAME = 'savianu-v158';
+// Cache version bumped to v159: remove price from faq-riforma.html CTA, add data-nosnippet
+const CACHE_NAME = 'savianu-v159';
 const urlsToCache = [
   '/',
   '/index.html',
