@@ -1,5 +1,6 @@
-# ── Markdown docs (internal only) ────────────────────────────
+# ── Markdown docs (internal analysis only) ──────────────────
 *.md
+!README.md
 
 # ── IDE / editor ─────────────────────────────────────────────
 *.code-workspace
