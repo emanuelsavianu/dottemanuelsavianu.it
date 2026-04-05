@@ -137,23 +137,23 @@ header p {
 }
 .btn-telefono-header:active { transform: scale(0.96); }
 
-/* --- LANGUAGE SWITCHER --- */
+/* --- DARK MODE TOGGLE (legacy pages via lang-switch wrapper) --- */
 .lang-switch {
-    position: absolute; top: 20px; right: 20px; z-index: 20;
-    background: rgba(26, 47, 76, 0.5); backdrop-filter: blur(5px);
-    padding: 5px 15px; border-radius: 20px; border: 1px solid var(--accent);
-    display: flex; gap: 10px; align-items: center;
+    position: absolute; top: 16px; right: 16px; z-index: 20;
+    display: flex; align-items: center; gap: 8px;
+    /* No background/border — was the ITA/ENG ghost frame, now just hosts the toggle */
 }
 
 .lang-btn {
-    background: none; border: none; color: rgba(255, 255, 255, 0.7);
-    font-weight: 600; cursor: pointer; font-size: 0.9rem;
-    transition: color 0.3s; padding: 5px 8px;
+    background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 1rem;
+    padding: 7px 10px; border-radius: var(--radius-md); line-height: 1;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
-
-.lang-btn:hover { color: var(--accent); }
-.lang-btn.active { color: var(--accent); }
-.lang-separator { color: rgba(255,255,255,0.3); }
+.lang-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,0,0,0.45); }
+body.dark-mode .lang-btn { color: #f3efe6; border-color: rgba(255,255,255,0.25); }
+body.dark-mode .lang-btn:hover { color: var(--accent); border-color: var(--accent); }
+.lang-separator { display: none; }
 
 /* --- LAYOUT GRID --- */
 .container {
@@ -349,8 +349,9 @@ body.dark-mode .triage-option h3 { color: var(--accent); }
 #welcome-overlay, #reps-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(26, 47, 76, 0.85); backdrop-filter: blur(5px);
-    z-index: 10000; display: flex; justify-content: center; align-items: center;
-    padding: 20px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;
+    z-index: 10000; display: flex; justify-content: center; align-items: flex-start;
+    padding: 24px 20px; overflow-y: auto; /* overlay scrolls, not the card */
+    opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;
 }
 
 body.dark-mode #welcome-overlay, body.dark-mode #reps-overlay { background-color: rgba(0, 0, 0, 0.9); }
@@ -358,7 +359,8 @@ body.dark-mode #welcome-overlay, body.dark-mode #reps-overlay { background-color
 
 .welcome-card, .reps-card {
     background: var(--white); width: 100%; max-width: 700px;
-    max-height: 90vh; overflow-y: auto; border-radius: 20px;
+    /* No max-height / overflow-y — overlay scrolls instead to eliminate nested scrollbar */
+    border-radius: 20px; flex-shrink: 0;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     position: relative; display: flex; flex-direction: column; border: 2px solid var(--accent);
 }

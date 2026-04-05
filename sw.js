@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v152: Removed "Perché Rivolgersi al Dott. Savianu" section from certificato page, fixed calendar 100% width, fixed text color contrast on visite-private gradient
-const CACHE_NAME = 'savianu-v152';
+// Cache version bumped to v153: Fix certificato layout (remove container grid), fix lang-switch ghost frame, fix modal nested scrollbar
+const CACHE_NAME = 'savianu-v153';
 const urlsToCache = [
   '/',
   '/index.html',
