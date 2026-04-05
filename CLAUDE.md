@@ -61,6 +61,40 @@ New pages (certificato-invalidita-civile.html, standalone guides) must NOT use `
 ## Lang-Switch Ghost Frame
 `.lang-switch` is styled as backdrop-blurred pill box for old ITA/ENG language buttons. Currently only holds the dark-mode toggle → visually appears as ghost frame. Restyle to remove pill appearance (no border/background) when displaying single icon, or use dedicated `.topbar-actions` pattern for new pages.
 
+## Dark Mode Toggle Button (Site-Wide)
+**Visibility & Interaction:** Circular button (50% border-radius, 48px), gold border (var(--accent)), hover: scale(1.15) + rotate(180deg) + glow shadow (0 4px 16px rgba(220,171,96,0.45)). Applied to both `.lang-btn` (legacy pages) and `.btn-dark-toggle` (new pages).
+
+**Persistence:** `toggleDarkMode()` in `app.js` persists dark-mode class via localStorage. Works site-wide automatically — no page-specific implementation needed.
+
+## Responsive Flexbox with CSS Reordering
+Mobile-first layout using flexbox `flex-direction` + CSS `order` property:
+```css
+.wrapper { display: flex; flex-direction: column; gap: 28px; }
+.wrapper > section:first-child { order: 1; }  /* appears first on mobile */
+.wrapper > section:last-child { order: 2; }
+
+@media (min-width: 900px) {
+  .wrapper { flex-direction: row; }
+  .wrapper > section:first-child { order: 2; flex: 0 0 320px; }  /* right side on desktop */
+  .wrapper > section:last-child { order: 1; flex: 1; }  /* left side on desktop */
+}
+```
+Cleaner than duplicating elements or multiple breakpoint-specific `display: none`/`block`.
+
+## Contact Card Pattern (Reusable)
+Consistent styling for contact sections:
+- Phone/email as clickable links (`tel:` and `mailto:` protocols)
+- Labels: small caps, uppercase, color: `var(--text-medium)`
+- Values: color: `var(--accent)`, font-weight: 700, font-size: 1.15rem
+- Privacy/disclaimers: italic, small font, border-top separator
+- Dark mode: Apply to `.booking-contacts-wrapper` or parent card, inherits styling automatically
+
+## Testing with Playwright & Service Worker Cache
+- **GitHub Pages deploy:** 45-60 seconds after `git push`
+- **Service worker + browser cache:** serve stale version until refreshed
+- **Solution:** Add `?v=N` query param to testing URLs (e.g., `https://dottemanuelsavianu.it/page.html?v=154`) to force fresh load
+- **Cache version in sw.js:** (e.g., `'savianu-v154'`) must be bumped for changes to propagate
+
 ## Large File Editing
 `visite-private.html` ≈17,817 tokens. Use `Read` with `limit` + `offset` parameters to avoid token overflow:
 ```bash
