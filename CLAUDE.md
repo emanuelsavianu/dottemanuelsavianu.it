@@ -168,6 +168,10 @@ Tono corretto: "Il Dott. X è certificatore telematico INPS autorizzato" (fattua
 ## SEO / Indicizzazione
 Il sito è **indicizzabile** per Local SEO su Arezzo. Tutte le pagine permettono indicizzazione. Schema JSON-LD Physician è presente in `index.html`. Open Graph tags sono configurati per condivisione social.
 
+**Google snippet vs meta description:** Google può ignorare la meta description e usare il testo visibile della pagina per gli snippet di ricerca. Per escludere un elemento HTML dagli snippet: `<div data-nosnippet>...</div>`. Per aggiornare lo snippet dopo una modifica: Google Search Console → URL Inspection → "Request Indexing" (1–7 giorni).
+
+**Meta tag limits:** Title ≤60 chars, description ≤155 chars. Le pagine esistenti avevano meta tag over-limit (es. title 73 chars) — verificare sempre quando si modificano i meta tag.
+
 ## GEO (Generative Engine Optimization) — AI Search Visibility
 **Key files:** `llms.txt` (ChatGPT/Perplexity site guide), `robots.txt` (AI crawler allow/deny), canonical URLs (`<link rel="canonical">` in head).
 **Schema patterns:** Physician + MedicalClinic + BreadcrumbList + FAQPage (all JSON-LD).
