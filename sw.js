@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v157: fix double scrollbar on calendar iframe (height 600→900px desktop, 500→750px mobile)
-const CACHE_NAME = 'savianu-v157';
+// Cache version bumped to v158: wide-screen calendar layout — 1380px max-width, sticky contacts card, 820px height at ≥1200px
+const CACHE_NAME = 'savianu-v158';
 const urlsToCache = [
   '/',
   '/index.html',
