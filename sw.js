@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v153: Fix certificato layout (remove container grid), fix lang-switch ghost frame, fix modal nested scrollbar
-const CACHE_NAME = 'savianu-v153';
+// Cache version bumped to v154: Make dark mode button prominent (circular, gold border, hover glow), add contatti studio section to visite-private.html
+const CACHE_NAME = 'savianu-v154';
 const urlsToCache = [
   '/',
   '/index.html',
