@@ -55,12 +55,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://dottemanuelsavianu.it/colleghi.html</loc>
-    <lastmod>2026-04-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://dottemanuelsavianu.it/impegnative.html</loc>
     <lastmod>2026-04-05</lastmod>
     <changefreq>yearly</changefreq>
@@ -101,12 +95,6 @@
     <lastmod>2026-04-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://dottemanuelsavianu.it/privacy.html</loc>
-    <lastmod>2026-04-05</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/offline.html</loc>

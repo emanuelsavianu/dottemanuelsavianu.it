@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v161: UX/accessibility improvements — booking sidebar + checklist box, larger touch targets (FAQ pills/questions), phone CTA in hero + topbar, hero text declutter
-const CACHE_NAME = 'savianu-v161';
+// Cache version bumped to v162: SEO improvements — trimmed titles/descriptions, added og:image meta tags, geo tags, internal nav links to orphaned pages, removed colleghi.html/privacy.html from sitemap
+const CACHE_NAME = 'savianu-v162';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -24,7 +24,9 @@ const urlsToCache = [
   '/installazione.html',
   '/xsegretarie.html',
   '/gestoreturni/gestoreturni.html',
-  '/gestoreturni/app.js'
+  '/gestoreturni/app.js',
+  '/RUAP/index.html',
+  '/protocollo-certificati-inps.html'
 ];
 
 // Helper: Check if request is same-origin
