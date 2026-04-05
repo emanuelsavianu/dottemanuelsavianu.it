@@ -50,6 +50,17 @@ Aggiungere i nuovi file HTML all'array `urlsToCache` in `sw.js`.
 
 **CRITICAL:** Every new `.html` page MUST be added to `urlsToCache` array AND cache version bumped in same commit, or users won't see changes.
 
+**Service Worker deploy latency:** GitHub Pages takes 45-60 seconds to serve new version after git push. Cache version bump is mandatory. Playwright/browser may serve cached old version until SW cache updates; add `?v=N` query param to force fresh load.
+
+## Single-Column Page Layouts
+New pages (certificato-invalidita-civile.html, standalone guides) must NOT use `class="container"` as main wrapper — applies `grid-template-columns: 2fr 1fr` ≥900px, breaking single-column layout. Use `display: block` with inline `max-width`, or dedicated non-grid class instead.
+
+## Modal Overflow (Welcome & Reps)
+`.welcome-card`, `.reps-card` must NOT have `max-height: 90vh; overflow-y: auto` (causes nested scrollbar inside overlay). Instead, move scroll to the overlay itself: `#welcome-overlay { overflow-y: auto; align-items: flex-start; }` + remove max-height from card.
+
+## Lang-Switch Ghost Frame
+`.lang-switch` is styled as backdrop-blurred pill box for old ITA/ENG language buttons. Currently only holds the dark-mode toggle → visually appears as ghost frame. Restyle to remove pill appearance (no border/background) when displaying single icon, or use dedicated `.topbar-actions` pattern for new pages.
+
 ## Large File Editing
 `visite-private.html` ≈17,817 tokens. Use `Read` with `limit` + `offset` parameters to avoid token overflow:
 ```bash
