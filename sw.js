@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v160: B2C benefits section in certificato-invalidita-civile.html (pensione, accompagnamento, agevolazioni fiscali, Legge 104) + meta/FAQ schema update
-const CACHE_NAME = 'savianu-v160';
+// Cache version bumped to v161: UX/accessibility improvements — booking sidebar + checklist box, larger touch targets (FAQ pills/questions), phone CTA in hero + topbar, hero text declutter
+const CACHE_NAME = 'savianu-v161';
 const urlsToCache = [
   '/',
   '/index.html',

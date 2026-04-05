@@ -109,6 +109,31 @@
         }
         body.dark-mode .topbar-brand span { color: var(--accent); }
 
+        .topbar-phone {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 8px 14px;
+            min-height: 44px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .topbar-phone:hover { background: var(--accent); color: #fff; opacity: 1; }
+        body.dark-mode .topbar-phone { border-color: #e0b976; color: #e0b976; }
+        body.dark-mode .topbar-phone:hover { background: #e0b976; color: #0d1e33; }
+        @media (max-width: 480px) { .topbar-phone span { display: none; } }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .btn-dark-toggle {
             background: none;
             border: 1px solid var(--border-color);
@@ -255,7 +280,7 @@
         body.dark-mode .triage-card--primary .triage-icon i { color: var(--accent); }
 
         .triage-card-title {
-            font-size: 0.98rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--primary);
             margin-bottom: 10px;
@@ -264,9 +289,9 @@
         body.dark-mode .triage-card-title { color: #f3efe6; }
 
         .triage-card-desc {
-            font-size: 0.78rem;
+            font-size: 0.88rem;
             color: var(--text-medium);
-            line-height: 1.6;
+            line-height: 1.65;
             flex: 1;
         }
 
@@ -352,9 +377,15 @@
         <div class="topbar-brand">
             <span>Studio Medico Ippocrate</span>
         </div>
-        <button id="btn-dark" class="btn-dark-toggle" onclick="toggleDarkMode()" aria-label="Attiva/Disattiva modalità scura">
-            <i class="fa-solid fa-moon"></i>
-        </button>
+        <div class="topbar-actions">
+            <a href="tel:+3905751713428" class="topbar-phone" aria-label="Chiama lo studio: 0575 171 3428">
+                <i class="fa-solid fa-phone" aria-hidden="true"></i>
+                <span>0575 171 3428</span>
+            </a>
+            <button id="btn-dark" class="btn-dark-toggle" onclick="toggleDarkMode()" aria-label="Attiva/Disattiva modalità scura">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
     </header>
 
     <!-- ── Triage ─────────────────────────────────────────────── -->
