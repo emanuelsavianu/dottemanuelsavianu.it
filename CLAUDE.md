@@ -46,7 +46,47 @@ Bump `CACHE_NAME` in `sw.js` (es. `savianu-v143`) ad ogni deploy che aggiunge **
 **When to bump:** After ANY edit to HTML, CSS, JS, or schema markup (not just new files). Users with old cache won't see changes without a bump.
 Aggiungere i nuovi file HTML all'array `urlsToCache` in `sw.js`.
 
-**Checklist per ogni bump:** (1) Elencare TUTTE le pagine HTML aggiunte/modificate. (2) Rimuovere i file eliminati da urlsToCache. (3) Cambiare CACHE_NAME (es. v147 → v148). (4) **Nota:** Cache bump NON flushes existing visitors — serve hard refresh (Ctrl+Shift+R) o update toast per vedere novità. Tomorrow's problem, but acceptable for static sites.
+**Checklist per ogni bump:** (1) Elencare TUTTE le pagine HTML aggiunte/modificate nel commento CACHE_NAME. (2) Rimuovere i file eliminati da urlsToCache. (3) Cambiare CACHE_NAME (es. v147 → v148). (4) **Nota:** Cache bump NON flushes existing visitors — serve hard refresh (Ctrl+Shift+R) o update toast per vedere novità. Tomorrow's problem, but acceptable for static sites.
+
+**CRITICAL:** Every new `.html` page MUST be added to `urlsToCache` array AND cache version bumped in same commit, or users won't see changes.
+
+## Large File Editing
+`visite-private.html` ≈17,817 tokens. Use `Read` with `limit` + `offset` parameters to avoid token overflow:
+```bash
+# First chunk
+Read { file_path, offset: 1, limit: 100 }
+# Second chunk
+Read { file_path, offset: 100, limit: 100 }
+```
+Prevents session context overflow and "file too large" errors.
+
+## Google Calendar Embeds
+Explicit sizing required to prevent scroll jank:
+```css
+.calendar-frame {
+  width: 100%;
+  height: 620px;
+}
+.calendar-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+```
+Without this, iframe scrolls independently instead of fitting page flow.
+
+## Gradient Sections with Text
+**Never hardcode white text on gradient backgrounds.** Uses CSS variables for automatic dark mode contrast:
+```css
+/* ✗ Wrong */
+<h2 style="color: #ffffff;">Title</h2>
+<p style="color: rgba(255,255,255,0.9);">Text</p>
+
+/* ✓ Correct */
+<h2 style="color: var(--primary);">Title</h2>
+<p style="color: var(--text-dark);">Text</p>
+```
+Hardcoded white fails readability in light mode on cream gradients.
 
 ## .gitignore Patterns
 Use **broad directory patterns** (`.bkit/`, `.claude/`, `.superpowers/`, `.playwright-mcp/`) instead of individual snapshot/log paths — maintenance burden ridotto di 90%.
