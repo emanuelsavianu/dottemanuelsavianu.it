@@ -1204,16 +1204,16 @@ body.large-text .qa-item i { font-size: 1.35rem; }
     max-width: 900px;
     padding: 0 20px;
 }
-.booking-contacts-wrapper > section:first-child { order: 1; flex: 0 0 auto; }
-.booking-contacts-wrapper > section:last-child { order: 2; flex: 1; }
+.booking-contacts-wrapper > .booking-sidebar { order: 1; flex: 0 0 auto; }
+.booking-contacts-wrapper > .booking-section { order: 2; flex: 1; }
 
 @media (min-width: 900px) {
     .booking-contacts-wrapper {
         flex-direction: row;
         gap: 32px;
     }
-    .booking-contacts-wrapper > section:first-child { order: 2; flex: 0 0 300px; }
-    .booking-contacts-wrapper > section:last-child { order: 1; flex: 1 1 100%; }
+    .booking-contacts-wrapper > .booking-sidebar { order: 2; flex: 0 0 300px; }
+    .booking-contacts-wrapper > .booking-section { order: 1; flex: 1 1 100%; }
 }
 
 @media (min-width: 1200px) {
@@ -1222,7 +1222,7 @@ body.large-text .qa-item i { font-size: 1.35rem; }
         padding: 0 48px;
         gap: 40px;
     }
-    .booking-contacts-wrapper > section:first-child {
+    .booking-contacts-wrapper > .booking-sidebar {
         position: sticky;
         top: 24px;
         align-self: flex-start;

@@ -109,12 +109,13 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--text-dark);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 7px 13px;
+            padding: 10px 16px;
+            min-height: 44px;
             text-decoration: none;
             transition: border-color 0.2s, color 0.2s, background 0.2s;
             background: transparent;
@@ -414,9 +415,10 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            padding: 6px 14px;
+            padding: 10px 16px;
+            min-height: 44px;
             border-radius: 50px;
-            font-size: 0.75rem;
+            font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
             border: 1px solid var(--border-color);
@@ -472,10 +474,10 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            padding: 14px 16px;
+            padding: 16px 18px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.86rem;
+            font-size: 0.95rem;
             color: var(--primary);
             gap: 12px;
             user-select: none;
@@ -498,8 +500,8 @@
         .faq-iitem.open .ichevron { transform: rotate(180deg); }
         .faq-ianswer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
         .faq-ianswer-inner {
-            padding: 0 16px 16px;
-            font-size: 0.85rem;
+            padding: 0 18px 18px;
+            font-size: 0.9rem;
             color: var(--text-medium);
             line-height: 1.75;
             border-top: 1px solid var(--border-color);
@@ -563,6 +565,16 @@
             box-shadow: 0 10px 28px rgba(224, 185, 118, 0.5);
         }
 
+        /* ── Booking sidebar ── */
+        .booking-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* Dark mode: heading text inside sidebar cards */
+        body.dark-mode .booking-sidebar h3 { color: #e0b976 !important; }
+        body.dark-mode .booking-sidebar .booking-info-label { color: #f3efe6 !important; }
+
         /* ── Responsive ── */
         @media (min-width: 1200px) {
             .booking-section { max-width: none; }
@@ -610,16 +622,13 @@
             della <strong>Legge&nbsp;104/92</strong> e pratiche INPS ai sensi del <strong>D.Lgs.&nbsp;62/2024</strong> ad Arezzo e provincia.
             Ex medico di categoria ANMIC presso le commissioni Medico Legali, è Certificatore telematico INPS autorizzato in libera professione.
         </p>
-        <p class="hero-desc" style="margin-top:-10px; font-size: clamp(0.78rem, 1.8vw, 0.87rem);">
-            La procedura è cambiata dal <strong>1°&nbsp;marzo 2026</strong>: Arezzo è nella sperimentazione pilota della riforma disabilità,
-            che elimina la domanda separata al Patronato. Il medico invia il certificato introduttivo digitalmente e la pratica INPS
-            parte in automatico. I tempi massimi sono <strong>90&nbsp;giorni</strong>, ridotti a <strong>15&nbsp;giorni</strong> per patologie oncologiche.
-            Studio Medico Ippocrate — Tel.&nbsp;0575&nbsp;171&nbsp;3428.
-        </p>
         <a href="#calendario" class="btn-cta-hero" aria-label="Prenota subito la tua visita o consulenza">
             <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
             Prenota subito la tua visita o consulenza
         </a>
+        <p style="margin-top: 16px; font-size: 0.82rem; color: rgba(255,255,255,0.7);">
+            Oppure chiama: <a href="tel:+3905751713428" style="color: var(--accent); font-weight: 700; font-size: 1rem; text-decoration: none; white-space: nowrap;">0575 171 3428</a>
+        </p>
     </section>
 
     <!-- ── Related Content ────────────────────────────────────── -->
@@ -638,33 +647,76 @@
     <!-- ── Booking + Contacts ────────────────────────────────── -->
     <div class="booking-contacts-wrapper">
 
-        <!-- Contatti (mobile before calendar, desktop on right) -->
-        <section style="background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
-            <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                <i class="fa-solid fa-phone" aria-hidden="true" style="margin-right: 10px;"></i>Studio Medico Ippocrate
-            </h3>
+        <!-- Sidebar: contatti + info (mobile sopra, desktop a destra) -->
+        <div class="booking-sidebar">
 
-            <div style="margin-bottom: 20px;">
-                <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Telefono</p>
-                <a href="tel:+39575171 3428" style="font-size: 1.15rem; color: var(--accent); font-weight: 700; text-decoration: none; transition: opacity 0.2s;">0575 171 3428</a>
-            </div>
+            <!-- Contatti -->
+            <section style="background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
+                <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-phone" aria-hidden="true" style="margin-right: 10px;"></i>Studio Medico Ippocrate
+                </h3>
 
-            <div style="margin-bottom: 20px;">
-                <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Indirizzo</p>
-                <p style="font-size: 0.9rem; color: var(--text-dark); line-height: 1.5;">Via Ubaldo Pasqui 38, Arezzo</p>
-            </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Telefono</p>
+                    <a href="tel:+3905751713428" style="font-size: 1.25rem; color: var(--accent); font-weight: 700; text-decoration: none; transition: opacity 0.2s; display: inline-block; padding: 6px 0;">0575 171 3428</a>
+                </div>
 
-            <div style="margin-bottom: 16px;">
-                <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Email</p>
-                <a href="mailto:segreteria@savianu.it" style="font-size: 0.9rem; color: var(--accent); text-decoration: none; word-break: break-all;">segreteria@savianu.it</a>
-            </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Indirizzo</p>
+                    <p style="font-size: 0.9rem; color: var(--text-dark); line-height: 1.5;">Via Ubaldo Pasqui 38, Arezzo</p>
+                </div>
 
-            <p style="font-size: 0.8rem; color: var(--text-medium); font-style: italic; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
-                Per privacy, non inviare dettagli clinici via email: usa la visita in studio.
-            </p>
-        </section>
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 0.75rem; color: var(--text-medium); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Email</p>
+                    <a href="mailto:segreteria@savianu.it" style="font-size: 0.9rem; color: var(--accent); text-decoration: none; word-break: break-all;">segreteria@savianu.it</a>
+                </div>
 
-        <!-- Calendario (desktop flex-order) -->
+                <p style="font-size: 0.8rem; color: var(--text-medium); font-style: italic; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
+                    Per privacy, non inviare dettagli clinici via email: usa la visita in studio.
+                </p>
+            </section>
+
+            <!-- Info: cosa portare + note riforma -->
+            <section style="background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
+                <h3 style="font-size: 1.1rem; color: var(--primary); margin-bottom: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-clipboard-list" aria-hidden="true" style="margin-right: 10px;"></i>Cosa portare
+                </h3>
+
+                <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 14px; font-style: italic;">Porta alla visita tutta la documentazione medica recente:</p>
+
+                <ul style="list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" style="color: var(--accent); flex-shrink: 0; margin-top: 2px;"></i>
+                        Referti di visite specialistiche
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" style="color: var(--accent); flex-shrink: 0; margin-top: 2px;"></i>
+                        Esami strumentali (TAC, RMN, analisi)
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" style="color: var(--accent); flex-shrink: 0; margin-top: 2px;"></i>
+                        Lettere di dimissioni ospedaliere
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" style="color: var(--accent); flex-shrink: 0; margin-top: 2px;"></i>
+                        Elenco dei farmaci in uso
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true" style="color: var(--accent); flex-shrink: 0; margin-top: 2px;"></i>
+                        Documento d'identità
+                    </li>
+                </ul>
+
+                <div style="background: var(--bg-gradient-1); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 12px 14px; font-size: 0.82rem; color: var(--text-medium); line-height: 1.65;">
+                    <strong style="color: var(--text-dark); display: block; margin-bottom: 5px;"><i class="fa-solid fa-rotate" aria-hidden="true" style="margin-right: 6px;"></i>Riforma D.Lgs. 62/2024 — Arezzo</strong>
+                    Dal <strong>1° marzo 2026</strong> non serve più andare al Patronato: il medico invia il certificato digitalmente e la pratica INPS parte in automatico.
+                    Tempi massimi: <strong>90 giorni</strong> (15 giorni per patologie oncologiche).
+                </div>
+            </section>
+
+        </div><!-- /.booking-sidebar -->
+
+        <!-- Calendario (desktop flex-order left) -->
         <section class="booking-section" id="calendario" aria-label="Calendario prenotazioni" style="padding: 0; margin: 0;">
 
             <div class="booking-label">
