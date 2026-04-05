@@ -81,6 +81,17 @@ Mobile-first layout using flexbox `flex-direction` + CSS `order` property:
 ```
 Cleaner than duplicating elements or multiple breakpoint-specific `display: none`/`block`.
 
+**Sticky flex sidebar:** `position: sticky` on a flex item only works if `align-self: flex-start` is also set — the default `stretch` value prevents sticky from activating.
+```css
+.booking-contacts-wrapper > section:first-child {
+    position: sticky;
+    top: 24px;
+    align-self: flex-start; /* required — stretch prevents sticky */
+}
+```
+
+**Wide-screen booking layout (≥1200px):** `.booking-section` class has `max-width: 900px` — must add `max-width: none` override at ≥1200px or the calendar stays narrow even if the wrapper expands. Pattern in `styles.css`: `@media (min-width: 1200px) { .booking-contacts-wrapper { max-width: 1380px; padding: 0 48px; } }` + inline override `@media (min-width: 1200px) { .booking-section { max-width: none; } }`.
+
 ## Contact Card Pattern (Reusable)
 Consistent styling for contact sections:
 - Phone/email as clickable links (`tel:` and `mailto:` protocols)
@@ -106,19 +117,9 @@ Read { file_path, offset: 100, limit: 100 }
 Prevents session context overflow and "file too large" errors.
 
 ## Google Calendar Embeds
-Explicit sizing required to prevent scroll jank:
-```css
-.calendar-frame {
-  width: 100%;
-  height: 620px;
-}
-.calendar-frame iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-```
-Without this, iframe scrolls independently instead of fitting page flow.
+**Cross-origin iframes have their own scroll context** — `overflow: hidden` on the wrapper div has zero effect on the iframe's internal scrollbar. The only fix is making the iframe tall enough that its content doesn't overflow.
+Minimum heights: `900px` desktop, `750px` mobile (≤600px). 620px is too short — causes double scrollbar (page scroll + iframe scroll).
+At ≥1200px wide (calendar ~944px), `820px` height is sufficient.
 
 ## Gradient Sections with Text
 **Never hardcode white text on gradient backgrounds.** Uses CSS variables for automatic dark mode contrast:
@@ -210,7 +211,7 @@ Esempio esistente: `cert-malattia.html`. Aggiungere nuovi documenti come `<a>` b
 
 ## Responsive Patterns
 
-**Responsive iframe (Google Calendar, ecc):** Su mobile, usare `padding-top: 75%;` + `position: absolute` per mantenere aspect ratio. Su desktop (min-width: 600px), usare `height: 620px;` fisso. Elimina attributi width/height dall'iframe stesso. Esempio: `visite-private.html` `.calendar-frame`.
+**Responsive iframe (Google Calendar, ecc):** Use fixed heights — `900px` desktop (default), `750px` mobile (≤600px), `820px` at ≥1200px wide. Remove width/height attributes from the `<iframe>` element itself. See `visite-private.html` `.calendar-frame`.
 
 ## DNS / Hosting
 Custom domain: `dottemanuelsavianu.it` (file `CNAME`). Hosted su GitHub Pages.
