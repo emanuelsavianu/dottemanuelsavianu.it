@@ -158,6 +158,12 @@ Per override dark mode: usa **valori hex hardcodati** (`#f3efe6`, `#0d1e33`) inv
 
 **Print CSS:** Aggiungere `@media print { .page-hero { background: none !important; color: #000; } }` per evitare sfondi scuri che consumano inchiostro. Nascondere topbar, footer, nav (display: none). Espandere max-height su `.faq-answer` (max-height: none !important;).
 
+## Pubblicità Medica (Normativa Italiana)
+Contenuti SEO **devono essere informativi**, mai promozionali (Codice Deontologico FNOMCeO + divieto pubblicità comparativa).
+Vietato: anni di esperienza, superlativi ("il migliore"), confronti con colleghi, testimonial.
+**Pattern obbligatorio per pagine di servizio:** citare esplicitamente che "il medico di famiglia SSN può rilasciare il medesimo servizio gratuitamente ai propri assistiti" — evita concorrenza sleale verso i colleghi MMG.
+Tono corretto: "Il Dott. X è certificatore telematico INPS autorizzato" (fattuale), non "scegli il Dott. X" (promozionale).
+
 ## SEO / Indicizzazione
 Il sito è **indicizzabile** per Local SEO su Arezzo. Tutte le pagine permettono indicizzazione. Schema JSON-LD Physician è presente in `index.html`. Open Graph tags sono configurati per condivisione social.
 
@@ -192,6 +198,8 @@ Esempio esistente: `cert-malattia.html`. Aggiungere nuovi documenti come `<a>` b
 - **index.html:** Physician (name, specialty, address, phone, priceRange, areaServed) + MedicalClinic (openingHours) + BreadcrumbList
 - **visite-private.html:** FAQPage + BreadcrumbList
 - **faq-riforma.html:** FAQPage + BreadcrumbList
+- **certificato-invalidita-civile.html:** MedicalService + FAQPage + BreadcrumbList + LocalBusiness+MedicalOrganization
+- **LocalBusiness+MedicalOrganization:** `@type: ["LocalBusiness", "MedicalOrganization"]` — use on service pages for local search visibility (name, address, phone, email, areaServed). Factual, not promotional.
 - **Key fields:** `sameAs` (links to Google Maps, LinkedIn), `worksFor` (clinic reference), proper address/phone formatting
 - **Validation:** Use Google Rich Results Test or schema.org validator before deploy
 
