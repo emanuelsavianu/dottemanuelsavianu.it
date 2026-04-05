@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v151: Added certificato-invalidita-civile.html page + updated index.html & visite-private.html
-const CACHE_NAME = 'savianu-v151';
+// Cache version bumped to v152: Removed "Perché Rivolgersi al Dott. Savianu" section from certificato page, fixed calendar 100% width, fixed text color contrast on visite-private gradient
+const CACHE_NAME = 'savianu-v152';
 const urlsToCache = [
   '/',
   '/index.html',
