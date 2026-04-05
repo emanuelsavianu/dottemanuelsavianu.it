@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v154: Make dark mode button prominent (circular, gold border, hover glow), add contatti studio section to visite-private.html
-const CACHE_NAME = 'savianu-v154';
+// Cache version bumped to v155: Simplify Contatti Studio (remove segreteria, Studio Medico Ippocrate title, personal phone only)
+const CACHE_NAME = 'savianu-v155';
 const urlsToCache = [
   '/',
   '/index.html',
