@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v155: Simplify Contatti Studio (remove segreteria, Studio Medico Ippocrate title, personal phone only)
-const CACHE_NAME = 'savianu-v155';
+// Cache version bumped to v156: SEO improvements to certificato-invalidita-civile.html (LocalBusiness schema, step section, FAQ expansion, fix invalid HTML)
+const CACHE_NAME = 'savianu-v156';
 const urlsToCache = [
   '/',
   '/index.html',

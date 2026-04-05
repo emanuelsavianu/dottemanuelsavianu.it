@@ -81,6 +81,30 @@
     ]
     </script>
 
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["LocalBusiness", "MedicalOrganization"],
+      "name": "Studio Medico Ippocrate — Dott. Emanuel Savianu",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Via Ubaldo Pasqui 38",
+        "addressLocality": "Arezzo",
+        "addressRegion": "Toscana",
+        "postalCode": "52100",
+        "addressCountry": "IT"
+      },
+      "telephone": "+390575171 3428",
+      "email": "segreteria@savianu.it",
+      "url": "https://dottemanuelsavianu.it",
+      "areaServed": {
+        "@type": "City",
+        "name": "Arezzo"
+      },
+      "medicalSpecialty": "General Practice"
+    }
+    </script>
+
     <style>
         /* ── Comparison Table Styling ──────────────────────────── */
         .comparison-table {
@@ -213,9 +237,9 @@
         </p>
         <h1 class="hero-title" id="hero-heading">Certificato di<br>Invalidità Civile</h1>
         <p class="hero-desc">
-            Dal <strong>1° marzo 2026</strong> la procedura per il riconoscimento dell'invalidità civile ad Arezzo è cambiata completamente.
-            Il Dott. Emanuel Savianu, certificatore telematico INPS autorizzato, guida cittadini e medici attraverso il nuovo percorso semplificato,
-            senza necessità di domanda separata al Patronato.
+            Dal <strong>1° marzo 2026</strong> ad Arezzo il nuovo <strong>Certificato Medico Introduttivo INPS</strong> avvia automaticamente
+            la pratica per il riconoscimento dell'invalidità civile, senza necessità di domanda separata al Patronato.
+            Il Dott. Emanuel Savianu è certificatore telematico INPS autorizzato ai sensi del D.Lgs. 62/2024.
         </p>
         <a href="#calendar-section" class="btn-cta-hero" aria-label="Prenota una consulenza con il Dott. Savianu">
             <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
@@ -303,15 +327,56 @@
                             <td><span class="table-check">✓</span> 90 giorni (15 oncologia)</td>
                         </tr>
                         <tr>
-                            <td>Disponibilità medica</td>
-                            <td><span class="table-cross">✗</span> Solo medico di famiglia SSN</td>
-                            <td><span class="table-check">✓</span> Anche liberi professionisti</td>
+                            <td>Integrazione INPS</td>
+                            <td><span class="table-cross">✗</span> Domanda manuale al Patronato</td>
+                            <td><span class="table-check">✓</span> Invio telematico diretto (medico → INPS)</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
+
+        <!-- ── Come Si Svolge ──────────────────────────────────── -->
+        <section aria-labelledby="procedura-heading" style="margin-top: 48px;">
+            <h2 id="procedura-heading" style="font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; font-weight: 700;">
+                Come Si Svolge la Consulenza
+            </h2>
+            <p style="font-size: 0.88rem; color: var(--text-medium); margin-bottom: 24px; line-height: 1.6;">
+                Il medico di famiglia SSN può rilasciare il Certificato Medico Introduttivo gratuitamente ai propri assistiti nell'ambito del Servizio Sanitario Nazionale.
+                La consulenza privata è un'alternativa per chi necessita di un appuntamento dedicato o il cui medico non effettua questa prestazione.
+            </p>
+            <ol style="list-style: none; padding: 0; margin: 0;">
+                <li style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <span style="flex-shrink: 0; width: 32px; height: 32px; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;">1</span>
+                    <div>
+                        <strong style="color: var(--primary); display: block; margin-bottom: 4px; font-size: 0.9rem;">Raccolta documentazione</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-dark); line-height: 1.6; margin: 0;">Referti specialistici, esami strumentali (TAC, radiografie, analisi), lettere di dimissione, elenco dei farmaci. Più è completa la documentazione, più precisa sarà la valutazione INPS.</p>
+                    </div>
+                </li>
+                <li style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <span style="flex-shrink: 0; width: 32px; height: 32px; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;">2</span>
+                    <div>
+                        <strong style="color: var(--primary); display: block; margin-bottom: 4px; font-size: 0.9rem;">Visita medica e compilazione certificato</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-dark); line-height: 1.6; margin: 0;">Il medico esamina la documentazione, valuta le condizioni di salute rilevanti e compila il Certificato Medico Introduttivo sul portale INPS.</p>
+                    </div>
+                </li>
+                <li style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <span style="flex-shrink: 0; width: 32px; height: 32px; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;">3</span>
+                    <div>
+                        <strong style="color: var(--primary); display: block; margin-bottom: 4px; font-size: 0.9rem;">Invio telematico all'INPS</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-dark); line-height: 1.6; margin: 0;">Il certificato viene trasmesso direttamente all'INPS per via telematica. Il paziente riceve l'attestato di trasmissione con il numero di protocollo ufficiale, prova dell'avvio della pratica.</p>
+                    </div>
+                </li>
+                <li style="display: flex; gap: 16px; align-items: flex-start; background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <span style="flex-shrink: 0; width: 32px; height: 32px; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;">4</span>
+                    <div>
+                        <strong style="color: var(--primary); display: block; margin-bottom: 4px; font-size: 0.9rem;">Risposta dell'INPS</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-dark); line-height: 1.6; margin: 0;">L'INPS programma la visita collegiale entro 90 giorni (15 per patologie oncologiche). La convocazione arriva per raccomandata. Non è necessario fare ulteriori domande.</p>
+                    </div>
+                </li>
+            </ol>
+        </section>
 
         <!-- ── Booking Section ─────────────────────────────────── -->
         <section class="booking-section" id="calendar-section" aria-label="Calendario prenotazioni" style="margin-top: 48px;">
@@ -339,7 +404,17 @@
                 Domande Frequenti
             </h2>
             <div style="background: var(--white); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);">
-                <body.dark-mode style="background: var(--card-bg-dark);">
+
+                <div style="margin-bottom: 24px;">
+                    <strong style="color: var(--primary); display: block; margin-bottom: 8px;">
+                        Il mio medico di famiglia può rilasciare il certificato?
+                    </strong>
+                    <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
+                        Sì. Il medico di medicina generale che ha in carico il paziente può rilasciare il Certificato Medico Introduttivo ai propri assistiti SSN —
+                        è la strada principale e gratuita nell'ambito dell'assistenza primaria.
+                        Se il medico di famiglia non effettua questa prestazione, o se si preferisce un appuntamento dedicato in libera professione, ci si può rivolgere a un certificatore telematico INPS privato.
+                    </p>
+                </div>
 
                 <div style="margin-bottom: 24px;">
                     <strong style="color: var(--primary); display: block; margin-bottom: 8px;">
@@ -347,8 +422,19 @@
                     </strong>
                     <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
                         Il vecchio certificato doveva essere accompagnato da una domanda amministrativa all'INPS tramite Patronato.
-                        Il nuovo certificato, valido dal 1° marzo 2026 ad Arezzo, ha valore di domanda stessa.
+                        Il nuovo Certificato Medico Introduttivo, valido dal 1° marzo 2026 ad Arezzo, ha valore di domanda stessa.
                         L'invio telematico del medico avvia automaticamente la pratica senza ulteriori passaggi burocratici.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <strong style="color: var(--primary); display: block; margin-bottom: 8px;">
+                        Cos'è il questionario WHODAS 2.0 che valuterà l'INPS?
+                    </strong>
+                    <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
+                        È il questionario internazionale dell'OMS (Organizzazione Mondiale della Sanità) basato sulla Classificazione Internazionale del Funzionamento (ICF).
+                        Misura come la patologia incide sulle attività quotidiane negli ultimi 30 giorni: igiene personale, mobilità, concentrazione, lavoro, vita sociale.
+                        Non valuta solo la diagnosi ma l'impatto reale sulla vita. Un familiare o caregiver può rispondere al posto del diretto interessato se necessario.
                     </p>
                 </div>
 
@@ -357,8 +443,8 @@
                         Posso rivolgermi a qualsiasi medico per il certificato?
                     </strong>
                     <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
-                        Sì. Possono rilasciare il certificato il medico di famiglia, specialisti, pediatri, medici ospedalieri e liberi professionisti
-                        autorizzati INPS come il Dott. Savianu. L'importante è che sia iscritto all'Albo e autorizzato come certificatore telematico INPS.
+                        Possono rilasciare il Certificato Medico Introduttivo: il medico di famiglia, specialisti SSN, pediatri, medici ospedalieri e liberi professionisti
+                        autorizzati INPS. L'importante è che il medico sia iscritto all'Albo e abilitato come certificatore telematico INPS.
                     </p>
                 </div>
 
@@ -367,7 +453,7 @@
                         Quali documenti devo portare?
                     </strong>
                     <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
-                        Porta tutta la documentazione medica recente: referti specialistici, esami (TAC, radiografie, analisi),
+                        Tutta la documentazione medica recente: referti specialistici, esami (TAC, radiografie, analisi),
                         lettere di dimissione ospedaliera, elenco dei farmaci in uso. Più è completa, più precisa sarà la valutazione INPS.
                     </p>
                 </div>
@@ -383,16 +469,15 @@
 
                 <div>
                     <strong style="color: var(--primary); display: block; margin-bottom: 8px;">
-                        Ho un vecchio certificato prima del 28 febbraio 2026. Cosa faccio?
+                        Ho un vecchio certificato precedente al 28 febbraio 2026. Cosa faccio?
                     </strong>
                     <p style="color: var(--text-dark); font-size: 0.9rem; line-height: 1.6;">
-                        Devi inviare la domanda all'INPS tramite Patronato entro il 28 febbraio 2026 utilizzando il vecchio sistema.
+                        Occorre inviare la domanda all'INPS tramite Patronato entro il 28 febbraio 2026 utilizzando il vecchio sistema.
                         Dal 1° marzo i vecchi certificati non abbinati a una domanda non sono più validi.
-                        Contatta subito il tuo Patronato se hai un certificato di gennaio o febbraio 2026.
+                        Contattare subito il proprio Patronato se si è in possesso di un certificato di gennaio o febbraio 2026.
                     </p>
                 </div>
 
-                </body.dark-mode>
             </div>
             <p style="text-align: center; margin-top: 24px; color: var(--text-medium); font-size: 0.85rem;">
                 Hai altre domande? <a href="visite-private.html#faq-riforma" style="color: var(--accent); text-decoration: underline;">Consulta la guida completa sulla riforma</a>
