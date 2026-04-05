@@ -53,6 +53,11 @@ Use **broad directory patterns** (`.bkit/`, `.claude/`, `.superpowers/`, `.playw
 Use **negation patterns** to protect documentation: `*.md` then `!README.md` (allows README while ignoring analysis files like GEO-ANALYSIS.md).
 When untracking files in bulk: `git ls-files --ignored --exclude-standard -c | xargs git rm --cached`.
 
+## Line Endings (.gitattributes)
+`.gitattributes` configured: `core.autocrlf = input` + explicit LF for `.html`, `.js`, `.css`, `.json`, `.md`, `.xml`.
+**Why:** Prevent CRLF/LF mismatch warnings on Windows commits. All files normalized to LF in repo.
+**For you:** Git will auto-convert CRLF → LF on commit; no manual line-ending management needed.
+
 ## robots.txt — AI Search Bots
 **Allow explicitly:** GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, anthropic-ai, PerplexityBot (ChatGPT, Claude, Perplexity discoverability).
 **Disallow:** CCBot (Common Crawl training scraper — optional, depends on content policy).
