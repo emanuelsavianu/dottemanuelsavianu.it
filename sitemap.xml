@@ -1,107 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage - highest priority -->
   <url>
     <loc>https://dottemanuelsavianu.it/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
   </url>
-
-  <!-- FAQ pages - frequently updated -->
   <url>
     <loc>https://dottemanuelsavianu.it/faq.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/faq-riforma.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
   </url>
-
-  <!-- Tools - high priority -->
   <url>
     <loc>https://dottemanuelsavianu.it/calcolatore-ferie.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/calcolatoreferiegemini.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/ferie.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/gestoreturni/gestoreturni.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
   </url>
-
-  <!-- Information pages -->
   <url>
     <loc>https://dottemanuelsavianu.it/colleghi.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/impegnative.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/esenzioni.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/protocollo-certificati-inps.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/visite-private.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/cert-malattia.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/installazione.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/rsa.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/xsegretarie.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/RUAP/index.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
-
-  <!-- Utility pages - lower priority -->
   <url>
     <loc>https://dottemanuelsavianu.it/privacy.html</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://dottemanuelsavianu.it/offline.html</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
   </url>
 </urlset>
