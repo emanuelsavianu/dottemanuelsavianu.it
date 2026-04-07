@@ -1,0 +1,95 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Gestore Turni — shift management tool for Continuita' Assistenziale / Guardia Medica. Single-page app, fully Italian UI, no backend. Two files: `gestoreturni.html` (UI + Tailwind config) and `app.js` (all logic). Data persisted in browser localStorage.
+
+## Development
+
+No build step. Open `gestoreturni.html` directly in browser or serve locally:
+```bash
+cd gestoreturni && python -m http.server 8000
+# then open http://localhost:8000/gestoreturni.html
+```
+
+No test suite — manual browser testing only.
+
+## Tech Stack
+
+- Tailwind CSS v3 (CDN — `cdn.tailwindcss.com`)
+- FontAwesome 6.5 (CDN)
+- jspdf 2.5.1 + html2canvas 1.4.1 (CDN, for PDF export)
+- Vanilla JavaScript ES6+
+- localStorage for persistence
+
+**This is NOT the parent site's design system.** Does not use `styles.css`, `app.js` (parent), or the service worker. Completely standalone.
+
+## Architecture
+
+### State Shape
+```javascript
+state = {
+  config: {
+    roles: [{ id, name, color }],
+    shifts: [{ id, label, startTime, endTime, hours, icon }],
+    activities: [{ id, name, location, requirements: [{ roleId, count }] }]
+  },
+  staff: [{
+    id, name, roleId, maxWeeklyHours, color,
+    preferredActivityId,  // nullable — staff's preferred activity
+    unavailability: [{ id, type, from, to, note }]
+  }],
+  assignments: {
+    'YYYY-MM-DD_shiftId_activityId_slotIndex': staffId
+  }
+}
+```
+
+### localStorage Keys
+- `ruap-config-v2` — roles, shifts, activities
+- `ruap-staff-v2` — staff members with unavailability
+- `ruap-assignments-v2` — shift assignments (date_shift_activity_slot → staffId)
+- `dark-mode` — boolean
+
+### Rendering Pipeline
+`renderAll()` calls `renderCalendar()` + `renderSidebar()`. Every mutation follows the pattern: update state → `saveToStorage()` → `renderAll()` (or targeted render). No virtual DOM — full re-render on each change.
+
+### Assignment Key Format
+`YYYY-MM-DD_shiftId_activityId_slotIndex` — this composite key is central to the app. Calendar cells, auto-assign, hour calculations, and import/export all depend on this format.
+
+### First-Run Behavior
+If no localStorage data exists, loads demo data with a dismissible banner. The onboarding wizard is accessible via Settings → "Ricomincia la Configurazione Guidata".
+
+## Key Patterns
+
+**CRUD operations** use inline forms (no `prompt()` dialogs). Settings modal has tabs: Ruoli, Turni, Attivita', Personale.
+
+**Auto-assign algorithm** respects: staff activity preferences (priority 1: preferred, 2: no preference, 3: other preference), weekly hour limits, role matching, unavailability, and no double-booking within the same shift.
+
+**Hour tracking** calculates weekly hours from `sidebarWeekStart` (Monday) and monthly hours from `calYear`/`calMonth`. Both iterate all assignments for the period.
+
+**v1 → v2 migration** exists in `migrateV1ToV2()` for importing legacy data (hardcoded 2-location, doctors-only format).
+
+## Tasks In Progress (Tasks 5-8)
+
+- **Task 5:** Auto-assign with preference priority (⭐ indicator for preferred doctors)
+- **Task 6:** PDF export (monthly schedule per sede using jspdf/html2canvas)
+- **Task 7:** Visual polish (calendar cells, dropdown width, responsive improvements)
+- **Task 8:** Pre-fill April 2026 with ~70% realistic assignments
+
+For the specialized RUAP demo (4 doctors, config-driven), see `RUAP/CLAUDE.md`.
+
+## Toast System (Task 4)
+
+All `alert()` and `confirm()` dialogs replaced with toast notifications:
+- 4 types: success (green), warning (amber), error (red), info (blue)
+- Auto-dismiss after 3 seconds or click to close
+- Location: bottom-right fixed position
+- No browser dialogs — fully in-app UI
+
+## Design Specs
+
+Active design docs in `docs/superpowers/specs/`:
+- `2026-04-07-gestoreturni-demo-polish-design.md` — current approved spec for UX overhaul
