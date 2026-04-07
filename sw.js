@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v164: Added reset assignments button to RUAP, fixed dark mode and instructions modal
-const CACHE_NAME = 'savianu-v164';
+// Cache version bumped to v165: Fixed RUAP modal positioning (above if no space) and PDF layout spacing
+const CACHE_NAME = 'savianu-v165';
 const urlsToCache = [
   '/',
   '/index.html',
