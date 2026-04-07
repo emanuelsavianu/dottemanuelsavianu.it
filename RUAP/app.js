@@ -767,9 +767,13 @@ async function callGeminiToAssign() {
   }
 }
 
-document.getElementById('btn-gemini-assign').addEventListener('click', callGeminiToAssign);
-document.getElementById('btn-auto-assign').addEventListener('click', autoAssign);
-document.getElementById('btn-pdf').addEventListener('click', exportPDF);
+// Event listeners (defensive checks for optional buttons)
+const btnGemini = document.getElementById('btn-gemini-assign');
+if (btnGemini) btnGemini.addEventListener('click', callGeminiToAssign);
+const btnAutoAssign = document.getElementById('btn-auto-assign');
+if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
+const btnPdf = document.getElementById('btn-pdf');
+if (btnPdf) btnPdf.addEventListener('click', exportPDF);
 
 // Init
 function init() {
@@ -777,6 +781,16 @@ function init() {
   const isFirstRun = state.doctors.length === 0;
   if (isFirstRun) {
     state.doctors = getDefaultDoctors();
+    // Resolve demo assignments (index → real ID)
+    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
+      Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
+        if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
+      });
+    }
+    // Navigate to current month if April 2026
+    const now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
     saveToStorage();
     document.getElementById('demo-banner').classList.remove('hidden');
   }
