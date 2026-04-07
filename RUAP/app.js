@@ -330,16 +330,23 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   const date = new Date(dateKey + 'T00:00:00');
   document.getElementById('assign-slot-label').textContent = `${place} — ${date.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})} ${slot.label}`;
 
-  const availDocs = state.doctors.filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key));
+  const availDocs = state.doctors
+    .filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key))
+    .sort((a, b) => {
+      const aP = a.preferredPlace === place ? 0 : 1;
+      const bP = b.preferredPlace === place ? 0 : 1;
+      return aP - bP;
+    });
   list.innerHTML = '';
   if (availDocs.length === 0) {
     list.innerHTML = '<p class="text-xs text-slate-400 italic py-2 px-1">Nessun medico disponibile</p>';
   } else {
     availDocs.forEach(doc => {
       const color = getDoctorColor(doc);
+      const isPref = doc.preferredPlace === place;
       const btn = document.createElement('button');
       btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 text-sm';
-      btn.innerHTML = `<span class="w-3 h-3 rounded-full" style="background:${color.hex}"></span><span class="flex-1 font-medium">${doc.name}</span>`;
+      btn.innerHTML = `<span class="w-3 h-3 rounded-full" style="background:${color.hex}"></span><span class="flex-1 font-medium">${doc.name}</span>${isPref ? '<span class="text-amber-500 text-xs">⭐</span>' : ''}`;
       btn.addEventListener('click', () => { state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll(); });
       list.appendChild(btn);
     });
@@ -474,6 +481,78 @@ document.getElementById('sidebar-week-next').addEventListener('click', () => { s
 function renderAll() { renderCalendar(); renderSidebar(); }
 
 // ====================================================
+// AUTO-ASSIGN LOCALE (no API required)
+// ====================================================
+function autoAssign() {
+  if (state.doctors.length === 0) {
+    toast('Aggiungi prima dei medici', 'warning');
+    return;
+  }
+
+  const year = state.calYear;
+  const month = state.calMonth;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let count = 0;
+
+  for (let day = 1; day <= lastDay; day++) {
+    const cellDate = new Date(year, month, day);
+    const jsDay = cellDate.getDay();
+    if (jsDay === 0 || jsDay === 6) continue;  // weekends only
+    const dateKey = toDateKey(cellDate);
+    const weekStart = getWeekStart(cellDate);
+
+    SLOTS.forEach(slot => {
+      PLACES.forEach(place => {
+        const slotKey = `${dateKey}_${slot.key}_${place}`;
+        if (state.assignments[slotKey]) return; // already assigned
+
+        // Check if doctor is not already busy in this slot on this date
+        const notBusy = (doc) => {
+          const prefix = `${dateKey}_${slot.key}_`;
+          return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
+        };
+
+        const available = state.doctors.filter(doc =>
+          isDoctorAvailableForSlot(doc, dateKey, slot.key) && notBusy(doc)
+        );
+
+        if (available.length === 0) return;
+
+        // Priority 1: doctors with preferred place + fewest weekly hours
+        // Priority 2: doctors with no preference + fewest weekly hours
+        // Priority 3: doctors preferring different place (only if 1-2 exhausted)
+        const preferred  = available.filter(d => d.preferredPlace === place);
+        const neutral    = available.filter(d => !d.preferredPlace);
+        const nonPreferred = available.filter(d => d.preferredPlace && d.preferredPlace !== place);
+
+        const pool = preferred.length > 0 ? preferred
+          : neutral.length > 0 ? neutral
+          : nonPreferred;
+
+        if (pool.length === 0) return;
+
+        // Pick doctor with fewest weekly hours assigned
+        pool.sort((a, b) =>
+          getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
+        );
+
+        state.assignments[slotKey] = pool[0].id;
+        count++;
+      });
+    });
+  }
+
+  if (count === 0) {
+    toast('Nessun turno vuoto da assegnare', 'info');
+    return;
+  }
+
+  saveToStorage();
+  renderAll();
+  toast(`Assegnati ${count} turni automaticamente`, 'success');
+}
+
+// ====================================================
 // GEMINI AI INTEGRATION
 // ====================================================
 
@@ -567,6 +646,7 @@ async function callGeminiToAssign() {
 }
 
 document.getElementById('btn-gemini-assign').addEventListener('click', callGeminiToAssign);
+document.getElementById('btn-auto-assign').addEventListener('click', autoAssign);
 
 // Init
 function init() {
