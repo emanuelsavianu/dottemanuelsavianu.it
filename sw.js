@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v166: Added malattia.html (Certificato di malattia: chi deve farlo?); links in index.html + colleghi.html
-const CACHE_NAME = 'savianu-v166';
+// Cache version bumped to v167: SEO fixes on visite-private.html — shortened title, added og:type + Twitter Card, LocalBusiness + MedicalService schema, image dimensions, freshness date
+const CACHE_NAME = 'savianu-v167';
 const urlsToCache = [
   '/',
   '/index.html',
