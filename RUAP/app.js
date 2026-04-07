@@ -76,6 +76,29 @@ function formatDateShort(date) { return date.toLocaleDateString('it-IT', { day: 
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 // ====================================================
+// DARK MODE TOGGLE
+// ====================================================
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('dark');
+  if (isDark) {
+    html.classList.remove('dark');
+    localStorage.setItem('ruap-dark-mode', 'false');
+  } else {
+    html.classList.add('dark');
+    localStorage.setItem('ruap-dark-mode', 'true');
+  }
+}
+
+// Load dark mode preference on page load
+function initDarkMode() {
+  const isDarkPref = localStorage.getItem('ruap-dark-mode') === 'true';
+  if (isDarkPref) {
+    document.documentElement.classList.add('dark');
+  }
+}
+
+// ====================================================
 // TOAST NOTIFICATIONS
 // ====================================================
 function toast(message, type = 'success', duration = 3000) {
@@ -774,9 +797,23 @@ const btnAutoAssign = document.getElementById('btn-auto-assign');
 if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
 const btnPdf = document.getElementById('btn-pdf');
 if (btnPdf) btnPdf.addEventListener('click', exportPDF);
+const btnDarkMode = document.getElementById('btn-darkmode');
+if (btnDarkMode) btnDarkMode.addEventListener('click', toggleDarkMode);
+const btnInstructions = document.getElementById('btn-instructions');
+if (btnInstructions) {
+  btnInstructions.addEventListener('click', () => {
+    document.getElementById('instructions-modal').classList.remove('hidden');
+  });
+}
+document.getElementById('instructions-modal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'instructions-modal') {
+    e.target.classList.add('hidden');
+  }
+});
 
 // Init
 function init() {
+  initDarkMode();
   loadFromStorage();
   const isFirstRun = state.doctors.length === 0;
   if (isFirstRun) {
