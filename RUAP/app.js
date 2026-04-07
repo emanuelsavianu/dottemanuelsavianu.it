@@ -75,6 +75,42 @@ function formatDateShort(date) { return date.toLocaleDateString('it-IT', { day: 
 
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
+// ====================================================
+// TOAST NOTIFICATIONS
+// ====================================================
+function toast(message, type = 'success', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const colors = {
+    success: 'bg-green-600 text-white',
+    warning: 'bg-amber-500 text-white',
+    error:   'bg-red-600 text-white',
+    info:    'bg-brand-700 text-white',
+  };
+  const icons = {
+    success: 'fa-circle-check',
+    warning: 'fa-triangle-exclamation',
+    error:   'fa-circle-xmark',
+    info:    'fa-circle-info',
+  };
+
+  const el = document.createElement('div');
+  el.className = `toast-item pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${colors[type] || colors.info} opacity-0 translate-y-2`;
+  el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+  el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${message}</span>`;
+  container.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0', 'translate-y-2');
+  });
+
+  setTimeout(() => {
+    el.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
 function isDoctorUnavailable(doctor, dateKey) {
   if (!doctor.unavailPeriods) return false;
   return doctor.unavailPeriods.some(p => dateKey >= p.from && dateKey <= p.to);
@@ -156,8 +192,8 @@ document.getElementById('import-file').addEventListener('change', (e) => {
       const data = JSON.parse(ev.target.result);
       if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
       state.doctors = data.doctors; state.assignments = data.assignments;
-      saveToStorage(); renderAll(); alert('Importazione completata!');
-    } catch (err) { alert('Errore: ' + err.message); }
+      saveToStorage(); renderAll(); toast('Importazione completata!', 'success');
+    } catch (err) { toast('Errore importazione: ' + err.message, 'error'); }
   };
   reader.readAsText(file); e.target.value = '';
 });
@@ -407,10 +443,26 @@ document.getElementById('modal-save').addEventListener('click', () => {
   saveToStorage(); closeDoctorModal(); renderAll();
 });
 function deleteDoctor(id) {
-  if(!confirm("Eliminare medico?")) return;
-  state.doctors = state.doctors.filter(d => d.id !== id);
-  Object.keys(state.assignments).forEach(k => { if(state.assignments[k] === id) delete state.assignments[k]; });
-  saveToStorage(); renderAll();
+  const doc = getDoctorById(id);
+  if (!doc) return;
+  // Use a small inline confirm toast
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast-item pointer-events-auto bg-white border border-red-200 rounded-xl shadow-lg px-4 py-3 text-sm flex items-center gap-3';
+  el.innerHTML = `
+    <span class="text-slate-700 flex-1">Eliminare <strong>${doc.name}</strong>?</span>
+    <button class="bg-red-600 hover:bg-red-500 text-white rounded-lg px-3 py-1 text-xs font-bold" id="confirm-delete-${id}">Sì, elimina</button>
+    <button class="text-slate-400 hover:text-slate-600 text-xs font-bold" id="cancel-delete-${id}">Annulla</button>
+  `;
+  container.appendChild(el);
+  document.getElementById(`confirm-delete-${id}`).onclick = () => {
+    state.doctors = state.doctors.filter(d => d.id !== id);
+    Object.keys(state.assignments).forEach(k => { if (state.assignments[k] === id) delete state.assignments[k]; });
+    saveToStorage(); renderAll(); el.remove();
+    toast(`${doc.name} rimosso`, 'info');
+  };
+  document.getElementById(`cancel-delete-${id}`).onclick = () => el.remove();
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
 }
 
 // Navigazione
@@ -427,7 +479,7 @@ function renderAll() { renderCalendar(); renderSidebar(); }
 
 async function callGeminiToAssign() {
   if (state.doctors.length === 0) {
-    alert("Aggiungi prima dei medici.");
+    toast('Aggiungi prima dei medici', 'warning');
     return;
   }
 
@@ -453,7 +505,7 @@ async function callGeminiToAssign() {
   }
 
   if (emptySlots.length === 0) {
-    alert("Non ci sono turni vuoti da assegnare in questo mese.");
+    toast('Nessun turno vuoto da assegnare', 'info');
     return;
   }
 
@@ -503,11 +555,11 @@ async function callGeminiToAssign() {
 
     saveToStorage();
     renderAll();
-    alert(`Gemini ha completato il lavoro! Assegnati ${count} turni.`);
+    toast(`Assegnati ${count} turni automaticamente`, 'success');
 
   } catch (err) {
     console.error(err);
-    alert(`Errore AI: ${err.message}\nVerifica la connessione o l'API key.`);
+    toast('Errore AI: ' + err.message, 'error');
   } finally {
     // Hide loading overlay
     document.getElementById('gemini-loading').classList.add('hidden');
