@@ -553,6 +553,113 @@ function autoAssign() {
 }
 
 // ====================================================
+// PDF EXPORT
+// ====================================================
+function buildPdfContent() {
+  const year = state.calYear;
+  const month = state.calMonth;
+  const monthName = MONTHS_IT[month];
+
+  document.getElementById('pdf-subtitle').textContent = `${monthName} ${year} — Sedi: ${PLACES.join(', ')}`;
+  document.getElementById('pdf-footer').textContent = `Generato il ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })} — RUAP Attività Diurne`;
+
+  const table = document.getElementById('pdf-table');
+  table.innerHTML = '';
+
+  PLACES.forEach(place => {
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-bottom: 24px;';
+
+    const placeTitle = document.createElement('h2');
+    placeTitle.style.cssText = 'font-size: 15px; font-weight: bold; color: #1e40af; margin: 0 0 8px; padding: 6px 10px; background: #eff6ff; border-radius: 6px;';
+    placeTitle.textContent = place;
+    section.appendChild(placeTitle);
+
+    const t = document.createElement('table');
+    t.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 12px;';
+
+    // Header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    headerRow.style.cssText = 'background: #1e40af; color: white;';
+    ['Data', 'Giorno', ...SLOTS.map(s => s.label)].forEach(h => {
+      const th = document.createElement('th');
+      th.style.cssText = 'padding: 6px 8px; text-align: left; font-weight: bold;';
+      th.textContent = h;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    t.appendChild(thead);
+
+    // Data rows (weekdays only)
+    const tbody = document.createElement('tbody');
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    for (let day = 1; day <= lastDay; day++) {
+      const d = new Date(year, month, day);
+      const jsDay = d.getDay();
+      if (jsDay === 0 || jsDay === 6) continue;
+
+      const dateKey = toDateKey(d);
+      const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+      const isToday = dateKey === toDateKey(new Date());
+
+      const tr = document.createElement('tr');
+      tr.style.cssText = `border-bottom: 1px solid #e2e8f0; ${isToday ? 'background: #eff6ff;' : day % 2 === 0 ? 'background: #f8fafc;' : ''}`;
+
+      const tdDate = document.createElement('td');
+      tdDate.style.cssText = 'padding: 5px 8px; font-weight: bold; color: #1e40af;';
+      tdDate.textContent = `${day}/${month + 1}`;
+      tr.appendChild(tdDate);
+
+      const tdDay = document.createElement('td');
+      tdDay.style.cssText = 'padding: 5px 8px; color: #64748b;';
+      tdDay.textContent = dayNames[jsDay];
+      tr.appendChild(tdDay);
+
+      SLOTS.forEach(slot => {
+        const key = `${dateKey}_${slot.key}_${place}`;
+        const doc = state.assignments[key] ? getDoctorById(state.assignments[key]) : null;
+        const td = document.createElement('td');
+        td.style.cssText = 'padding: 5px 8px;';
+        if (doc) {
+          const color = getDoctorColor(doc);
+          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 2px 8px; border-radius: 4px; font-weight:bold;">${doc.name.replace('Dott. ', '')}</span>`;
+        } else {
+          td.innerHTML = '<span style="color: #cbd5e1;">—</span>';
+        }
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    }
+    t.appendChild(tbody);
+    section.appendChild(t);
+    table.appendChild(section);
+  });
+}
+
+async function exportPDF() {
+  buildPdfContent();
+  const el = document.getElementById('pdf-content');
+  el.classList.remove('hidden');
+
+  try {
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width / 1.5, canvas.height / 1.5] });
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 1.5, canvas.height / 1.5);
+    pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
+    toast('PDF scaricato', 'success');
+  } catch (err) {
+    toast('Errore PDF: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    el.classList.add('hidden');
+  }
+}
+
+// ====================================================
 // GEMINI AI INTEGRATION
 // ====================================================
 
@@ -647,6 +754,7 @@ async function callGeminiToAssign() {
 
 document.getElementById('btn-gemini-assign').addEventListener('click', callGeminiToAssign);
 document.getElementById('btn-auto-assign').addEventListener('click', autoAssign);
+document.getElementById('btn-pdf').addEventListener('click', exportPDF);
 
 // Init
 function init() {
