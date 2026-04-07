@@ -6,13 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Gestore Turni — shift management tool for Continuita' Assistenziale / Guardia Medica. Single-page app, fully Italian UI, no backend. Two files: `gestoreturni.html` (UI + Tailwind config) and `app.js` (all logic). Data persisted in browser localStorage.
 
-## Development
+## Quick Start
 
 No build step. Open `gestoreturni.html` directly in browser or serve locally:
+
 ```bash
-cd gestoreturni && python -m http.server 8000
-# then open http://localhost:8000/gestoreturni.html
+cd gestoreturni && npx serve .
+# then visit http://localhost:3000/gestoreturni.html
 ```
+
+Or use Python: `python -m http.server 8000` → `http://localhost:8000/gestoreturni.html`
+
+First run loads demo data. Clear localStorage to reset.
+
+## Development
 
 No test suite — manual browser testing only.
 

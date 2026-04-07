@@ -93,6 +93,45 @@ Config-driven approach means non-technical users can modify `config.js` without 
 
 **Import/Export:** JSON backup works with v2 schema including preferredPlace field.
 
+## Data Schema
+
+**Doctor object (from CONFIG):**
+```javascript
+{
+  id: string (generated on first run),
+  name: string (e.g., 'Dott. Savianu'),
+  patients: number (determines weeklyHours: ≤400→38h, ≤1000→24h, ≤1200→12h),
+  weeklyHours: number (calculated from patients),
+  colorIndex: number (0-7, maps to COLOR_PALETTE),
+  preferredPlace: string (sede name, e.g., 'M.S.Savino') | null,
+  availability: { lun/mar/mer/gio/ven: { mat: bool, pom: bool } },
+  unavailPeriods: array
+}
+```
+
+**Assignment key format:** `YYYY-MM-DD_slotKey_placeName`
+- Example: `2026-04-07_mat_M.S.Savino`
+- Immutable and used across calendar, PDF export, auto-assign, and import/export
+- `slotKey`: `mat` or `pom`
+- `placeName`: must match exactly a place from CONFIG.places
+
+**Assignment map:** `{ slotKey: doctorId, ... }`
+- Maps assignment keys to doctor IDs
+- Example: `{ '2026-04-07_mat_M.S.Savino': 'doc-abc123', ... }`
+
+**App state:**
+```javascript
+{
+  doctors: array of doctor objects,
+  assignments: { slotKey: doctorId, ... },
+  calYear: number,
+  calMonth: number (0-11),
+  sidebarWeekStart: Date,
+  editingDoctorId: string | null,
+  activeSlotKey: string | null
+}
+```
+
 ## Pending Tasks
 
 Implementation plan: `docs/superpowers/plans/2026-04-07-ruap-demo-ready.md`
