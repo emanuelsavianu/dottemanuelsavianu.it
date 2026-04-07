@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v163: Added RUAP app.js and config.js to cache for demo scheduler
-const CACHE_NAME = 'savianu-v163';
+// Cache version bumped to v164: Added reset assignments button to RUAP, fixed dark mode and instructions modal
+const CACHE_NAME = 'savianu-v164';
 const urlsToCache = [
   '/',
   '/index.html',
