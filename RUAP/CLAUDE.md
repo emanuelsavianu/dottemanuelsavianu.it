@@ -62,7 +62,7 @@ slots: [
 - **config.js** — Loaded before app.js, seeds first run with doctors/sedi/shifts
 - **index.html** — Structure + toast container + PDF content div
 - **app.js** — All logic (state, rendering, toast system, auto-assign, PDF export)
-- **localStorage** — Persists doctor/assignment/config state (keys: ruap-config-v2, ruap-staff-v2, ruap-assignments-v2)
+- **localStorage** — Persists doctor/assignment/config state (keys: ruap-turni-medici, ruap-turni-assegnazioni, ruap-dark-mode)
 
 Config-driven approach means non-technical users can modify `config.js` without touching app logic.
 
@@ -71,6 +71,8 @@ Config-driven approach means non-technical users can modify `config.js` without 
 **Assignment key format:** `YYYY-MM-DD_slotKey_placeName` (e.g., `2026-04-07_mat_M.S.Savino`)
 - Central to calendar rendering, hour calculations, export, and auto-assign logic
 - Composite key replaces separate fields for maximum clarity
+
+**`cleanDoctorName(name)`** — strips `'Dott. '` prefix; used in calendar cells and PDF output.
 
 **preferredPlace field:** Doctor's preferred location — impacts auto-assign priority order:
 1. Doctors with preferred place + fewest weekly hours
@@ -85,9 +87,9 @@ Config-driven approach means non-technical users can modify `config.js` without 
 ## Data Persistence
 
 **localStorage keys:**
-- `ruap-config-v2` — roles, shifts, activities (mirrored from CONFIG on first run)
-- `ruap-staff-v2` — doctor objects with preferredPlace + unavailability
-- `ruap-assignments-v2` — shift assignments (key → staffId mapping)
+- `ruap-turni-medici` — doctor objects array (JSON)
+- `ruap-turni-assegnazioni` — shift assignments map (JSON)
+- `ruap-dark-mode` — `'true'`/`'false'` string
 
 **First-run behavior:** If no localStorage exists, loads CONFIG doctors + shows demo banner. Banner dismissible; wizard accessible via Settings → "Ricomincia la Configurazione Guidata".
 
@@ -132,14 +134,13 @@ Config-driven approach means non-technical users can modify `config.js` without 
 }
 ```
 
-## Pending Tasks
+## Features Implemented
 
-Implementation plan: `docs/superpowers/plans/2026-04-07-ruap-demo-ready.md`
-
-- **Task 5:** Auto-assign with preference priority (⭐ indicator in dropdown for preferred doctors)
-- **Task 6:** PDF export (monthly schedule table per sede using jspdf/html2canvas)
-- **Task 7:** Visual polish (calendar cells, dropdown width, responsive improvements)
-- **Task 8:** Pre-fill April 2026 with ~70% realistic assignments (~4 weeks, respecting preferences + unavailability)
+- Auto-assign with 3-tier priority (⭐ preferred place → no preference → other places)
+- PDF export — landscape, table per sede, html2canvas → jsPDF
+- Reset Turni button — clears assignments only, preserves doctors and preferences
+- Dark mode toggle — persisted in `ruap-dark-mode` localStorage key
+- Smart dropdown positioning — appears above the button if insufficient space below (`DROPDOWN_HEIGHT = 350`)
 
 ## Development
 

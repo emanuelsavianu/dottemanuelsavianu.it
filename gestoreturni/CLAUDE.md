@@ -79,13 +79,6 @@ If no localStorage data exists, loads demo data with a dismissible banner. The o
 
 **v1 → v2 migration** exists in `migrateV1ToV2()` for importing legacy data (hardcoded 2-location, doctors-only format).
 
-## Tasks In Progress (Tasks 5-8)
-
-- **Task 5:** Auto-assign with preference priority (⭐ indicator for preferred doctors)
-- **Task 6:** PDF export (monthly schedule per sede using jspdf/html2canvas)
-- **Task 7:** Visual polish (calendar cells, dropdown width, responsive improvements)
-- **Task 8:** Pre-fill April 2026 with ~70% realistic assignments
-
 For the specialized RUAP demo (4 doctors, config-driven), see `RUAP/CLAUDE.md`.
 
 ## Toast System (Task 4)
