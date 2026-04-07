@@ -391,7 +391,16 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   }
   removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
   const rect = e.currentTarget.getBoundingClientRect();
-  dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  const dropdownHeight = 350; // stima approssimativa dell'altezza del dropdown
+  const spaceBelow = window.innerHeight - rect.bottom;
+
+  // Se c'è poco spazio sotto, posiziona sopra il bottone
+  if (spaceBelow < dropdownHeight) {
+    dropdown.style.top = `${rect.top + window.scrollY - dropdownHeight - 4}px`;
+  } else {
+    dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  }
+
   dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 320)}px`;
   dropdown.classList.remove('hidden');
 }
@@ -633,7 +642,7 @@ function buildPdfContent() {
     section.appendChild(placeTitle);
 
     const t = document.createElement('table');
-    t.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 12px;';
+    t.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 13px;';
 
     // Header row
     const thead = document.createElement('thead');
@@ -641,7 +650,7 @@ function buildPdfContent() {
     headerRow.style.cssText = 'background: #1e40af; color: white;';
     ['Data', 'Giorno', ...SLOTS.map(s => s.label)].forEach(h => {
       const th = document.createElement('th');
-      th.style.cssText = 'padding: 6px 8px; text-align: left; font-weight: bold;';
+      th.style.cssText = 'padding: 8px 12px; text-align: left; font-weight: bold;';
       th.textContent = h;
       headerRow.appendChild(th);
     });
@@ -677,10 +686,10 @@ function buildPdfContent() {
         const key = `${dateKey}_${slot.key}_${place}`;
         const doc = state.assignments[key] ? getDoctorById(state.assignments[key]) : null;
         const td = document.createElement('td');
-        td.style.cssText = 'padding: 5px 8px;';
+        td.style.cssText = 'padding: 8px 12px; word-wrap: break-word; word-break: break-word;';
         if (doc) {
           const color = getDoctorColor(doc);
-          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 2px 8px; border-radius: 4px; font-weight:bold;">${doc.name.replace('Dott. ', '')}</span>`;
+          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 4px 12px; border-radius: 4px; font-weight:bold; display: inline-block; white-space: normal;">${doc.name.replace('Dott. ', '')}</span>`;
         } else {
           td.innerHTML = '<span style="color: #cbd5e1;">—</span>';
         }
