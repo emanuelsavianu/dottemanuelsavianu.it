@@ -510,6 +510,25 @@ function deleteDoctor(id) {
   setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
 }
 
+function resetAssignments() {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast-item pointer-events-auto bg-white border border-orange-200 rounded-xl shadow-lg px-4 py-3 text-sm flex items-center gap-3';
+  el.innerHTML = `
+    <span class="text-slate-700 flex-1">Sei sicuro di voler resettare <strong>tutti i turni</strong>? I medici e le preferenze rimarranno.</span>
+    <button class="bg-orange-600 hover:bg-orange-500 text-white rounded-lg px-3 py-1 text-xs font-bold" id="confirm-reset-all">Sì, resetta</button>
+    <button class="text-slate-400 hover:text-slate-600 text-xs font-bold" id="cancel-reset-all">Annulla</button>
+  `;
+  container.appendChild(el);
+  document.getElementById('confirm-reset-all').onclick = () => {
+    state.assignments = {};
+    saveToStorage(); renderAll(); el.remove();
+    toast('Tutti i turni resettati', 'success');
+  };
+  document.getElementById('cancel-reset-all').onclick = () => el.remove();
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
+}
+
 // Navigazione
 document.getElementById('cal-prev').addEventListener('click', () => { state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); });
 document.getElementById('cal-next').addEventListener('click', () => { state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); });
@@ -810,6 +829,10 @@ document.getElementById('instructions-modal')?.addEventListener('click', (e) => 
     e.target.classList.add('hidden');
   }
 });
+const btnResetAssignments = document.getElementById('btn-reset-assignments');
+if (btnResetAssignments) {
+  btnResetAssignments.addEventListener('click', resetAssignments);
+}
 
 // Init
 function init() {
