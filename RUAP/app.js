@@ -13,6 +13,9 @@ const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
   { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
 ];
 
+const DROPDOWN_HEIGHT = 350;
+const DROPDOWN_WIDTH  = 320;
+
 const COLOR_PALETTE = [
   { bg: 'bg-blue-500',   text: 'text-white', hex: '#3b82f6',  label: 'Blu' },
   { bg: 'bg-green-500',  text: 'text-white', hex: '#22c55e',  label: 'Verde' },
@@ -54,6 +57,7 @@ function getDefaultDoctors() {
 // UTILITY FUNCTIONS
 // ====================================================
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function cleanDoctorName(name) { return name.replace('Dott. ', ''); }
 
 function getWeekStart(date) {
   const d = new Date(date);
@@ -326,7 +330,7 @@ function renderCalendar() {
           if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
 
           slotBtn.innerHTML = assignedDoc
-            ? `<div class="truncate font-semibold text-xs">${assignedDoc.name.replace('Dott. ', '')}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
             : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
 
           if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
@@ -391,17 +395,11 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   }
   removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
   const rect = e.currentTarget.getBoundingClientRect();
-  const dropdownHeight = 350; // stima approssimativa dell'altezza del dropdown
   const spaceBelow = window.innerHeight - rect.bottom;
-
-  // Se c'è poco spazio sotto, posiziona sopra il bottone
-  if (spaceBelow < dropdownHeight) {
-    dropdown.style.top = `${rect.top + window.scrollY - dropdownHeight - 4}px`;
-  } else {
-    dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
-  }
-
-  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 320)}px`;
+  dropdown.style.top = spaceBelow < DROPDOWN_HEIGHT
+    ? `${rect.top + window.scrollY - DROPDOWN_HEIGHT - 4}px`
+    : `${rect.bottom + window.scrollY + 4}px`;
+  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - DROPDOWN_WIDTH)}px`;
   dropdown.classList.remove('hidden');
 }
 
@@ -631,6 +629,7 @@ function buildPdfContent() {
 
   const table = document.getElementById('pdf-table');
   table.innerHTML = '';
+  const doctorMap = Object.fromEntries(state.doctors.map(d => [d.id, d]));
 
   PLACES.forEach(place => {
     const section = document.createElement('div');
@@ -684,12 +683,12 @@ function buildPdfContent() {
 
       SLOTS.forEach(slot => {
         const key = `${dateKey}_${slot.key}_${place}`;
-        const doc = state.assignments[key] ? getDoctorById(state.assignments[key]) : null;
+        const doc = state.assignments[key] ? doctorMap[state.assignments[key]] : null;
         const td = document.createElement('td');
-        td.style.cssText = 'padding: 8px 12px; word-wrap: break-word; word-break: break-word;';
+        td.style.cssText = 'padding: 8px 12px; overflow-wrap: break-word; word-break: break-word;';
         if (doc) {
           const color = getDoctorColor(doc);
-          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 4px 12px; border-radius: 4px; font-weight:bold; display: inline-block; white-space: normal;">${doc.name.replace('Dott. ', '')}</span>`;
+          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 4px 12px; border-radius: 4px; font-weight:bold; display: inline-block; white-space: normal;">${cleanDoctorName(doc.name)}</span>`;
         } else {
           td.innerHTML = '<span style="color: #cbd5e1;">—</span>';
         }
