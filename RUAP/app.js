@@ -303,8 +303,8 @@ function renderCalendar() {
           if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
 
           slotBtn.innerHTML = assignedDoc
-            ? `<div class="truncate font-semibold">${slot.icon} ${assignedDoc.name.replace('Dott. ', 'Dr. ')}</div>`
-            : `<div class="text-slate-600">${slot.icon} ${slot.label}</div>`;
+            ? `<div class="truncate font-semibold text-xs">${assignedDoc.name.replace('Dott. ', '')}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
 
           if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
           placeSection.appendChild(slotBtn);
@@ -344,9 +344,24 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
     availDocs.forEach(doc => {
       const color = getDoctorColor(doc);
       const isPref = doc.preferredPlace === place;
+      const weeklyH = getWeeklyAssignedHours(doc.id, getWeekStart(new Date(dateKey + 'T00:00:00')));
+      const pct = Math.min(100, Math.round((weeklyH / (doc.weeklyHours || 24)) * 100));
+      const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
       const btn = document.createElement('button');
-      btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 text-sm';
-      btn.innerHTML = `<span class="w-3 h-3 rounded-full" style="background:${color.hex}"></span><span class="flex-1 font-medium">${doc.name}</span>${isPref ? '<span class="text-amber-500 text-xs">⭐</span>' : ''}`;
+      btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-start gap-2 transition';
+      btn.innerHTML = `
+        <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-sm">${doc.name}</span>
+            ${isPref ? '<span class="text-amber-500 text-xs">⭐</span>' : ''}
+          </div>
+          <div class="flex items-center gap-1 mt-0.5">
+            <div class="flex-1 h-1.5 bg-slate-100 rounded-full"><div style="width:${pct}%; background:${barColor}" class="h-1.5 rounded-full transition-all"></div></div>
+            <span class="text-[10px] text-slate-400 flex-shrink-0">${weeklyH}/${doc.weeklyHours || 24}h</span>
+          </div>
+        </div>
+      `;
       btn.addEventListener('click', () => { state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll(); });
       list.appendChild(btn);
     });
@@ -354,7 +369,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
   const rect = e.currentTarget.getBoundingClientRect();
   dropdown.style.top = `${rect.bottom + window.scrollY + 4}px`;
-  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 280)}px`;
+  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 320)}px`;
   dropdown.classList.remove('hidden');
 }
 
