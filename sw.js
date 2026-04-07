@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v165: Fixed RUAP modal positioning (above if no space) and PDF layout spacing
-const CACHE_NAME = 'savianu-v165';
+// Cache version bumped to v166: Added malattia.html (Certificato di malattia: chi deve farlo?); links in index.html + colleghi.html
+const CACHE_NAME = 'savianu-v166';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -14,6 +14,7 @@ const urlsToCache = [
   '/protocollo-certificati-inps.html',
   '/faq-riforma.html',
   '/cert-malattia.html',
+  '/malattia.html',
   '/rsa.html',
   '/faq.html',
   '/esenzioni.html',
@@ -28,7 +29,6 @@ const urlsToCache = [
   '/RUAP/index.html',
   '/RUAP/app.js',
   '/RUAP/config.js',
-  '/protocollo-certificati-inps.html'
 ];
 
 // Helper: Check if request is same-origin

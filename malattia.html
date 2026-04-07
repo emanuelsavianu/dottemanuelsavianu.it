@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificato di Malattia: La Verità Legale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; color: #1c1917; }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (max-width: 640px) { .chart-container { height: 280px; } }
+        .accordion-content { transition: max-height 0.3s ease-out, padding 0.3s ease; max-height: 0; overflow: hidden; }
+        .accordion-content.open { max-height: 500px; padding-bottom: 1rem; }
+        .smooth-scroll { scroll-behavior: smooth; }
+        .active-tab { border-bottom-color: #0f766e; color: #0f766e; font-weight: 600; }
+    </style>
+</head>
+<body class="smooth-scroll antialiased">
+
+<!-- Chosen Palette: Warm Neutrals (Stone/Zinc) con accenti Teal (#0f766e) e Amber (#b45309) per gerarchia visiva. -->
+<!-- Application Structure Plan: Architettura a navigazione progressiva. Si parte dal problema emotivo (il "ping-pong"), si passa a un simulatore interattivo per casi d'uso (per dare risposte immediate all'utente), si approfondiscono le basi normative tramite un tab-viewer, si visualizza l'impatto del disservizio con un grafico, e si chiude col monito legale (falso ideologico) e le FAQ. Questa struttura garantisce un apprendimento attivo e non una lettura passiva di testi di legge. -->
+<!-- Visualization & Content Choices: 1. Simulatore di scenario (JS) -> Obiettivo: Organizzare e contestualizzare. L'utente clicca il suo caso (es. Dentista) e vede subito i suoi diritti senza leggere tutta la legge. 2. Tab-viewer Normativo (JS) -> Obiettivo: Informare. Raggruppa i testi di legge evitando un muro di testo. 3. Bar Chart (Chart.js) -> Obiettivo: Comparare. Mostra il tempo perso dal paziente nel disservizio vs la corretta applicazione della legge, creando "wow factor" sull'impatto reale. Nessun SVG utilizzato. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<nav class="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-50 border-b border-stone-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <div class="flex-shrink-0 flex items-center font-bold text-teal-800 text-lg">
+                ⚖️ MedLegale Info
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#il-problema" class="text-stone-600 hover:text-teal-700 text-sm font-medium">Il Problema</a>
+                <a href="#simulatore" class="text-stone-600 hover:text-teal-700 text-sm font-medium">Chi deve farlo?</a>
+                <a href="#normativa" class="text-stone-600 hover:text-teal-700 text-sm font-medium">La Legge</a>
+                <a href="#falso-ideologico" class="text-stone-600 hover:text-teal-700 text-sm font-medium">Falso Ideologico</a>
+                <a href="#faq" class="text-stone-600 hover:text-teal-700 text-sm font-medium">FAQ</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<header class="bg-stone-100 py-16 md:py-24 border-b border-stone-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <span class="text-teal-700 font-semibold tracking-wider uppercase text-sm">Guida ai Diritti del Paziente</span>
+        <h1 class="mt-2 text-4xl md:text-5xl font-bold text-stone-900 leading-tight">
+            Certificato di malattia: chi deve farlo?<br>
+            <span class="text-teal-800 text-3xl md:text-4xl">La verità su Pronto Soccorso, Dentisti e Liberi Professionisti</span>
+        </h1>
+        <p class="mt-6 text-lg text-stone-600 max-w-2xl mx-auto">
+            Basta rimbalzi dal Medico di Base. Scopri perché il medico che ti visita, in qualunque sede, ha l'obbligo di legge di emettere il certificato telematico INPS.
+        </p>
+    </div>
+</header>
+
+<main>
+    <section id="il-problema" class="py-16 bg-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10">
+                <h2 class="text-3xl font-bold text-stone-800">Il problema del "Ping-Pong"</h2>
+                <p class="mt-4 text-stone-600">Questa sezione inquadra il disservizio comune in cui si imbattono i cittadini e ne spiega l'illegittimità. Interagisci con il grafico per comprendere l'impatto reale di questa pratica scorretta.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg">
+                        <h3 class="text-xl font-bold text-amber-900 mb-2">"Vada dal suo medico per il certificato"</h3>
+                        <p class="text-amber-800">
+                            Sei stato appena dimesso dal Pronto Soccorso o da una visita specialistica odontoiatrica. Soffri, hai bisogno di riposo, ma il medico si rifiuta di farti il certificato e ti rimanda al tuo Medico di Medicina Generale (MMG).
+                        </p>
+                        <p class="text-amber-800 font-bold mt-4">
+                            Questo comportamento non è solo una scortesia: è un disservizio sanzionabile e un'infrazione normativa.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-center text-sm font-semibold text-stone-500 mb-4 uppercase tracking-wide">Impatto del disservizio (Ore perse dal paziente)</h3>
+                    <div class="chart-container">
+                        <canvas id="impactChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="simulatore" class="py-16 bg-stone-50 border-y border-stone-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10 text-center">
+                <h2 class="text-3xl font-bold text-stone-800">Chi è obbligato a certificare?</h2>
+                <p class="mt-4 text-stone-600">Seleziona il luogo della tua visita medica per scoprire immediatamente chi ha il dovere legale di trasmettere il certificato di malattia all'INPS.</p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mb-8" id="simulator-buttons">
+                <button data-target="ps" class="px-6 py-3 bg-white border border-stone-300 rounded-full text-stone-700 font-semibold hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">🚨 Pronto Soccorso</button>
+                <button data-target="dentista" class="px-6 py-3 bg-white border border-stone-300 rounded-full text-stone-700 font-semibold hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">🦷 Dentista / Privato</button>
+                <button data-target="ospedale" class="px-6 py-3 bg-white border border-stone-300 rounded-full text-stone-700 font-semibold hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 transition">🏥 Dimissione Ospedaliera</button>
+            </div>
+
+            <div id="simulator-result" class="bg-white rounded-xl shadow-md p-8 min-h-[200px] border border-teal-100 hidden">
+                <div class="flex items-center gap-4 mb-4">
+                    <span id="sim-icon" class="text-4xl"></span>
+                    <h3 id="sim-title" class="text-2xl font-bold text-teal-800"></h3>
+                </div>
+                <p id="sim-desc" class="text-stone-700 text-lg mb-4"></p>
+                <div class="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                    <span class="text-xs font-bold text-stone-500 uppercase">Riferimento Normativo Principale:</span>
+                    <p id="sim-law" class="text-sm text-stone-800 font-mono mt-1"></p>
+                </div>
+            </div>
+            
+            <div id="simulator-prompt" class="text-center py-12 text-stone-400 italic">
+                👆 Clicca su uno dei pulsanti qui sopra per vedere i dettagli.
+            </div>
+        </div>
+    </section>
+
+    <section id="normativa" class="py-16 bg-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10">
+                <h2 class="text-3xl font-bold text-stone-800">La Legge parla chiaro</h2>
+                <p class="mt-4 text-stone-600">Esplora le circolari e i decreti che rendono inattaccabile il tuo diritto. Questa sezione raccoglie le prove normative che vietano il rimpallo al medico di famiglia.</p>
+            </div>
+
+            <div class="border-b border-stone-200">
+                <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs" id="law-tabs">
+                    <button data-tab="tab-brunetta" class="active-tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm transition">D.Lgs. 150/2009</button>
+                    <button data-tab="tab-inps" class="border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition">Circ. INPS 117/2011</button>
+                    <button data-tab="tab-dfp" class="border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition">Circ. DFP 4/2011</button>
+                    <button data-tab="tab-221" class="border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition">Legge 221/2012</button>
+                </nav>
+            </div>
+
+            <div class="mt-8">
+                <div id="tab-brunetta" class="law-content block bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">La "Legge Brunetta" (Art. 55-septies)</h3>
+                    <p class="text-stone-700 mb-4">Questa è la norma capostipite. Stabilisce che in tutti i casi di assenza per malattia, la certificazione medica è inviata per via telematica all'INPS, direttamente dal medico o dalla struttura sanitaria che ha effettuato la diagnosi e accertato lo stato invalidante.</p>
+                    <p class="text-stone-700 font-semibold">Cosa significa per te?</p>
+                    <p class="text-stone-600">Chi ti visita e fa la diagnosi DEVE inviare il certificato telematico. Non può demandare l'operazione a terzi.</p>
+                </div>
+
+                <div id="tab-inps" class="law-content hidden bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">Circolare INPS n. 117 del 9 settembre 2011</h3>
+                    <p class="text-stone-700 mb-4">Questa circolare è fondamentale perché estende e chiarisce l'obbligo. Riguarda specificamente l'ambito <strong>ospedaliero, i medici di Pronto Soccorso, i liberi professionisti e i dentisti</strong>.</p>
+                    <ul class="list-disc pl-5 text-stone-600 space-y-2">
+                        <li>I medici ospedalieri non possono limitarsi a redigere un referto cartaceo.</li>
+                        <li>Il rifiuto del medico di struttura pubblica o convenzionata costituisce violazione.</li>
+                        <li>Ribadisce la necessità che i liberi professionisti si dotino delle credenziali del Sistema TS.</li>
+                    </ul>
+                </div>
+
+                <div id="tab-dfp" class="law-content hidden bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">Circolare Dipartimento Funzione Pubblica n. 4/2011</h3>
+                    <p class="text-stone-700 mb-4">Definisce il rimpallo organizzativo. La circolare specifica che indirizzare il cittadino, al momento della dimissione (es. dal Pronto Soccorso), verso il Medico di Medicina Generale (MMG) per la mera redazione del certificato di malattia costituisce un <strong>disservizio per il cittadino</strong>.</p>
+                    <div class="bg-white p-4 border border-stone-200 mt-4 rounded">
+                        <p class="text-stone-600 italic">"Tale prassi, oltre a recare disagio al lavoratore, produce oneri impropri a carico delle Asl..."</p>
+                    </div>
+                </div>
+
+                <div id="tab-221" class="law-content hidden bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">Legge n. 221 del 17 dicembre 2012</h3>
+                    <p class="text-stone-700 mb-4">Mentre inizialmente l'obbligo pareva ristretto ai medici del Servizio Sanitario Nazionale, la Legge 221/2012 ha sanato ogni dubbio interpretativo: <strong>l'obbligo dell'invio telematico vige in capo a tutti i medici abilitati alla professione</strong>.</p>
+                    <p class="text-stone-700">Questo include in via definitiva ogni medico di base, specialista privato o dentista. Non ci sono scuse tecnologiche: tutti hanno il dovere di iscriversi al Sistema Tessera Sanitaria (TS).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="falso-ideologico" class="py-16 bg-stone-900 text-stone-100">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block p-4 bg-stone-800 rounded-full mb-6 text-4xl">
+                ⚠️
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-6">Perché il tuo Medico di Base fa bene a rifiutarsi</h2>
+            <p class="text-lg text-stone-300 mb-8">
+                Quando chiedi al tuo Medico di Medicina Generale (MMG) di "copiare" o "trascrivere" i giorni di riposo prescritti su un referto del Pronto Soccorso o del Dentista, gli stai inconsapevolmente chiedendo di commettere un reato.
+            </p>
+            
+            <div class="bg-stone-800 p-8 rounded-xl text-left border border-stone-700">
+                <h3 class="text-2xl font-bold text-amber-500 mb-4">Il reato di Falso Ideologico</h3>
+                <p class="text-stone-300 mb-4">
+                    Il <strong>Codice di Deontologia Medica (Art. 24)</strong> impone che il medico certifichi solo ciò che ha potuto constatare <em>direttamente</em>. 
+                </p>
+                <p class="text-stone-300 mb-4">
+                    Un medico non può certificare uno stato di malattia basandosi unicamente sulla diagnosi scritta da un altro collega senza averti visitato. Se il medico di famiglia redige un certificato INPS senza compiere un atto clinico (visita), redige un atto pubblico falso, incorrendo nel reato penale di <strong>falso ideologico</strong>.
+                </p>
+                <div class="bg-stone-900 p-4 border border-stone-600 mt-6 rounded text-sm text-stone-400">
+                    "Il medico è tenuto a rilasciare alla persona assistita certificazioni relative allo stato di salute che attestino in modo puntuale e diligente i dati anamnestici raccolti e/o i rilievi clinici direttamente constatati ed oggettivati." - Art. 24
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="py-16 bg-stone-50">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10 text-center">
+                <h2 class="text-3xl font-bold text-stone-800">Domande Frequenti (FAQ)</h2>
+                <p class="mt-4 text-stone-600">Risposte rapide ai dubbi più comuni su diritti e doveri riguardo al certificato di malattia.</p>
+            </div>
+
+            <div class="space-y-4" id="faq-container">
+                <div class="bg-white border border-stone-200 rounded-lg">
+                    <button class="faq-btn w-full text-left px-6 py-4 font-semibold text-stone-800 flex justify-between items-center focus:outline-none">
+                        <span>Cosa fare se il dentista o lo specialista privato si rifiuta di farmi il certificato?</span>
+                        <span class="text-teal-600 text-xl font-light transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content px-6 text-stone-600">
+                        <p class="pb-4">Ricordagli gentilmente che l'obbligo di trasmissione telematica tramite Sistema TS vale per tutti i medici iscritti all'ordine, come stabilito dalla Legge 221/2012 e dalle circolari INPS. In caso di rifiuto ostinato, puoi segnalare il comportamento all'Ordine dei Medici provinciale e all'URP dell'azienda sanitaria (se in regime di convenzione) per interruzione di servizio.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-lg">
+                    <button class="faq-btn w-full text-left px-6 py-4 font-semibold text-stone-800 flex justify-between items-center focus:outline-none">
+                        <span>Il medico di base può trascrivere il referto del Pronto Soccorso?</span>
+                        <span class="text-teal-600 text-xl font-light transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content px-6 text-stone-600">
+                        <p class="pb-4">No, non può farlo senza visitarti nuovamente. La mera "trascrizione" per finalità amministrative espone il MMG al reato di falso ideologico in atto pubblico. Il medico del PS che ti ha dimesso aveva l'obbligo (Circ. DFP 4/2011) di compilare ed inviare il certificato.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-lg">
+                    <button class="faq-btn w-full text-left px-6 py-4 font-semibold text-stone-800 flex justify-between items-center focus:outline-none">
+                        <span>Il certificato medico cartaceo è ancora valido?</span>
+                        <span class="text-teal-600 text-xl font-light transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content px-6 text-stone-600">
+                        <p class="pb-4">L'emissione cartacea è considerata un'eccezione assoluta e può avvenire SOLO in caso di comprovato e totale malfunzionamento dei sistemi telematici. Anche in quel caso, deve essere il medico che ti ha visitato (es. in Ospedale) a redigerlo sulla modulistica specifica.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="bg-stone-100 py-8 border-t border-stone-200 text-center text-stone-500 text-sm">
+    <div class="max-w-6xl mx-auto px-4">
+        <p>Le informazioni qui riportate hanno scopo divulgativo e si basano sulle normative vigenti in materia medico-legale in Italia.</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        const simData = {
+            'ps': {
+                title: 'Il Medico di Pronto Soccorso',
+                icon: '🚨',
+                desc: 'Chi effettua la diagnosi in PS e prescrive giorni di riposo è obbligato a emettere contestualmente il certificato telematico. Dimettere il paziente dicendo "vada dal medico curante" è un disservizio sanzionabile.',
+                law: 'Circ. INPS 117/2011 | Circ. Dipartimento Funzione Pubblica 4/2011'
+            },
+            'dentista': {
+                title: 'Il Dentista / Specialista Privato',
+                icon: '🦷',
+                desc: 'Anche i liberi professionisti che non operano per il SSN hanno il pieno obbligo di dotarsi delle credenziali del Sistema TS e di emettere il certificato telematico se riscontrano un\'incapacità temporanea al lavoro.',
+                law: 'Legge n. 221 del 17/12/2012 | D.Lgs. 150/2009'
+            },
+            'ospedale': {
+                title: 'Il Medico del Reparto Ospedaliero',
+                icon: '🏥',
+                desc: 'Al momento della dimissione dopo un ricovero, la struttura ospedaliera deve inviare telematicamente il certificato per coprire i giorni di ricovero e l\'eventuale periodo di convalescenza prescritto.',
+                law: 'Circ. INPS 117/2011'
+            }
+        };
+
+        const buttons = document.querySelectorAll('#simulator-buttons button');
+        const resultDiv = document.getElementById('simulator-result');
+        const promptDiv = document.getElementById('simulator-prompt');
+        const simTitle = document.getElementById('sim-title');
+        const simDesc = document.getElementById('sim-desc');
+        const simLaw = document.getElementById('sim-law');
+        const simIcon = document.getElementById('sim-icon');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                buttons.forEach(b => {
+                    b.classList.remove('bg-teal-50', 'border-teal-500', 'text-teal-700');
+                    b.classList.add('bg-white', 'text-stone-700', 'border-stone-300');
+                });
+                
+                const target = e.target;
+                target.classList.remove('bg-white', 'text-stone-700', 'border-stone-300');
+                target.classList.add('bg-teal-50', 'border-teal-500', 'text-teal-700');
+
+                const data = simData[target.getAttribute('data-target')];
+                
+                simTitle.textContent = data.title;
+                simDesc.textContent = data.desc;
+                simLaw.textContent = data.law;
+                simIcon.textContent = data.icon;
+
+                promptDiv.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+                
+                resultDiv.animate([
+                    { opacity: 0, transform: 'translateY(10px)' },
+                    { opacity: 1, transform: 'translateY(0)' }
+                ], { duration: 300, easing: 'ease-out' });
+            });
+        });
+
+        const tabBtns = document.querySelectorAll('#law-tabs button');
+        const tabContents = document.querySelectorAll('.law-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-tab');
+                
+                tabBtns.forEach(b => {
+                    b.classList.remove('active-tab', 'border-teal-600', 'text-teal-700');
+                    b.classList.add('border-transparent', 'text-stone-500');
+                });
+                btn.classList.remove('border-transparent', 'text-stone-500');
+                btn.classList.add('active-tab', 'border-teal-600', 'text-teal-700');
+
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('block');
+                });
+                
+                document.getElementById(targetId).classList.remove('hidden');
+                document.getElementById(targetId).classList.add('block');
+            });
+        });
+
+        const faqs = document.querySelectorAll('.faq-btn');
+        faqs.forEach(faq => {
+            faq.addEventListener('click', () => {
+                const content = faq.nextElementSibling;
+                const icon = faq.querySelector('span:last-child');
+                
+                if (content.classList.contains('open')) {
+                    content.classList.remove('open');
+                    icon.textContent = '+';
+                    icon.classList.remove('rotate-45');
+                } else {
+                    document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('open'));
+                    document.querySelectorAll('.faq-btn span:last-child').forEach(i => {
+                        i.textContent = '+';
+                        i.classList.remove('rotate-45');
+                    });
+                    
+                    content.classList.add('open');
+                    icon.textContent = '+';
+                    icon.classList.add('rotate-45', 'inline-block');
+                }
+            });
+        });
+
+        const ctx = document.getElementById('impactChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Legge Applicata', 'Prassi Sbagliata (Ping-Pong)'],
+                datasets: [{
+                    label: 'Ore perse in media dal paziente per burocrazia',
+                    data: [0.5, 4.5], 
+                    backgroundColor: [
+                        'rgba(15, 118, 110, 0.7)', 
+                        'rgba(180, 83, 9, 0.7)'     
+                    ],
+                    borderColor: [
+                        'rgba(15, 118, 110, 1)',
+                        'rgba(180, 83, 9, 1)'
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' ore medie perse';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Ore (Stima)',
+                            color: '#78716c'
+                        },
+                        grid: {
+                            color: '#f5f5f4'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
