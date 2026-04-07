@@ -6,10 +6,11 @@ const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
 
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
-const PLACES = ['M.S.Savino', 'Subbiano'];
-const SLOTS = [
-  { key: 'mat', label: '08:00-14:00', hours: 6, icon: '🌅' },
-  { key: 'pom', label: '14:00-20:00', hours: 6, icon: '🌆' }
+// Read from config.js if available, fall back to hardcoded defaults
+const PLACES = (typeof CONFIG !== 'undefined' && CONFIG.places) ? CONFIG.places : ['M.S.Savino', 'Subbiano'];
+const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
+  { key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' },
+  { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
 ];
 
 const COLOR_PALETTE = [
@@ -34,20 +35,19 @@ let state = {
 };
 
 function getDefaultDoctors() {
-  const currentYear = new Date().getFullYear();
-  return [{
+  if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
+  return CONFIG.doctors.map((d, i) => ({
     id: generateId(),
-    name: 'Dott. Savianu',
-    patients: 850,
-    weeklyHours: 24,
-    colorIndex: 0,
-    availability: {
-      lun: { mat: true, pom: false }, mar: { mat: false, pom: true },
-      mer: { mat: true, pom: false }, gio: { mat: false, pom: true },
-      ven: { mat: true, pom: false },
-    },
-    unavailPeriods: [{ id: generateId(), from: `${currentYear}-04-01`, to: `${currentYear}-04-30`, note: 'Ferie Aprile' }]
-  }];
+    name: d.name,
+    patients: d.patients || 850,
+    weeklyHours: calculateDebtByPatients(d.patients || 850),
+    colorIndex: d.colorIndex ?? i,
+    preferredPlace: d.preferredPlace || null,
+    availability: Object.fromEntries(
+      ['lun','mar','mer','gio','ven'].map(k => [k, { mat: true, pom: true }])
+    ),
+    unavailPeriods: [],
+  }));
 }
 
 // ====================================================
@@ -337,12 +337,35 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-patients').value = doc.patients || '';
     document.getElementById('modal-hours').value = calculateDebtByPatients(doc.patients || 0);
     renderColorPicker(doc.colorIndex ?? 0);
+    // Populate preferred place dropdown
+    const ppSelect = document.getElementById('modal-preferred-place');
+    if (ppSelect) {
+      ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
+      PLACES.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        if (doctorId && getDoctorById(doctorId)?.preferredPlace === p) opt.selected = true;
+        ppSelect.appendChild(opt);
+      });
+    }
     // (Availability table logic is omitted here to keep JS clean, assume default full availability if missing for demo)
   } else {
     document.getElementById('modal-name').value = '';
     document.getElementById('modal-patients').value = '';
     document.getElementById('modal-hours').value = '38';
     renderColorPicker(0);
+    // Populate preferred place dropdown for new doctor
+    const ppSelect = document.getElementById('modal-preferred-place');
+    if (ppSelect) {
+      ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
+      PLACES.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        ppSelect.appendChild(opt);
+      });
+    }
   }
 }
 function renderColorPicker(selectedIndex) {
@@ -374,11 +397,12 @@ document.getElementById('modal-save').addEventListener('click', () => {
   const availability = {};
   DAY_KEYS.forEach(dk => { availability[dk] = { mat: true, pom: true }; });
 
+  const preferredPlace = document.getElementById('modal-preferred-place')?.value || null;
   if (state.editingDoctorId) {
     const doc = getDoctorById(state.editingDoctorId);
-    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability });
+    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace });
   } else {
-    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, availability, unavailPeriods: [] });
+    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, availability, unavailPeriods: [] });
   }
   saveToStorage(); closeDoctorModal(); renderAll();
 });
@@ -495,7 +519,12 @@ document.getElementById('btn-gemini-assign').addEventListener('click', callGemin
 // Init
 function init() {
   loadFromStorage();
-  if (state.doctors.length === 0) { state.doctors = getDefaultDoctors(); saveToStorage(); }
+  const isFirstRun = state.doctors.length === 0;
+  if (isFirstRun) {
+    state.doctors = getDefaultDoctors();
+    saveToStorage();
+    document.getElementById('demo-banner').classList.remove('hidden');
+  }
   renderAll();
 }
 
