@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v162: SEO improvements — trimmed titles/descriptions, added og:image meta tags, geo tags, internal nav links to orphaned pages, removed colleghi.html/privacy.html from sitemap
-const CACHE_NAME = 'savianu-v162';
+// Cache version bumped to v163: Added RUAP app.js and config.js to cache for demo scheduler
+const CACHE_NAME = 'savianu-v163';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -26,6 +26,8 @@ const urlsToCache = [
   '/gestoreturni/gestoreturni.html',
   '/gestoreturni/app.js',
   '/RUAP/index.html',
+  '/RUAP/app.js',
+  '/RUAP/config.js',
   '/protocollo-certificati-inps.html'
 ];
 
