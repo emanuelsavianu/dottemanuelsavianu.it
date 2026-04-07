@@ -55,6 +55,7 @@ state = {
 ```
 
 ### localStorage Keys
+**Note:** Both `gestoreturni` and `RUAP` use "ruap-" prefix for compatibility (shared codebase origin):
 - `ruap-config-v2` — roles, shifts, activities
 - `ruap-staff-v2` — staff members with unavailability
 - `ruap-assignments-v2` — shift assignments (date_shift_activity_slot → staffId)
@@ -88,6 +89,17 @@ All `alert()` and `confirm()` dialogs replaced with toast notifications:
 - Auto-dismiss after 3 seconds or click to close
 - Location: bottom-right fixed position
 - No browser dialogs — fully in-app UI
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Data not saving** | Check browser localStorage quota (DevTools → Application → Storage). Clear old data or export/reimport in smaller batches |
+| **Demo banner won't dismiss** | Click the X button or refresh page. If localStorage is full, banner persists. Clear storage via Settings or DevTools |
+| **Auto-assign not working** | Check that at least one staff member has no preference or matching role. If all are unavailable, assignment skips silently |
+| **Hours not calculating** | Verify `maxWeeklyHours` is set for all staff. Empty shifts don't count toward hours; assignments must have a `staffId` |
+| **Calendar jumps to wrong month** | Browser timezone mismatch. Assignment keys use `YYYY-MM-DD` (local date). Check system date/timezone |
+| **Import fails with no error** | JSON schema must match v2 structure (staff with `maxWeeklyHours`, assignments as date_shift_activity_slot). Try exporting then re-importing to verify format |
 
 ## Design Specs
 

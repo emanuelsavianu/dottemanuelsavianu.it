@@ -1,6 +1,14 @@
 # RUAP Attività Diurne — Implementation
 
-This is a specialized demo for RUAP (Attività Diurne) with pre-configured doctors and sedi. Built on the same shift manager architecture as gestoreturni, but optimized for immediate demo use with baked-in configuration.
+This is a specialized demo for RUAP (Attività Diurne) with pre-configured doctors and sedi. Built on the same shift manager architecture as `../gestoreturni`, but optimized for immediate demo use with baked-in configuration.
+
+**Relationship to gestoreturni:** RUAP shares the core state management (`app.js`) and rendering pipeline with gestoreturni. Both projects:
+- Use Tailwind CDN + vanilla JS (no build step)
+- Persist state to localStorage (keys prefixed with `ruap-*` for historical reasons)
+- Support toast notifications, dark mode, auto-assign, and PDF export
+- Have no backend or external dependencies
+
+Main differences: RUAP uses `config.js` (pre-configured doctors/sedi), gestoreturni allows full CRUD via UI settings.
 
 ## Quick Start
 
@@ -141,6 +149,18 @@ Config-driven approach means non-technical users can modify `config.js` without 
 - Reset Turni button — clears assignments only, preserves doctors and preferences
 - Dark mode toggle — persisted in `ruap-dark-mode` localStorage key
 - Smart dropdown positioning — appears above the button if insufficient space below (`DROPDOWN_HEIGHT = 350`)
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Assignments not saving** | Check browser localStorage quota (DevTools → Application → Storage). Clear via Settings → "Ripristina Dati Iniziali" or reset localStorage manually |
+| **Demo banner won't dismiss** | Click the X button. If localStorage is full or corrupted, use DevTools to clear `ruap-*` keys and reload |
+| **Auto-assign skips all doctors** | Verify doctors have `preferredPlace` matching a CONFIG.places entry exactly. Check spelling; `'M.S.Savino'` ≠ `'M.S. Savino'` |
+| **Colors not matching config** | Verify `colorIndex` (0-7) matches available colors in `COLOR_PALETTE`. Index >7 falls back to default |
+| **PDF export blank or cut off** | Try landscape orientation (already set). If table overflows, reduce doctor count or increase page width. Check browser zoom (100%+) |
+| **Hours wrong after import** | Verify import JSON has correct schema: `{ id, name, patients, weeklyHours, colorIndex, preferredPlace, availability, unavailPeriods }`. Missing `weeklyHours` causes calculation errors |
+| **Dropdown appears below fold** | Mobile viewport: dropdowns positioned via `DROPDOWN_HEIGHT = 350`. On very small screens, may extend off-screen. Use dropdown sparingly on mobile |
 
 ## Development
 

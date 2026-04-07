@@ -165,6 +165,11 @@ Vietato: anni di esperienza, superlativi ("il migliore"), confronti con colleghi
 **Pattern obbligatorio per pagine di servizio:** citare esplicitamente che "il medico di famiglia SSN può rilasciare il medesimo servizio gratuitamente ai propri assistiti" — evita concorrenza sleale verso i colleghi MMG.
 Tono corretto: "Il Dott. X è certificatore telematico INPS autorizzato" (fattuale), non "scegli il Dott. X" (promozionale).
 
+## Recent Updates (April 2026)
+- **visite-private.html SEO overhaul** (8 Apr): Shortened title (72→58 chars for SERP display), added `og:type + Twitter Card` meta tags, LocalBusiness+MedicalOrganization schema with 3 MedicalService entries for local pack visibility, image dimensions to prevent CLS, visible freshness date ("Aggiornato: 8 Aprile 2026")
+- **sitemap.xml** (8 Apr): Removed deprecated `<priority>` + `<changefreq>` tags, updated all `<lastmod>` dates from git history for accuracy (was all 2026-04-05)
+- **Service Worker** (8 Apr): Bumped cache v166 → v167 (SEO changes on visite-private.html)
+
 ## SEO / Indicizzazione
 Il sito è **indicizzabile** per Local SEO su Arezzo. Tutte le pagine permettono indicizzazione. Schema JSON-LD Physician è presente in `index.html`. Open Graph tags sono configurati per condivisione social.
 
@@ -212,10 +217,10 @@ Esempio esistente: `cert-malattia.html`. Aggiungere nuovi documenti come `<a>` b
 
 ## Schema Markup Patterns (Medical Site)
 - **index.html:** Physician (name, specialty, address, phone, priceRange, areaServed) + MedicalClinic (openingHours) + BreadcrumbList
-- **visite-private.html:** FAQPage + BreadcrumbList
+- **visite-private.html:** Physician + BreadcrumbList + FAQPage + LocalBusiness+MedicalOrganization + 3× MedicalService (Certificato Introduttivo, Legge 104 & Aggravamento, Accompagnamento)
 - **faq-riforma.html:** FAQPage + BreadcrumbList
 - **certificato-invalidita-civile.html:** MedicalService + FAQPage + BreadcrumbList + LocalBusiness+MedicalOrganization
-- **LocalBusiness+MedicalOrganization:** `@type: ["LocalBusiness", "MedicalOrganization"]` — use on service pages for local search visibility (name, address, phone, email, areaServed). Factual, not promotional.
+- **LocalBusiness+MedicalOrganization:** `@type: ["LocalBusiness", "MedicalOrganization"]` — use on service pages for local search visibility (name, address, phone, email, areaServed). Factual, not promotional. Include `hasOfferCatalog` with multiple `MedicalService` entries for each service offered.
 - **Key fields:** `sameAs` (links to Google Maps, LinkedIn), `worksFor` (clinic reference), proper address/phone formatting
 - **Validation:** Use Google Rich Results Test or schema.org validator before deploy
 
@@ -233,26 +238,3 @@ Custom domain: `dottemanuelsavianu.it` (file `CNAME`). Hosted su GitHub Pages.
 DNS: Cloudflare (nameserver: `ariadne.ns.cloudflare.com` + `clark.ns.cloudflare.com`).
 Records devono essere DNS-only (no proxy arancione) — obbligatorio per il cert Let's Encrypt di GitHub Pages.
 Dopo modifiche DNS: verificare GitHub Pages → Settings → Pages → spunta "Enforce HTTPS".
-
-
-# dottemanuelsavianu.it — Project Context
-
-**Stack:** raw-http | none | javascript
-
-0 routes | 0 models | 0 env vars | 0 import links
-
-
----
-
-## Instructions for Claude Code
-
-Before exploring the repo, read these files in order:
-1. `.codesight/CODESIGHT.md` — full context map (routes, schema, components, deps)
-2. Use the codesight MCP server for targeted queries:
-
-   - `codesight_get_summary` — quick project overview
-   - `codesight_get_routes --prefix /api/users` — filtered routes
-   - `codesight_get_blast_radius --file src/lib/db.ts` — impact analysis before changes
-   - `codesight_get_schema --model users` — specific model details
-
-Only open specific files after consulting codesight context. This saves ~413 tokens per conversation.
