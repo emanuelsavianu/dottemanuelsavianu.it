@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v167: SEO fixes on visite-private.html — shortened title, added og:type + Twitter Card, LocalBusiness + MedicalService schema, image dimensions, freshness date
-const CACHE_NAME = 'savianu-v167';
+// Cache version bumped to v168: Add dark mode toggle button to visite-private.html topbar
+const CACHE_NAME = 'savianu-v168';
 const urlsToCache = [
   '/',
   '/index.html',
