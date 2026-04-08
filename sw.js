@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v168: Add dark mode toggle button to visite-private.html topbar
-const CACHE_NAME = 'savianu-v168';
+// Cache version bumped to v169: SEO optimization — Add GMB sameAs link to all MedicalOrganization schemas, optimize titles/H1s for Arezzo keywords, enhance schema descriptions with location specificity
+const CACHE_NAME = 'savianu-v169';
 const urlsToCache = [
   '/',
   '/index.html',
