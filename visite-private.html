@@ -12,6 +12,8 @@
     <meta property="og:description" content="Ottieni il Certificato Medico Introduttivo per Invalidità Civile e Legge 104 ad Arezzo. Dott. Savianu, medico certificatore INPS autorizzato.">
     <meta property="og:url" content="https://dottemanuelsavianu.it/visite-private.html">
     <meta property="og:image" content="https://dottemanuelsavianu.it/bronzelogo.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Certificato Medico Introduttivo Arezzo | Dott. Savianu">
     <meta name="twitter:description" content="Ottieni il Certificato Medico Introduttivo per Invalidità Civile e Legge 104 ad Arezzo. Dott. Savianu, medico certificatore INPS autorizzato.">
@@ -654,6 +656,21 @@
             .booking-section { padding: 32px 16px 40px; }
             .floating-faq-btn { bottom: 20px; right: 20px; width: 52px; height: 52px; font-size: 1.2rem; }
         }
+
+        /* ── Print CSS ── */
+        @media print {
+            .page-topbar { display: none; }
+            .page-hero { background: none !important; color: #000; }
+            .page-hero h1 { color: #000; }
+            .btn-cta-hero { display: none; }
+            .page-hero p { color: #333; }
+            .booking-contacts-wrapper { display: none; }
+            .calendar-frame { display: none; }
+            .floating-faq-btn { display: none; }
+            .page-footer { display: none; }
+            .faq-inline-section .faq-iquestion { page-break-inside: avoid; }
+            .faq-ianswer { max-height: none !important; overflow: visible !important; }
+        }
     </style>
 </head>
 <body>
@@ -762,9 +779,11 @@
                     <a href="mailto:segreteria@savianu.it" style="font-size: 0.9rem; color: var(--accent); text-decoration: none; word-break: break-all;">segreteria@savianu.it</a>
                 </div>
 
-                <p style="font-size: 0.8rem; color: var(--text-medium); font-style: italic; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
-                    Per privacy, non inviare dettagli clinici via email: usa la visita in studio.
-                </p>
+                <div data-nosnippet>
+                    <p style="font-size: 0.8rem; color: var(--text-medium); font-style: italic; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
+                        Per privacy, non inviare dettagli clinici via email: usa la visita in studio.
+                    </p>
+                </div>
             </section>
 
             <!-- Info: cosa portare + note riforma -->
