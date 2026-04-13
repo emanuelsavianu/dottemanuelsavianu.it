@@ -1,6 +1,9 @@
 # Project Context: Portale Medico Dr. Savianu
 Sei un Web Designer e Developer esperto. Questo progetto è il portale web del Dr. Emanuel Savianu, Medico di Medicina Generale ad Arezzo.
 
+## Target Audience
+This medical site serves elderly Italian patients and their general practitioner in Arezzo. Prioritize accessibility, large touch targets, simple Italian language, and senior-friendly UX in all UI changes.
+
 ## Architettura
 Sito statico HTML/CSS/JS deployato su GitHub Pages (`emanuelsavianu.github.io`).
 - `index.html` — **Triage landing page** (3 card: Assistito SSN → savianu.it, Colleghi → colleghi.html, Privati → visite-private.html)
@@ -35,6 +38,10 @@ rtk git log               # Log compatto
 rtk git add <files> && rtk git commit -m "msg" && rtk git push
 rtk npx serve .           # Server locale con output compatto
 ```
+
+## Git Workflow
+- Always commit AND push changes after completing edits unless explicitly told otherwise
+- Verify changes appear on GitHub before declaring task complete
 
 ## File Principale da Modificare
 Per aggiornare assenze, trasferimenti o orari ambulatorio: modifica **`config.js`** (array `ASSENZE` e oggetto `SCHEDULE`).
@@ -195,6 +202,12 @@ If a page has zero internal links pointing to it (rsa.html, xsegretarie.html, in
 **JS-hidden content:** FAQ answers hidden by CSS (`max-height: 0; overflow: hidden`) are invisible to AI crawlers — add JSON-LD `FAQPage` schema as alternative.
 See `GEO-ANALYSIS.md` (not in git) for detailed audit + expansion recommendations.
 
+## Debugging
+
+### Root Cause Analysis
+- Before concluding an issue is 'unfixable' or a backend problem, investigate the actual data/state (e.g., check for missing fields, null values, config mismatches)
+- Prefer root-cause fixes over workarounds
+
 ## Design System (Usa `styles.css` esistente)
 - **Colori**: Usa le variabili CSS esistenti (`--primary` navy, `--accent` gold, `--bg-gradient-1`).
 - **Font**: Montserrat (testi) e Playball (titoli eleganti).
@@ -232,6 +245,11 @@ Esempio esistente: `cert-malattia.html`. Aggiungere nuovi documenti come `<a>` b
 ## Responsive Patterns
 
 **Responsive iframe (Google Calendar, ecc):** Use fixed heights — `900px` desktop (default), `750px` mobile (≤600px), `820px` at ≥1200px wide. Remove width/height attributes from the `<iframe>` element itself. See `visite-private.html` `.calendar-frame`.
+
+## CSS Layout Rules
+- Use flex-shrink: 0 on header action buttons to prevent overlap
+- Test mobile and desktop layouts after any header/navigation changes
+- Verify dropdown overflow behavior when adding widgets like Google Translate
 
 ## DNS / Hosting
 Custom domain: `dottemanuelsavianu.it` (file `CNAME`). Hosted su GitHub Pages.
