@@ -88,6 +88,7 @@ function undo() {
     saveToStorage();
     renderAll();
     updateUndoRedoButtons();
+    updateConflictsHeaderBadge();
     toast('Annullato', 'info');
   }
 }
@@ -100,6 +101,7 @@ function redo() {
     saveToStorage();
     renderAll();
     updateUndoRedoButtons();
+    updateConflictsHeaderBadge();
     toast('Ripristinato', 'info');
   }
 }
@@ -649,7 +651,7 @@ function resetAssignments() {
   document.getElementById('confirm-reset-all').onclick = () => {
     pushHistory();
     state.assignments = {};
-    saveToStorage(); renderAll(); el.remove();
+    saveToStorage(); renderAll(); el.remove(); updateConflictsHeaderBadge();
     toast('Tutti i turni resettati', 'success');
   };
   document.getElementById('cancel-reset-all').onclick = () => el.remove();
@@ -880,60 +882,98 @@ function autoAssign() {
   const year = state.calYear;
   const month = state.calMonth;
   const lastDay = new Date(year, month + 1, 0).getDate();
-  let count = 0;
 
+  const slotsToProcess = [];
   for (let day = 1; day <= lastDay; day++) {
     const cellDate = new Date(year, month, day);
     const jsDay = cellDate.getDay();
     if (jsDay === 0 || jsDay === 6) continue;
     const dateKey = toDateKey(cellDate);
-    const weekStart = getWeekStart(cellDate);
-
     SLOTS.forEach(slot => {
       PLACES.forEach(place => {
         const slotKey = `${dateKey}_${slot.key}_${place}`;
-        if (state.assignments[slotKey]) return;
-
-        const notBusy = (doc) => {
-          const prefix = `${dateKey}_${slot.key}_`;
-          return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
-        };
-
-        const available = state.doctors.filter(doc =>
-          isDoctorAvailableForSlot(doc, dateKey, slot.key) && notBusy(doc)
-        );
-
-        if (available.length === 0) return;
-
-        const preferred  = available.filter(d => d.preferredPlace === place);
-        const neutral    = available.filter(d => !d.preferredPlace);
-        const nonPreferred = available.filter(d => d.preferredPlace && d.preferredPlace !== place);
-
-        const pool = preferred.length > 0 ? preferred
-          : neutral.length > 0 ? neutral
-          : nonPreferred;
-
-        if (pool.length === 0) return;
-
-        pool.sort((a, b) =>
-          getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
-        );
-
-        state.assignments[slotKey] = pool[0].id;
-        count++;
+        if (!state.assignments[slotKey]) slotsToProcess.push({ dateKey, slotKey, cellDate });
       });
     });
   }
 
-  if (count === 0) {
+  if (slotsToProcess.length === 0) {
     toast('Nessun turno vuoto da assegnare', 'info');
     return;
   }
 
-  saveToStorage();
-  renderAll();
-  renderStats();
-  toast(`Assegnati ${count} turni automaticamente`, 'success');
+  const progressBar = document.getElementById('autoassign-progress-bar');
+  const progressLabel = document.getElementById('autoassign-progress-label');
+  const loadingEl = document.getElementById('autoassign-loading');
+  const loadingText = document.getElementById('autoassign-loading-text');
+
+  loadingEl.classList.remove('hidden');
+  let count = 0;
+  const total = slotsToProcess.length;
+
+  function processChunk(index) {
+    const batchSize = 20;
+    const end = Math.min(index + batchSize, total);
+
+    for (let i = index; i < end; i++) {
+      const { dateKey, slotKey, cellDate } = slotsToProcess[i];
+      const slotKeyParts = slotKey.split('_');
+      const slotKeyOnly = slotKeyParts[1];
+      const place = slotKeyParts.slice(2).join('_');
+      const weekStart = getWeekStart(cellDate);
+
+      const notBusy = (doc) => {
+        const prefix = `${dateKey}_${slotKeyOnly}_`;
+        return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
+      };
+
+      const available = state.doctors.filter(doc =>
+        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly) && notBusy(doc)
+      );
+
+      if (available.length === 0) continue;
+
+      const preferred  = available.filter(d => d.preferredPlace === place);
+      const neutral    = available.filter(d => !d.preferredPlace);
+      const nonPreferred = available.filter(d => d.preferredPlace && d.preferredPlace !== place);
+
+      const pool = preferred.length > 0 ? preferred
+        : neutral.length > 0 ? neutral
+        : nonPreferred;
+
+      if (pool.length === 0) continue;
+
+      pool.sort((a, b) =>
+        getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
+      );
+
+      state.assignments[slotKey] = pool[0].id;
+      count++;
+    }
+
+    const pct = Math.round((end / total) * 100);
+    progressBar.style.width = pct + '%';
+    progressLabel.textContent = `${end} / ${total} turni`;
+    loadingText.textContent = `Assegnazione in corso... ${pct}%`;
+
+    if (end < total) {
+      requestAnimationFrame(() => processChunk(end));
+    } else {
+      loadingEl.classList.add('hidden');
+      progressBar.style.width = '0%';
+      if (count === 0) {
+        toast('Nessun turno vuoto da assegnare', 'info');
+        return;
+      }
+      saveToStorage();
+      renderAll();
+      renderStats();
+      updateConflictsHeaderBadge();
+      toast(`Assegnati ${count} turni automaticamente`, 'success');
+    }
+  }
+
+  processChunk(0);
 }
 
 function buildPdfContent() {
@@ -1077,6 +1117,8 @@ async function callGeminiToAssign() {
   }
 
   document.getElementById('gemini-loading').classList.remove('hidden');
+  const loadingText = document.getElementById('gemini-loading-text');
+  if (loadingText) loadingText.textContent = `Invio richiesta a Gemini AI...`;
 
   const promptData = {
     task: "Assign doctors to the empty hospital shifts.",
@@ -1106,6 +1148,7 @@ async function callGeminiToAssign() {
     }
 
     const generatedJsonText = data.candidates[0].content.parts[0].text;
+    if (loadingText) loadingText.textContent = `Elaborazione della risposta...`;
     const newAssignments = JSON.parse(generatedJsonText);
 
     let count = 0;
@@ -1116,9 +1159,11 @@ async function callGeminiToAssign() {
       }
     }
 
+    if (loadingText) loadingText.textContent = `Applicazione delle assegnazioni...`;
     saveToStorage();
     renderAll();
     renderStats();
+    updateConflictsHeaderBadge();
     toast(`Assegnati ${count} turni automaticamente`, 'success');
 
   } catch (err) {
@@ -1156,6 +1201,13 @@ const btnResetAssignments = document.getElementById('btn-reset-assignments');
 if (btnResetAssignments) {
   btnResetAssignments.addEventListener('click', resetAssignments);
 }
+const btnConflicts = document.getElementById('btn-conflicts');
+if (btnConflicts) {
+  btnConflicts.addEventListener('click', openConflictsModal);
+}
+document.getElementById('conflicts-modal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'conflicts-modal') closeConflictsModal();
+});
 const btnRestartWizard = document.getElementById('btn-restart-wizard');
 if (btnRestartWizard) {
   btnRestartWizard.addEventListener('click', restartWizard);
@@ -1196,6 +1248,108 @@ function closeSettingsModal() {
 function closeConflictModal() {
   const modal = document.getElementById('conflict-modal');
   if (modal) modal.classList.add('hidden');
+}
+
+// ====================================================
+// CONFLICTS RESOLUTION CENTER
+// ====================================================
+function openConflictsModal() {
+  const conflicts = getConflicts();
+  const modal = document.getElementById('conflicts-modal');
+  const list = document.getElementById('conflicts-list');
+  const badge = document.getElementById('conflicts-count-badge');
+  const autoBtn = document.getElementById('btn-auto-resolve-all');
+
+  badge.textContent = conflicts.length;
+  autoBtn.disabled = conflicts.length === 0;
+
+  if (conflicts.length === 0) {
+    list.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+        <i class="fa-solid fa-check-circle text-5xl mb-3 text-green-400"></i>
+        <p class="text-lg font-medium text-slate-500">Nessun conflitto trovato</p>
+        <p class="text-sm">Tutti i turni sono assegnati correttamente.</p>
+      </div>`;
+  } else {
+    list.innerHTML = conflicts.map((c, idx) => {
+      const doc = getDoctorById(c.docId);
+      const color = COLOR_PALETTE[doc?.colorIndex ?? 0] || COLOR_PALETTE[0];
+      const slot = SLOTS.find(s => s.key === c.slotKey);
+      const slotLabel = slot ? `${slot.icon} ${slot.label}` : c.slotKey;
+      const [year, month, day] = c.dateKey.split('-');
+      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      const dateFormatted = dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+
+      const placesHtml = c.keys.map(k => {
+        const parts = k.split('_');
+        const place = parts.slice(2).join('_');
+        return `<div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 mb-1">
+          <span class="text-sm text-slate-700 flex items-center gap-2">
+            <i class="fa-solid fa-location-dot text-slate-400"></i>${place}
+          </span>
+          <button onclick="removeAssignmentFromConflict('${k}')" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
+            <i class="fa-solid fa-xmark mr-1"></i>Rimuovi
+          </button>
+        </div>`;
+      }).join('');
+
+      return `<div class="border border-slate-200 rounded-xl overflow-hidden">
+        <div class="bg-slate-50 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
+          <div class="w-3 h-3 rounded-full ${color.bg} flex-shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-slate-800 text-sm truncate">${doc?.name || 'Medico sconosciuto'}</p>
+            <p class="text-xs text-slate-500">${dateFormatted} · ${slotLabel}</p>
+          </div>
+          <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">${c.keys.length} sedi</span>
+        </div>
+        <div class="p-3 bg-white">${placesHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  modal.classList.remove('hidden');
+  updateConflictsHeaderBadge();
+}
+
+function closeConflictsModal() {
+  document.getElementById('conflicts-modal').classList.add('hidden');
+}
+
+function removeAssignmentFromConflict(slotKey) {
+  pushHistory();
+  delete state.assignments[slotKey];
+  saveToStorage();
+  renderAll();
+  renderStats();
+  openConflictsModal();
+}
+
+function autoResolveAllConflicts() {
+  const conflicts = getConflicts();
+  if (conflicts.length === 0) return;
+  pushHistory();
+  for (const c of conflicts) {
+    const keysToRemove = c.keys.slice(1);
+    for (const k of keysToRemove) {
+      delete state.assignments[k];
+    }
+  }
+  saveToStorage();
+  renderAll();
+  renderStats();
+  openConflictsModal();
+  toast(`Risolti ${conflicts.length} conflitti automaticamente`, 'success');
+}
+
+function updateConflictsHeaderBadge() {
+  const conflicts = getConflicts();
+  const badge = document.getElementById('conflicts-header-badge');
+  if (conflicts.length > 0) {
+    badge.textContent = conflicts.length;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 }
 
 // Auto-update weekly hours when patients change
@@ -1750,6 +1904,7 @@ function init() {
   renderAll();
   renderStats();
   updateUndoRedoButtons();
+  updateConflictsHeaderBadge();
 }
 
 function loadHistory() {

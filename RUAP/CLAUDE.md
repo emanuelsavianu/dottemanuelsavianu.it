@@ -144,11 +144,13 @@ Config-driven approach means non-technical users can modify `config.js` without 
 
 ## Features Implemented
 
-- Auto-assign with 3-tier priority (⭐ preferred place → no preference → other places)
+- Auto-assign with 3-tier priority (⭐ preferred place → no preference → other places) — **with real-time progress bar overlay**
 - PDF export — landscape, table per sede, html2canvas → jsPDF
 - Reset Turni button — clears assignments only, preserves doctors and preferences
 - Dark mode toggle — persisted in `ruap-dark-mode` localStorage key
 - Smart dropdown positioning — appears above the button if insufficient space below (`DROPDOWN_HEIGHT = 350`)
+- **Conflict Resolution Center** — amber "Conflitti" button in header with red count badge, modal showing all double-bookings with per-slot remove and auto-resolve-all
+- **Undo/Redo** — 50-state history, Ctrl+Z / Ctrl+Y, buttons in bottom-right corner
 
 ## Troubleshooting
 
