@@ -787,6 +787,85 @@ function renderCalendarWeek() {
 }
 
 function renderCalendarMonth() {
+  const year = state.calYear;
+  const month = state.calMonth;
+  document.getElementById('cal-title').textContent = `${MONTHS_IT[month]} ${year}`;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = getWeekStart(firstDay);
+
+  let currentWeekStart = new Date(startDate);
+  const weeks = [];
+  while (true) {
+    if (currentWeekStart > lastDay) break;
+    weeks.push(new Date(currentWeekStart));
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  weeks.forEach(weekStart => {
+    const weekRow = document.createElement('div');
+    weekRow.className = 'grid grid-cols-5 gap-2';
+    for (let i = 0; i < 5; i++) {
+      const cellDate = new Date(weekStart);
+      cellDate.setDate(cellDate.getDate() + i);
+      const dateKey = toDateKey(cellDate);
+      const inMonth = cellDate.getMonth() === month;
+      const isToday = toDateKey(new Date()) === dateKey;
+
+      const cell = document.createElement('div');
+      cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
+      
+      cell.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+        </div>
+      `;
+
+      PLACES.forEach(place => {
+        const placeSection = document.createElement('div');
+        placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
+        
+        const matKey = `${dateKey}_mat_${place}`;
+        const pomKey = `${dateKey}_pom_${place}`;
+        const matAssigned = !!state.assignments[matKey];
+        const pomAssigned = !!state.assignments[pomKey];
+        const bothAssigned = matAssigned && pomAssigned;
+        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
+        
+        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
+          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+        </div>`;
+
+        SLOTS.forEach(slot => {
+          const slotKey = `${dateKey}_${slot.key}_${place}`;
+          const assignedId = state.assignments[slotKey];
+          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+
+          const slotBtn = document.createElement('button');
+          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1 mb-0.5 text-xs font-medium border transition-all ' +
+            (assignedDoc ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
+          if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
+
+          slotBtn.innerHTML = assignedDoc
+            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+
+          if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+          placeSection.appendChild(slotBtn);
+        });
+        cell.appendChild(placeSection);
+      });
+      weekRow.appendChild(cell);
+    }
+    grid.appendChild(weekRow);
+  });
+}
 
 // ====================================================
 // AUTO-ASSIGN LOCALE (no API required)
@@ -857,9 +936,6 @@ function autoAssign() {
   toast(`Assegnati ${count} turni automaticamente`, 'success');
 }
 
-// ====================================================
-// PDF EXPORT
-// ====================================================
 function buildPdfContent() {
   const year = state.calYear;
   const month = state.calMonth;
