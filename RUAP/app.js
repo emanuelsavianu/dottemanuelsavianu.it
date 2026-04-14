@@ -37,6 +37,8 @@ let state = {
   sidebarWeekStart: getWeekStart(new Date()),
   editingDoctorId: null,
   activeSlotKey: null,
+  calendarView: 'monthly',
+  calendarWeekStart: getWeekStart(new Date()),
 };
 
 let historyStack = [];
@@ -655,12 +657,136 @@ function resetAssignments() {
 }
 
 // Navigazione
-document.getElementById('cal-prev').addEventListener('click', () => { state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); });
-document.getElementById('cal-next').addEventListener('click', () => { state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); });
-document.getElementById('sidebar-week-prev').addEventListener('click', () => { state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() - 7); renderSidebar(); });
-document.getElementById('sidebar-week-next').addEventListener('click', () => { state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() + 7); renderSidebar(); });
+document.getElementById('cal-prev').addEventListener('click', () => {
+  if (state.calendarView === 'weekly') {
+    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() - 7);
+    state.sidebarWeekStart = new Date(state.calendarWeekStart);
+  } else {
+    state.calMonth--;
+    if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+  }
+  renderAll();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  if (state.calendarView === 'weekly') {
+    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() + 7);
+    state.sidebarWeekStart = new Date(state.calendarWeekStart);
+  } else {
+    state.calMonth++;
+    if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+  }
+  renderAll();
+});
+document.getElementById('sidebar-week-prev').addEventListener('click', () => { 
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() - 7); 
+  state.calendarWeekStart = new Date(state.sidebarWeekStart);
+  renderSidebar(); 
+  if (state.calendarView === 'weekly') renderCalendar();
+});
+document.getElementById('sidebar-week-next').addEventListener('click', () => { 
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() + 7); 
+  state.calendarWeekStart = new Date(state.sidebarWeekStart);
+  renderSidebar(); 
+  if (state.calendarView === 'weekly') renderCalendar();
+});
 
 function renderAll() { renderCalendar(); renderSidebar(); }
+
+function toggleCalendarView() {
+  state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
+  const icon = document.getElementById('view-toggle-icon');
+  const label = document.getElementById('view-toggle-label');
+  if (state.calendarView === 'weekly') {
+    icon.className = 'fa-solid fa-calendar-day';
+    label.textContent = 'Settimanale';
+  } else {
+    icon.className = 'fa-solid fa-calendar-week';
+    label.textContent = 'Mensile';
+  }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  if (state.calendarView === 'weekly') {
+    renderCalendarWeek();
+  } else {
+    renderCalendarMonth();
+  }
+}
+
+function renderCalendarWeek() {
+  const weekStart = state.calendarWeekStart;
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 4);
+  
+  document.getElementById('cal-title').textContent = `${formatDateShort(weekStart)} – ${formatDateShort(weekEnd)}`;
+  document.getElementById('cal-grid').innerHTML = '';
+  
+  const weekRow = document.createElement('div');
+  weekRow.className = 'grid grid-cols-5 gap-2';
+  
+  for (let i = 0; i < 5; i++) {
+    const cellDate = new Date(weekStart);
+    cellDate.setDate(cellDate.getDate() + i);
+    const dateKey = toDateKey(cellDate);
+    const isToday = toDateKey(new Date()) === dateKey;
+    
+    const cell = document.createElement('div');
+    cell.className = 'rounded-xl p-3 min-h-48 bg-white shadow-sm border border-slate-200';
+    
+    cell.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+        <span class="text-xs text-slate-400">${cellDate.toLocaleDateString('it-IT', { weekday: 'short' })}</span>
+      </div>
+    `;
+    
+    PLACES.forEach(place => {
+      const placeSection = document.createElement('div');
+      placeSection.className = 'mb-2 pb-2 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
+      
+      const matKey = `${dateKey}_mat_${place}`;
+      const pomKey = `${dateKey}_pom_${place}`;
+      const matAssigned = !!state.assignments[matKey];
+      const pomAssigned = !!state.assignments[pomKey];
+      const bothAssigned = matAssigned && pomAssigned;
+      const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+      const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
+      
+      placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${place}</div>
+        <button onclick="copyWeek('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
+        <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+      </div>`;
+      
+      SLOTS.forEach(slot => {
+        const slotKey = `${dateKey}_${slot.key}_${place}`;
+        const assignedId = state.assignments[slotKey];
+        const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+        const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+        
+        const slotBtn = document.createElement('button');
+        slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
+          (assignedDoc ? 'border-transparent text-white shadow-sm' : 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700');
+        if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
+        
+        slotBtn.innerHTML = assignedDoc
+          ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+          : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+        
+        slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+        placeSection.appendChild(slotBtn);
+      });
+      
+      cell.appendChild(placeSection);
+    });
+    weekRow.appendChild(cell);
+  }
+  
+  document.getElementById('cal-grid').appendChild(weekRow);
+}
+
+function renderCalendarMonth() {
 
 // ====================================================
 // AUTO-ASSIGN LOCALE (no API required)
@@ -954,6 +1080,10 @@ const btnResetAssignments = document.getElementById('btn-reset-assignments');
 if (btnResetAssignments) {
   btnResetAssignments.addEventListener('click', resetAssignments);
 }
+const btnRestartWizard = document.getElementById('btn-restart-wizard');
+if (btnRestartWizard) {
+  btnRestartWizard.addEventListener('click', restartWizard);
+}
 
 // Undo/Redo buttons
 const btnUndo = document.getElementById('btn-undo');
@@ -969,6 +1099,8 @@ if (btnOggi) {
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
     state.sidebarWeekStart = getWeekStart(now);
+    state.calendarWeekStart = getWeekStart(now);
+    if (state.calendarView === 'weekly') toggleCalendarView();
     renderAll();
     toast('Tornato a oggi', 'info');
   });
@@ -978,6 +1110,10 @@ if (btnOggi) {
 function closeInstructions() {
   const modal = document.getElementById('instructions-modal');
   if (modal) modal.classList.add('hidden');
+}
+
+function closeSettingsModal() {
+  // No settings modal in RUAP, just a placeholder
 }
 
 // Close conflict modal function
@@ -1118,11 +1254,21 @@ document.getElementById('filter-aft')?.addEventListener('change', (e) => {
 // ====================================================
 let copyWeekSource = null;
 
+function copyWeekFromCurrentView() {
+  const weekStart = state.calendarView === 'weekly' ? state.calendarWeekStart : state.sidebarWeekStart;
+  copyWeek(weekStart);
+}
+
+function pasteWeekToCurrentView() {
+  const weekStart = state.calendarView === 'weekly' ? state.calendarWeekStart : state.sidebarWeekStart;
+  pasteWeek(weekStart);
+}
+
 function copyWeek(weekStart) {
-  copyWeekSource = { weekStart: new Date(weekStart), assignments: {} };
-  const dk = toDateKey(weekStart);
+  const startDate = weekStart instanceof Date ? weekStart : new Date(weekStart + 'T00:00:00');
+  copyWeekSource = { weekStart: startDate, assignments: {} };
   for (let i = 0; i < 5; i++) {
-    const d = new Date(weekStart);
+    const d = new Date(startDate);
     d.setDate(d.getDate() + i);
     const dateKey = toDateKey(d);
     PLACES.forEach(place => {
@@ -1134,7 +1280,7 @@ function copyWeek(weekStart) {
       });
     });
   }
-  toast(`Settimana del ${formatDateShort(weekStart)} copiata`, 'success');
+  toast(`Settimana del ${formatDateShort(startDate)} copiata (${Object.keys(copyWeekSource.assignments).length} turni)`, 'success');
 }
 
 function pasteWeek(weekStart) {
@@ -1161,6 +1307,7 @@ function pasteWeek(weekStart) {
   }
   saveToStorage();
   renderAll();
+  renderStats();
   toast(`${count} turni incollati`, 'success');
 }
 
@@ -1202,6 +1349,302 @@ function getConflicts() {
 }
 
 // ====================================================
+// WIZARD SETUP
+// ====================================================
+let wizardStep = 1;
+const WIZARD_TOTAL = 4;
+let wPlaces = [];
+let wSlots = [];
+let wDoctors = [];
+
+function startWizard() {
+  wPlaces = [];
+  wSlots = [{ key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' }, { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' }];
+  wDoctors = [];
+  wizardStep = 1;
+  document.getElementById('ruap-wizard').classList.remove('hidden');
+  renderWizardStep();
+}
+
+function restartWizard() {
+  if (!confirm('Vuoi ricominciare la configurazione?\n\nTutti i dati verranno cancellati.')) return;
+  localStorage.removeItem(STORAGE_DOCTORS);
+  localStorage.removeItem(STORAGE_ASSIGNMENTS);
+  localStorage.removeItem(STORAGE_HISTORY);
+  state.doctors = [];
+  state.assignments = [];
+  historyStack = [];
+  historyIndex = -1;
+  document.getElementById('demo-banner').classList.add('hidden');
+  closeSettingsModal();
+  startWizard();
+}
+
+function renderWizardProgressDots() {
+  const container = document.getElementById('wizard-progress-dots');
+  if (!container) return;
+  let html = '';
+  for (let i = 1; i <= WIZARD_TOTAL; i++) {
+    const cls = i < wizardStep ? 'dot done' : i === wizardStep ? 'dot active' : 'dot';
+    html += `<span class="${cls}"></span>`;
+  }
+  container.innerHTML = html;
+  document.getElementById('wizard-step-label').textContent = `Passo ${wizardStep} di ${WIZARD_TOTAL}`;
+}
+
+function renderWizardStep() {
+  renderWizardProgressDots();
+  
+  ['wizard-back', 'wizard-next'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+  });
+
+  const backBtn = document.getElementById('wizard-back');
+  const nextBtn = document.getElementById('wizard-next');
+
+  backBtn.classList.toggle('hidden', wizardStep === 1);
+  nextBtn.classList.toggle('hidden', wizardStep === 1 || wizardStep === 4);
+
+  const stepFns = [null, renderWizardStep1, renderWizardStep2, renderWizardStep3, renderWizardStep4];
+  stepFns[wizardStep]();
+
+  backBtn.addEventListener('click', () => { wizardStep--; renderWizardStep(); });
+
+  if (wizardStep === 2 || wizardStep === 3) {
+    updateWizardNextState();
+    nextBtn.addEventListener('click', () => {
+      if (wizardAdvance()) { wizardStep++; renderWizardStep(); }
+    });
+  }
+}
+
+function updateWizardNextState() {
+  const nextBtn = document.getElementById('wizard-next');
+  if (!nextBtn) return;
+  const valid = (wizardStep === 2 && wPlaces.length >= 1) || (wizardStep === 3 && wSlots.length >= 1);
+  nextBtn.disabled = !valid;
+}
+
+function wizardAdvance() {
+  if (wizardStep === 2 && wPlaces.length < 1) return false;
+  if (wizardStep === 3 && wSlots.length < 1) return false;
+  return true;
+}
+
+function finishWizard() {
+  state.doctors = wDoctors;
+  state.assignments = {};
+  historyStack = [];
+  historyIndex = -1;
+  document.getElementById('ruap-wizard').classList.add('hidden');
+  saveToStorage();
+  pushHistory();
+  renderAll();
+  renderStats();
+  updateUndoRedoButtons();
+  toast('Configurazione completata!', 'success');
+}
+
+function renderWizardStep1() {
+  document.getElementById('wizard-step-content').innerHTML = `
+    <div class="text-center" style="padding: 1.5rem 0">
+      <div style="font-size:4rem; margin-bottom:1.2rem">📅</div>
+      <h1>Benvenuto!</h1>
+      <p class="wizard-body-text" style="margin: 1rem 0 0.5rem">
+        Configuriamo insieme il tuo sistema di turni RUAP.
+      </p>
+      <p class="wizard-body-text" style="margin-bottom: 2rem">
+        Ti farò <strong>4 semplici domande</strong> e sarai subito operativo.
+      </p>
+      <button id="w-start" class="wizard-big-btn primary" style="text-align:center">
+        <span style="font-size:1.5rem; margin-right:0.5rem">👉</span> Iniziamo!
+      </button>
+    </div>
+  `;
+  document.getElementById('w-start').addEventListener('click', () => {
+    wizardStep = 2;
+    renderWizardStep();
+  });
+}
+
+function renderWizardStep2() {
+  const chipsHtml = wPlaces.map(p => `
+    <span class="wizard-chip" style="background:#dbeafe; color:#1e40af">
+      ${p}
+      <button class="chip-remove w-remove-place" data-place="${p}">×</button>
+    </span>
+  `).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1>Dove si lavora?</h1>
+    <p class="wizard-body-text" style="margin:0.75rem 0 1.5rem">
+      Quali sono le sedi ambulatoriali? (Es. "M.S.Savino", "Subbiano", "Castel Fisa")
+    </p>
+    <div class="flex flex-wrap gap-2 mb-4">${chipsHtml || '<span class="text-slate-400 text-sm">Nessuna sede aggiunta</span>'}</div>
+    <div class="flex gap-2 mb-4">
+      <input type="text" id="w-place-input" placeholder="Nome sede..." style="flex:1">
+      <button id="w-place-add" class="wizard-big-btn outline" style="width:auto; padding:0.75rem 1.25rem; flex-shrink:0">+ Aggiungi</button>
+    </div>
+    <div class="mt-4 p-3 bg-slate-50 rounded-lg">
+      <p class="text-sm text-slate-500">💡 <strong>Suggerimento:</strong> Puoi usare le sedi del tuo territorio USL</p>
+    </div>
+  `;
+
+  document.getElementById('w-place-add').addEventListener('click', () => {
+    const input = document.getElementById('w-place-input');
+    const val = input.value.trim();
+    if (val && !wPlaces.includes(val)) {
+      wPlaces.push(val);
+      renderWizardStep2();
+    }
+  });
+  document.getElementById('w-place-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') document.getElementById('w-place-add').click();
+  });
+  document.querySelectorAll('.w-remove-place').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wPlaces = wPlaces.filter(p => p !== btn.dataset.place);
+      renderWizardStep2();
+    });
+  });
+  updateWizardNextState();
+}
+
+function renderWizardStep3() {
+  const chipsHtml = wSlots.map(s => `
+    <span class="wizard-chip" style="background:#fef3c7; color:#92400e">
+      ${s.icon} ${s.label} (${s.hours}h)
+      <button class="chip-remove w-remove-slot" data-key="${s.key}">×</button>
+    </span>
+  `).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1>Quali turni?</h1>
+    <p class="wizard-body-text" style="margin:0.75rem 0 1.5rem">
+      Definisci gli orari dei turni. Ogni turno ha una durata in ore.
+    </p>
+    <div class="flex flex-wrap gap-2 mb-4">${chipsHtml || '<span class="text-slate-400 text-sm">Nessun turno aggiunto</span>'}</div>
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <div>
+        <label class="text-sm font-semibold text-slate-600 mb-1 block">Orario inizio</label>
+        <input type="time" id="w-slot-start" value="08:00">
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-600 mb-1 block">Orario fine</label>
+        <input type="time" id="w-slot-end" value="14:00">
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="text-sm font-semibold text-slate-600 mb-1 block">Icona</label>
+      <div class="flex gap-2">
+        <button class="w-slot-icon text-2xl p-2 border-2 border-transparent rounded hover:border-brand-400" data-icon="🌅">🌅</button>
+        <button class="w-slot-icon text-2xl p-2 border-2 border-transparent rounded hover:border-brand-400" data-icon="🌆">🌆</button>
+        <button class="w-slot-icon text-2xl p-2 border-2 border-transparent rounded hover:border-brand-400" data-icon="🌙">🌙</button>
+        <button class="w-slot-icon text-2xl p-2 border-2 border-transparent rounded hover:border-brand-400" data-icon="☀️">☀️</button>
+      </div>
+    </div>
+    <button id="w-slot-add" class="wizard-big-btn outline w-full" style="padding:0.75rem; font-size:1rem">+ Aggiungi turno</button>
+    <p class="text-xs text-slate-400 mt-2">Usa standard 08:00-14:00 (Mattina) e 14:00-20:00 (Pomeriggio)</p>
+  `;
+
+  let selectedIcon = '🌅';
+  document.querySelectorAll('.w-slot-icon').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.w-slot-icon').forEach(b => b.classList.remove('border-brand-400'));
+      btn.classList.add('border-brand-400');
+      selectedIcon = btn.dataset.icon;
+    });
+  });
+  document.querySelector('.w-slot-icon').classList.add('border-brand-400');
+
+  document.getElementById('w-slot-add').addEventListener('click', () => {
+    const start = document.getElementById('w-slot-start').value;
+    const end = document.getElementById('w-slot-end').value;
+    if (start && end) {
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      const hours = eh * 60 + em - (sh * 60 + sm);
+      const key = 'slot-' + Date.now();
+      wSlots.push({ key, label: `${start}–${end}`, hours: hours / 60, icon: selectedIcon });
+      document.getElementById('w-slot-start').value = '14:00';
+      document.getElementById('w-slot-end').value = '20:00';
+      renderWizardStep3();
+    }
+  });
+  document.querySelectorAll('.w-remove-slot').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wSlots = wSlots.filter(s => s.key !== btn.dataset.key);
+      renderWizardStep3();
+    });
+  });
+  updateWizardNextState();
+}
+
+function renderWizardStep4() {
+  const placesHtml = wPlaces.map(p => `<li>📍 <strong>${p}</strong></li>`).join('');
+  const slotsHtml = wSlots.map(s => `<li>${s.icon} <strong>${s.label}</strong> (${s.hours}h)</li>`).join('');
+
+  document.getElementById('wizard-step-content').innerHTML = `
+    <h1>Quasi pronto!</h1>
+    <p class="wizard-body-text" style="margin:0.75rem 0 1rem">
+      Riepilogo della configurazione:
+    </p>
+    <div class="bg-slate-50 rounded-xl p-4 mb-4">
+      <h3 class="font-bold text-slate-700 mb-2">📍 Sedi (${wPlaces.length})</h3>
+      <ul class="text-sm space-y-1 mb-4">${placesHtml}</ul>
+      <h3 class="font-bold text-slate-700 mb-2">🕐 Turni (${wSlots.length})</h3>
+      <ul class="text-sm space-y-1">${slotsHtml}</ul>
+    </div>
+    <p class="wizard-body-text" style="margin-bottom: 1rem">
+      Ora aggiungi i medici che faranno i turni.
+    </p>
+    <div class="mb-3">
+      <input type="text" id="w-doctor-name" placeholder="Nome del medico (es. Dott. Rossi)" class="mb-2">
+      <input type="number" id="w-doctor-patients" placeholder="Numero assistiti (es. 850)" class="mb-2">
+      <select id="w-doctor-place" class="w-full border-2 border-slate-200 rounded-lg p-2">
+        <option value="">-- Sede preferita --</option>
+        ${wPlaces.map(p => `<option value="${p}">${p}</option>`).join('')}
+      </select>
+    </div>
+    <button id="w-doctor-add" class="wizard-big-btn outline w-full mb-3" style="padding:0.75rem; font-size:1rem">+ Aggiungi medico</button>
+    <div id="w-doctor-list" class="flex flex-wrap gap-2 mb-4">
+      ${wDoctors.map((d, i) => `
+        <span class="wizard-chip" style="background:${COLOR_PALETTE[i % 8].hex}; color:white">
+          ${d.name}
+          <button class="chip-remove w-remove-doctor" data-index="${i}">×</button>
+        </span>
+      `).join('')}
+      ${wDoctors.length === 0 ? '<span class="text-slate-400 text-sm">Nessun medico aggiunto</span>' : ''}
+    </div>
+    <button id="w-finish" class="wizard-big-btn success w-full" style="text-align:center; margin-top:1rem; ${wDoctors.length < 1 ? 'opacity:0.4; pointer-events:none' : ''}">
+      ✅ Configura e inizia
+    </button>
+  `;
+
+  document.getElementById('w-doctor-add').addEventListener('click', () => {
+    const name = document.getElementById('w-doctor-name').value.trim();
+    const patients = parseInt(document.getElementById('w-doctor-patients').value) || 850;
+    const preferredPlace = document.getElementById('w-doctor-place').value || null;
+    if (name) {
+      wDoctors.push({ name: name.startsWith('Dott. ') ? name : 'Dott. ' + name, patients, weeklyHours: calculateDebtByPatients(patients), colorIndex: wDoctors.length % 8, preferredPlace, availability: Object.fromEntries(['lun','mar','mer','gio','ven'].map(k => [k, { mat: true, pom: true }])), unavailPeriods: [] });
+      document.getElementById('w-doctor-name').value = '';
+      document.getElementById('w-doctor-patients').value = '';
+      renderWizardStep4();
+    }
+  });
+  document.querySelectorAll('.w-remove-doctor').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wDoctors.splice(parseInt(btn.dataset.index), 1);
+      renderWizardStep4();
+    });
+  });
+  document.getElementById('w-finish').addEventListener('click', finishWizard);
+}
+
+// ====================================================
 // INIT
 // ====================================================
 function init() {
@@ -1210,19 +1653,24 @@ function init() {
   loadHistory();
   const isFirstRun = state.doctors.length === 0;
   if (isFirstRun) {
-    state.doctors = getDefaultDoctors();
-    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
-      Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
-        if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
-      });
-    }
     const now = new Date();
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
-    saveToStorage();
-    document.getElementById('demo-banner').classList.remove('hidden');
+    state.doctors = [];
+    startWizard();
+  } else {
+    pushHistory();
+    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
+      const hasAssignments = Object.keys(state.assignments).length > 0;
+      if (!hasAssignments) {
+        Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
+          if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
+        });
+        saveToStorage();
+        document.getElementById('demo-banner').classList.remove('hidden');
+      }
+    }
   }
-  pushHistory();
   renderAll();
   renderStats();
   updateUndoRedoButtons();
