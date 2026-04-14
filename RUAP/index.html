@@ -52,6 +52,14 @@
     /* Festività */
     .holiday-cell { background: linear-gradient(135deg, #fef2f2, #fff) !important; }
     body.dark-mode .holiday-cell { background: linear-gradient(135deg, #1c0a0a, #1e293b) !important; }
+    /* Rainbow animation for Konami code */
+    @keyframes rainbow {
+      0% { filter: hue-rotate(0deg); }
+      25% { filter: hue-rotate(90deg); }
+      50% { filter: hue-rotate(180deg); }
+      75% { filter: hue-rotate(270deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
     @media print {
       header, aside, #demo-banner, #toast-container { display: none !important; }
       body { background: white !important; }
@@ -99,6 +107,16 @@
         class="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-file-export"></i> Export JSON
       </button>
+      <!-- Copia settimana -->
+      <button id="btn-copy-week" onclick="copyWeek(state.sidebarWeekStart)"
+        class="bg-cyan-500 hover:bg-cyan-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-copy"></i> Copia Sett.
+      </button>
+      <!-- Incolla settimana -->
+      <button id="btn-paste-week" onclick="pasteWeek(state.sidebarWeekStart)"
+        class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-paste"></i> Incolla Sett.
+      </button>
       <!-- Import -->
       <label class="bg-slate-500 hover:bg-slate-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 cursor-pointer">
         <i class="fa-solid fa-file-import"></i> Import JSON
@@ -139,6 +157,7 @@
     <div class="flex justify-between text-xs text-slate-500 mb-2 px-1">
       <span><i class="fas fa-user-md mr-1"></i> <b id="total-doctors">0</b> medici</span>
       <span><i class="fas fa-clock mr-1"></i> <b id="total-hours">0</b>h tot.</span>
+      <span id="coverage-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">—%</span>
     </div>
 
     <!-- Filtro AFT (Facoltativo) -->

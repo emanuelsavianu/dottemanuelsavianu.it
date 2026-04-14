@@ -3,6 +3,8 @@
 // ====================================================
 const STORAGE_DOCTORS = 'ruap-turni-medici';
 const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
+const STORAGE_HISTORY = 'ruap-turni-history';
+const HISTORY_MAX = 50;
 
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
@@ -37,6 +39,9 @@ let state = {
   activeSlotKey: null,
 };
 
+let historyStack = [];
+let historyIndex = -1;
+
 function getDefaultDoctors() {
   if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
   return CONFIG.doctors.map((d, i) => ({
@@ -58,6 +63,57 @@ function getDefaultDoctors() {
 // ====================================================
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function cleanDoctorName(name) { return name.replace('Dott. ', ''); }
+
+function pushHistory() {
+  const snapshot = JSON.stringify({ assignments: state.assignments });
+  if (historyIndex < historyStack.length - 1) {
+    historyStack = historyStack.slice(0, historyIndex + 1);
+  }
+  historyStack.push(snapshot);
+  if (historyStack.length > HISTORY_MAX) {
+    historyStack.shift();
+  } else {
+    historyIndex++;
+  }
+  updateUndoRedoButtons();
+}
+
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    const snapshot = JSON.parse(historyStack[historyIndex]);
+    state.assignments = snapshot.assignments;
+    saveToStorage();
+    renderAll();
+    updateUndoRedoButtons();
+    toast('Annullato', 'info');
+  }
+}
+
+function redo() {
+  if (historyIndex < historyStack.length - 1) {
+    historyIndex++;
+    const snapshot = JSON.parse(historyStack[historyIndex]);
+    state.assignments = snapshot.assignments;
+    saveToStorage();
+    renderAll();
+    updateUndoRedoButtons();
+    toast('Ripristinato', 'info');
+  }
+}
+
+function updateUndoRedoButtons() {
+  const btnUndo = document.getElementById('btn-undo');
+  const btnRedo = document.getElementById('btn-redo');
+  if (btnUndo) {
+    btnUndo.style.opacity = historyIndex > 0 ? '1' : '0';
+    btnUndo.style.pointerEvents = historyIndex > 0 ? 'auto' : 'none';
+  }
+  if (btnRedo) {
+    btnRedo.style.opacity = historyIndex < historyStack.length - 1 ? '1' : '0';
+    btnRedo.style.pointerEvents = historyIndex < historyStack.length - 1 ? 'auto' : 'none';
+  }
+}
 
 function getWeekStart(date) {
   const d = new Date(date);
@@ -235,39 +291,45 @@ function renderSidebar() {
   
   const container = document.getElementById('sidebar-doctors');
   container.innerHTML = '';
-  if (state.doctors.length === 0) {
-    container.innerHTML = `<div class="text-center text-slate-400 py-6 text-sm">Nessun medico registrato</div>`;
+  
+  const filteredDocs = filterDoctors();
+  
+  if (filteredDocs.length === 0) {
+    container.innerHTML = `<div class="text-center text-slate-400 py-6 text-sm">${searchQuery || filterAFT ? 'Nessun medico trovato' : 'Nessun medico registrato'}</div>`;
     return;
   }
 
   const docCardsSection = document.createElement('div');
   docCardsSection.className = 'space-y-3';
 
-  state.doctors.forEach(doc => {
+  filteredDocs.forEach(doc => {
     const color = getDoctorColor(doc);
     const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
     const debt = doc.weeklyHours || 38;
     const pct = Math.min(100, Math.round((assigned / debt) * 100));
+    const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
     
     const card = document.createElement('div');
-    card.className = `rounded-xl border p-3 border-slate-200 bg-slate-50`;
+    card.className = `doctor-card rounded-xl border p-3 border-slate-200 bg-slate-50 cursor-pointer`;
+    card.onclick = () => openDoctorModal(doc.id);
     card.innerHTML = `
       <div class="flex items-start justify-between mb-2">
-        <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
           <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
           <span class="font-semibold text-sm text-slate-800 truncate">${doc.name}</span>
+          ${doc.preferredPlace ? '<span class="text-amber-500 text-xs ml-1">⭐</span>' : ''}
         </div>
         <div class="flex items-center gap-1">
-          <button class="text-slate-400 hover:text-brand-600 text-xs" onclick="openDoctorModal('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
-          <button class="text-slate-400 hover:text-red-500 text-xs ml-1" onclick="deleteDoctor('${doc.id}')"><i class="fa-solid fa-trash-can"></i></button>
+          <button class="text-slate-400 hover:text-brand-600 text-xs" onclick="event.stopPropagation(); openDoctorModal('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="text-slate-400 hover:text-red-500 text-xs ml-1" onclick="event.stopPropagation(); deleteDoctor('${doc.id}')"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       </div>
       <div class="flex items-baseline justify-between mb-1.5">
-        <span class="text-xs text-slate-500">${doc.patients ? doc.patients + ' paz.' : ''}</span>
+        <span class="text-xs text-slate-500">${doc.patients ? doc.patients + ' paz.' : ''} ${doc.aft ? '• AFT ' + doc.aft : ''}</span>
         <span class="text-xs font-bold text-slate-700">${assigned}h / ${debt}h</span>
       </div>
       <div class="w-full bg-slate-200 rounded-full h-2">
-        <div class="h-2 rounded-full bg-blue-500" style="width: ${pct}%"></div>
+        <div class="h-2 rounded-full transition-all" style="width: ${pct}%; background:${barColor}"></div>
       </div>
     `;
     docCardsSection.appendChild(card);
@@ -316,7 +378,19 @@ function renderCalendar() {
       PLACES.forEach(place => {
         const placeSection = document.createElement('div');
         placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-        placeSection.innerHTML = `<div class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">${place}</div>`;
+        
+        const matKey = `${dateKey}_mat_${place}`;
+        const pomKey = `${dateKey}_pom_${place}`;
+        const matAssigned = !!state.assignments[matKey];
+        const pomAssigned = !!state.assignments[pomKey];
+        const bothAssigned = matAssigned && pomAssigned;
+        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
+        
+        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
+          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+        </div>`;
 
         SLOTS.forEach(slot => {
           const slotKey = `${dateKey}_${slot.key}_${place}`;
@@ -389,7 +463,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
           </div>
         </div>
       `;
-      btn.addEventListener('click', () => { state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll(); });
+      btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll(); renderStats(); });
       list.appendChild(btn);
     });
   }
@@ -404,7 +478,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
 }
 
 document.getElementById('assign-remove').addEventListener('click', () => {
-  if (state.activeSlotKey) { delete state.assignments[state.activeSlotKey]; saveToStorage(); closeAssignDropdown(); renderAll(); }
+  if (state.activeSlotKey) { pushHistory(); delete state.assignments[state.activeSlotKey]; saveToStorage(); closeAssignDropdown(); renderAll(); renderStats(); }
 });
 
 function closeAssignDropdown() {
@@ -425,7 +499,7 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-patients').value = doc.patients || '';
     document.getElementById('modal-hours').value = calculateDebtByPatients(doc.patients || 0);
     renderColorPicker(doc.colorIndex ?? 0);
-    // Populate preferred place dropdown
+    
     const ppSelect = document.getElementById('modal-preferred-place');
     if (ppSelect) {
       ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
@@ -433,17 +507,21 @@ function openDoctorModal(doctorId = null) {
         const opt = document.createElement('option');
         opt.value = p;
         opt.textContent = p;
-        if (doctorId && getDoctorById(doctorId)?.preferredPlace === p) opt.selected = true;
+        if (doc.preferredPlace === p) opt.selected = true;
         ppSelect.appendChild(opt);
       });
     }
-    // (Availability table logic is omitted here to keep JS clean, assume default full availability if missing for demo)
+    
+    document.getElementById('modal-aft').value = doc.aft || '';
+    document.getElementById('modal-seniority').value = doc.seniority || '';
+    
+    renderAvailabilityTable(doc.availability);
   } else {
     document.getElementById('modal-name').value = '';
     document.getElementById('modal-patients').value = '';
     document.getElementById('modal-hours').value = '38';
     renderColorPicker(0);
-    // Populate preferred place dropdown for new doctor
+    
     const ppSelect = document.getElementById('modal-preferred-place');
     if (ppSelect) {
       ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
@@ -454,7 +532,36 @@ function openDoctorModal(doctorId = null) {
         ppSelect.appendChild(opt);
       });
     }
+    
+    document.getElementById('modal-aft').value = '';
+    document.getElementById('modal-seniority').value = '';
+    
+    renderAvailabilityTable(null);
   }
+}
+
+function renderAvailabilityTable(availability) {
+  const tbody = document.getElementById('avail-table');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  const dayLabels = { lun: 'Lunedì', mar: 'Martedì', mer: 'Mercoledì', gio: 'Giovedì', ven: 'Venerdì' };
+  
+  DAY_KEYS.forEach(dayKey => {
+    const dayAvail = availability?.[dayKey] || { mat: true, pom: true };
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100';
+    tr.innerHTML = `
+      <td class="px-3 py-2 font-medium text-slate-700">${dayLabels[dayKey]}</td>
+      <td class="px-3 py-2 text-center">
+        <input type="checkbox" class="w-5 h-5 rounded text-brand-600" id="avail-${dayKey}-mat" ${dayAvail.mat ? 'checked' : ''}>
+      </td>
+      <td class="px-3 py-2 text-center">
+        <input type="checkbox" class="w-5 h-5 rounded text-brand-600" id="avail-${dayKey}-pom" ${dayAvail.pom ? 'checked' : ''}>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 function renderColorPicker(selectedIndex) {
   const container = document.getElementById('color-picker');
@@ -477,22 +584,31 @@ document.getElementById('modal-cancel').addEventListener('click', closeDoctorMod
 document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('modal-name').value;
   const patients = parseInt(document.getElementById('modal-patients').value) || 0;
-  const weeklyHours = parseInt(document.getElementById('modal-hours').value) || 38;
+  const weeklyHours = calculateDebtByPatients(patients);
   const colorBtn = document.querySelector('#color-picker button.border-slate-800');
   const colorIndex = colorBtn ? parseInt(colorBtn.dataset.colorIndex) : 0;
   
-  // Default availability (all true for simplicity in this updated script)
   const availability = {};
-  DAY_KEYS.forEach(dk => { availability[dk] = { mat: true, pom: true }; });
+  DAY_KEYS.forEach(dk => {
+    availability[dk] = {
+      mat: document.getElementById(`avail-${dk}-mat`)?.checked ?? true,
+      pom: document.getElementById(`avail-${dk}-pom`)?.checked ?? true
+    };
+  });
 
   const preferredPlace = document.getElementById('modal-preferred-place')?.value || null;
+  const aft = document.getElementById('modal-aft')?.value || '';
+  const seniority = parseInt(document.getElementById('modal-seniority')?.value) || 0;
+
   if (state.editingDoctorId) {
     const doc = getDoctorById(state.editingDoctorId);
-    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace });
+    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, aft, seniority });
   } else {
-    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, availability, unavailPeriods: [] });
+    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, aft, seniority, availability, unavailPeriods: [] });
   }
+  pushHistory();
   saveToStorage(); closeDoctorModal(); renderAll();
+  toast('Medico salvato', 'success');
 });
 function deleteDoctor(id) {
   const doc = getDoctorById(id);
@@ -508,6 +624,7 @@ function deleteDoctor(id) {
   `;
   container.appendChild(el);
   document.getElementById(`confirm-delete-${id}`).onclick = () => {
+    pushHistory();
     state.doctors = state.doctors.filter(d => d.id !== id);
     Object.keys(state.assignments).forEach(k => { if (state.assignments[k] === id) delete state.assignments[k]; });
     saveToStorage(); renderAll(); el.remove();
@@ -528,6 +645,7 @@ function resetAssignments() {
   `;
   container.appendChild(el);
   document.getElementById('confirm-reset-all').onclick = () => {
+    pushHistory();
     state.assignments = {};
     saveToStorage(); renderAll(); el.remove();
     toast('Tutti i turni resettati', 'success');
@@ -553,6 +671,7 @@ function autoAssign() {
     return;
   }
 
+  pushHistory();
   const year = state.calYear;
   const month = state.calMonth;
   const lastDay = new Date(year, month + 1, 0).getDate();
@@ -561,16 +680,15 @@ function autoAssign() {
   for (let day = 1; day <= lastDay; day++) {
     const cellDate = new Date(year, month, day);
     const jsDay = cellDate.getDay();
-    if (jsDay === 0 || jsDay === 6) continue;  // weekends only
+    if (jsDay === 0 || jsDay === 6) continue;
     const dateKey = toDateKey(cellDate);
     const weekStart = getWeekStart(cellDate);
 
     SLOTS.forEach(slot => {
       PLACES.forEach(place => {
         const slotKey = `${dateKey}_${slot.key}_${place}`;
-        if (state.assignments[slotKey]) return; // already assigned
+        if (state.assignments[slotKey]) return;
 
-        // Check if doctor is not already busy in this slot on this date
         const notBusy = (doc) => {
           const prefix = `${dateKey}_${slot.key}_`;
           return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
@@ -582,9 +700,6 @@ function autoAssign() {
 
         if (available.length === 0) return;
 
-        // Priority 1: doctors with preferred place + fewest weekly hours
-        // Priority 2: doctors with no preference + fewest weekly hours
-        // Priority 3: doctors preferring different place (only if 1-2 exhausted)
         const preferred  = available.filter(d => d.preferredPlace === place);
         const neutral    = available.filter(d => !d.preferredPlace);
         const nonPreferred = available.filter(d => d.preferredPlace && d.preferredPlace !== place);
@@ -595,7 +710,6 @@ function autoAssign() {
 
         if (pool.length === 0) return;
 
-        // Pick doctor with fewest weekly hours assigned
         pool.sort((a, b) =>
           getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
         );
@@ -613,6 +727,7 @@ function autoAssign() {
 
   saveToStorage();
   renderAll();
+  renderStats();
   toast(`Assegnati ${count} turni automaticamente`, 'success');
 }
 
@@ -734,17 +849,16 @@ async function callGeminiToAssign() {
     return;
   }
 
-  // 1. Prepare data for the AI
+  pushHistory();
   const year = state.calYear;
   const month = state.calMonth;
   const lastDay = new Date(year, month + 1, 0).getDate();
   
   const emptySlots = [];
-  // Gather all empty slots for this month
   for (let day = 1; day <= lastDay; day++) {
     const cellDate = new Date(year, month, day);
     const jsDay = cellDate.getDay();
-    if (jsDay === 0 || jsDay === 6) continue; // Skip weekends
+    if (jsDay === 0 || jsDay === 6) continue;
     const dateKey = toDateKey(cellDate);
     
     PLACES.forEach(place => {
@@ -760,10 +874,8 @@ async function callGeminiToAssign() {
     return;
   }
 
-  // Show loading overlay
   document.getElementById('gemini-loading').classList.remove('hidden');
 
-  // Format context for the LLM
   const promptData = {
     task: "Assign doctors to the empty hospital shifts.",
     rules: "Do not assign the same doctor to two different places on the same day and time slot. Respect the weeklyHours limit (6 hours per shift). Return a JSON object where the key is the shift string and the value is the doctor ID. Output ONLY valid JSON, no markdown formatting.",
@@ -779,8 +891,8 @@ async function callGeminiToAssign() {
       body: JSON.stringify({
         contents: [{ parts: [{ text: JSON.stringify(promptData) }] }],
         generationConfig: { 
-          response_mime_type: "application/json", // Force JSON!
-          temperature: 0.2 // Low temp for more logical, deterministic output
+          response_mime_type: "application/json",
+          temperature: 0.2
         } 
       })
     });
@@ -791,11 +903,9 @@ async function callGeminiToAssign() {
       throw new Error(data.error.message);
     }
 
-    // Parse the generated text into a JSON object
     const generatedJsonText = data.candidates[0].content.parts[0].text;
     const newAssignments = JSON.parse(generatedJsonText);
 
-    // Merge new assignments into the state
     let count = 0;
     for (const [key, doctorId] of Object.entries(newAssignments)) {
       if (emptySlots.includes(key)) {
@@ -806,6 +916,7 @@ async function callGeminiToAssign() {
 
     saveToStorage();
     renderAll();
+    renderStats();
     toast(`Assegnati ${count} turni automaticamente`, 'success');
 
   } catch (err) {
@@ -837,32 +948,314 @@ document.getElementById('instructions-modal')?.addEventListener('click', (e) => 
     e.target.classList.add('hidden');
   }
 });
+document.getElementById('close-instructions')?.addEventListener('click', closeInstructions);
+document.getElementById('close-instructions-bottom')?.addEventListener('click', closeInstructions);
 const btnResetAssignments = document.getElementById('btn-reset-assignments');
 if (btnResetAssignments) {
   btnResetAssignments.addEventListener('click', resetAssignments);
 }
 
-// Init
+// Undo/Redo buttons
+const btnUndo = document.getElementById('btn-undo');
+if (btnUndo) btnUndo.addEventListener('click', undo);
+const btnRedo = document.getElementById('btn-redo');
+if (btnRedo) btnRedo.addEventListener('click', redo);
+
+// Oggi button - go to current date
+const btnOggi = document.getElementById('btn-oggi');
+if (btnOggi) {
+  btnOggi.addEventListener('click', () => {
+    const now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
+    state.sidebarWeekStart = getWeekStart(now);
+    renderAll();
+    toast('Tornato a oggi', 'info');
+  });
+}
+
+// Close instructions modal function
+function closeInstructions() {
+  const modal = document.getElementById('instructions-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Close conflict modal function
+function closeConflictModal() {
+  const modal = document.getElementById('conflict-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Auto-update weekly hours when patients change
+document.getElementById('modal-patients')?.addEventListener('input', (e) => {
+  const patients = parseInt(e.target.value) || 0;
+  const hours = calculateDebtByPatients(patients);
+  document.getElementById('modal-hours').value = hours;
+});
+
+// Unavailability periods functionality
+document.getElementById('btn-add-period')?.addEventListener('click', () => {
+  const container = document.getElementById('unavail-periods');
+  const periodId = 'period-' + Date.now();
+  const periodEl = document.createElement('div');
+  periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2';
+  periodEl.innerHTML = `
+    <input type="date" id="${periodId}-from" class="border border-slate-300 rounded px-2 py-1 text-xs" placeholder="Da">
+    <span class="text-slate-400">—</span>
+    <input type="date" id="${periodId}-to" class="border border-slate-300 rounded px-2 py-1 text-xs" placeholder="A">
+    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-xs">
+      <i class="fa-solid fa-trash-can"></i>
+    </button>
+  `;
+  container.appendChild(periodEl);
+});
+
+// ====================================================
+// KEYBOARD SHORTCUTS
+// ====================================================
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+  if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); }
+  if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); }
+  if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); closeInstructions(); }
+});
+
+// ====================================================
+// KONAMI CODE EASTER EGG
+// ====================================================
+const konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIndex = 0;
+document.addEventListener('keydown', (e) => {
+  if (e.key === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      toast('🎉 Sei un vero utente RUAP!', 'success');
+      document.body.style.animation = 'rainbow 2s';
+      konamiIndex = 0;
+    }
+  } else {
+    konamiIndex = 0;
+  }
+});
+
+// ====================================================
+// STATISTICHE E STATO COPERTURA
+// ====================================================
+function getMonthlyStats() {
+  const year = state.calYear;
+  const month = state.calMonth;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let totalSlots = 0, filledSlots = 0;
+  const doctorHours = {};
+  state.doctors.forEach(d => doctorHours[d.id] = 0);
+
+  for (let day = 1; day <= lastDay; day++) {
+    const cellDate = new Date(year, month, day);
+    const jsDay = cellDate.getDay();
+    if (jsDay === 0 || jsDay === 6) continue;
+    const dateKey = toDateKey(cellDate);
+    PLACES.forEach(place => {
+      SLOTS.forEach(slot => {
+        totalSlots++;
+        const key = `${dateKey}_${slot.key}_${place}`;
+        if (state.assignments[key]) {
+          filledSlots++;
+          doctorHours[state.assignments[key]] += slot.hours;
+        }
+      });
+    });
+  }
+  return { totalSlots, filledSlots, emptySlots: totalSlots - filledSlots, coverage: totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0, doctorHours };
+}
+
+function renderStats() {
+  const stats = getMonthlyStats();
+  document.getElementById('total-doctors').textContent = state.doctors.length;
+  document.getElementById('total-hours').textContent = Object.values(stats.doctorHours).reduce((a, b) => a + b, 0);
+  
+  const coverageEl = document.getElementById('coverage-badge');
+  if (coverageEl) {
+    coverageEl.textContent = `${stats.coverage}%`;
+    coverageEl.className = `text-xs font-bold px-2 py-0.5 rounded-full ${stats.coverage === 100 ? 'bg-green-100 text-green-700' : stats.coverage >= 70 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`;
+  }
+}
+
+// ====================================================
+// RICERCA E FILTRO MEDICI
+// ====================================================
+let searchQuery = '';
+let filterAFT = '';
+
+function filterDoctors() {
+  let filtered = state.doctors;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.preferredPlace && d.preferredPlace.toLowerCase().includes(q)));
+  }
+  if (filterAFT) {
+    if (filterAFT === 'none') {
+      filtered = filtered.filter(d => !d.aft || d.aft === '');
+    } else {
+      filtered = filtered.filter(d => d.aft === filterAFT);
+    }
+  }
+  return filtered;
+}
+
+document.getElementById('doctor-search')?.addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  renderSidebar();
+});
+
+document.getElementById('filter-aft')?.addEventListener('change', (e) => {
+  filterAFT = e.target.value;
+  renderSidebar();
+});
+
+// ====================================================
+// COPIA SETTIMANA
+// ====================================================
+let copyWeekSource = null;
+
+function copyWeek(weekStart) {
+  copyWeekSource = { weekStart: new Date(weekStart), assignments: {} };
+  const dk = toDateKey(weekStart);
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const dateKey = toDateKey(d);
+    PLACES.forEach(place => {
+      SLOTS.forEach(slot => {
+        const key = `${dateKey}_${slot.key}_${place}`;
+        if (state.assignments[key]) {
+          copyWeekSource.assignments[key] = state.assignments[key];
+        }
+      });
+    });
+  }
+  toast(`Settimana del ${formatDateShort(weekStart)} copiata`, 'success');
+}
+
+function pasteWeek(weekStart) {
+  if (!copyWeekSource || Object.keys(copyWeekSource.assignments).length === 0) {
+    toast('Nessuna settimana in clipboard', 'warning');
+    return;
+  }
+  pushHistory();
+  const offset = Math.floor((weekStart - copyWeekSource.weekStart) / (7 * 24 * 60 * 60 * 1000));
+  let count = 0;
+  for (const [key, docId] of Object.entries(copyWeekSource.assignments)) {
+    const parts = key.split('_');
+    const oldDate = parts[0];
+    const slotKey = parts[1];
+    const place = parts.slice(2).join('_');
+    const oldDateObj = new Date(oldDate + 'T00:00:00');
+    const newDateObj = new Date(oldDateObj);
+    newDateObj.setDate(newDateObj.getDate() + offset * 7);
+    const newKey = `${toDateKey(newDateObj)}_${slotKey}_${place}`;
+    if (!state.assignments[newKey]) {
+      state.assignments[newKey] = docId;
+      count++;
+    }
+  }
+  saveToStorage();
+  renderAll();
+  toast(`${count} turni incollati`, 'success');
+}
+
+// ====================================================
+// SWAP MEDICI
+// ====================================================
+function swapDoctorsInSlot(slotKey1, slotKey2) {
+  pushHistory();
+  const temp = state.assignments[slotKey1];
+  state.assignments[slotKey1] = state.assignments[slotKey2];
+  state.assignments[slotKey2] = temp;
+  saveToStorage();
+  renderAll();
+  toast('Turni scambiati', 'success');
+}
+
+// ====================================================
+// CONFLICT DETECTION
+// ====================================================
+function hasConflict(docId, dateKey, slotKey) {
+  const prefix = `${dateKey}_${slotKey}_`;
+  return Object.entries(state.assignments).some(([k, v]) => v === docId && k.startsWith(prefix));
+}
+
+function getConflicts() {
+  const conflicts = [];
+  for (const [key, docId] of Object.entries(state.assignments)) {
+    const parts = key.split('_');
+    const dateKey = parts[0];
+    const slotKey = parts[1];
+    if (hasConflict(docId, dateKey, slotKey)) {
+      const matches = Object.entries(state.assignments).filter(([k, v]) => v === docId && k.startsWith(`${dateKey}_${slotKey}_`));
+      if (matches.length > 1) {
+        conflicts.push({ docId, dateKey, slotKey, keys: matches.map(m => m[0]) });
+      }
+    }
+  }
+  return conflicts;
+}
+
+// ====================================================
+// INIT
+// ====================================================
 function init() {
   initDarkMode();
   loadFromStorage();
+  loadHistory();
   const isFirstRun = state.doctors.length === 0;
   if (isFirstRun) {
     state.doctors = getDefaultDoctors();
-    // Resolve demo assignments (index → real ID)
     if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
       Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
         if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
       });
     }
-    // Navigate to current month if April 2026
     const now = new Date();
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
     saveToStorage();
     document.getElementById('demo-banner').classList.remove('hidden');
   }
+  pushHistory();
   renderAll();
+  renderStats();
+  updateUndoRedoButtons();
+}
+
+function loadHistory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_HISTORY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      historyStack = data.stack || [];
+      historyIndex = data.index || -1;
+    }
+  } catch (e) { console.error(e); }
+}
+
+function saveHistory() {
+  localStorage.setItem(STORAGE_HISTORY, JSON.stringify({ stack: historyStack, index: historyIndex }));
+}
+
+function pushHistory() {
+  const snapshot = JSON.stringify({ assignments: state.assignments });
+  if (historyIndex < historyStack.length - 1) {
+    historyStack = historyStack.slice(0, historyIndex + 1);
+  }
+  historyStack.push(snapshot);
+  if (historyStack.length > HISTORY_MAX) {
+    historyStack.shift();
+  } else {
+    historyIndex++;
+  }
+  saveHistory();
+  updateUndoRedoButtons();
 }
 
 init();
