@@ -23,7 +23,7 @@
   "email": "segreteria@savianu.it",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Via Ubaldo Pasqui 38",
+    "streetAddress": "Piazza Saione 3",
     "addressLocality": "Arezzo",
     "postalCode": "52100",
     "addressCountry": "IT"
@@ -64,7 +64,7 @@
   "description": "Studio medico del Dott. Emanuel Savianu, Medico di Medicina Generale e Certificatore INPS ad Arezzo.",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Via Ubaldo Pasqui 38",
+    "streetAddress": "Piazza Saione 3",
     "addressLocality": "Arezzo",
     "postalCode": "52100",
     "addressRegion": "Toscana",
@@ -73,7 +73,7 @@
   "telephone": "+3905751713428",
   "url": "https://dottemanuelsavianu.it",
   "openingHours": ["Mo 08:00-13:00", "Tu 08:00-13:00", "We 08:00-13:00", "Th 08:00-13:00", "Fr 08:00-13:00"],
-  "hasMap": "https://maps.google.com/?q=Via+Ubaldo+Pasqui+38+Arezzo",
+  "hasMap": "https://maps.google.com/?q=Piazza+Saione+3+Arezzo",
 
   // ========= ADD THIS BLOCK =========
   "aggregateRating": {

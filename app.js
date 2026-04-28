@@ -191,7 +191,7 @@ const translations = {
 
         // Welcome modal
         welcome_transfer_title: "Nuova Sede Studio",
-        welcome_transfer_desc: "Dal 27 Aprile 2026, il Dott. Savianu si trasferirà in <strong>Piazza Saione 3</strong>. Attualmente: <strong>Via Ubaldo Pasqui 38</strong>.",
+        welcome_transfer_desc: "Lo studio si trova in <strong>Piazza Saione 3, Arezzo</strong> dal 27 Aprile 2026.",
         welcome_intro: "Benvenuti. Ho organizzato questo sito per semplificare la vostra vita. Utilizzando gli strumenti digitali, mi permettete di dedicare la massima attenzione alle visite mediche vere e proprie.",
         welcome_step0_title: "0. Prima di tutto: Leggi le FAQ",
         welcome_step0_desc: "La maggior parte delle risposte a dubbi su certificati, ricette ed esenzioni si trova nelle <strong><a href='faq.html' style='text-decoration:underline; font-weight:bold;'>Domande Frequenti</a></strong>. Consultale prima di chiamare!",
