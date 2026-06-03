@@ -110,7 +110,7 @@ Config-driven approach means non-technical users can modify `config.js` without 
 {
   id: string (generated on first run),
   name: string (e.g., 'Dott. Savianu'),
-  patients: number (determines weeklyHours: ≤400→38h, ≤1000→24h, ≤1200→12h),
+  patients: number (determines weeklyHours: ≤400→38h, ≤1000→24h, ≤1200→12h, ≤1500→6h),
   weeklyHours: number (calculated from patients),
   colorIndex: number (0-7, maps to COLOR_PALETTE),
   preferredPlace: string (sede name, e.g., 'M.S.Savino') | null,

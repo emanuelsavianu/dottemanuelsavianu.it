@@ -17,6 +17,7 @@ const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
 
 const DROPDOWN_HEIGHT = 350;
 const DROPDOWN_WIDTH  = 320;
+const MONTHLY_WEEKS = 4;
 
 const COLOR_PALETTE = [
   { bg: 'bg-blue-500',   text: 'text-white', hex: '#3b82f6',  label: 'Blu' },
@@ -27,6 +28,14 @@ const COLOR_PALETTE = [
   { bg: 'bg-teal-500',   text: 'text-white', hex: '#14b8a6',  label: 'Teal' },
   { bg: 'bg-orange-500', text: 'text-white', hex: '#f97316',  label: 'Arancio' },
   { bg: 'bg-cyan-600',   text: 'text-white', hex: '#0891b2',  label: 'Ciano' },
+  { bg: 'bg-indigo-500', text: 'text-white', hex: '#6366f1',  label: 'Indaco' },
+  { bg: 'bg-pink-500',   text: 'text-white', hex: '#ec4899',  label: 'Rosa Scuro' },
+  { bg: 'bg-lime-500',   text: 'text-white', hex: '#84cc16',  label: 'Lime' },
+  { bg: 'bg-emerald-500',text: 'text-white', hex: '#10b981',  label: 'Smeraldo' },
+  { bg: 'bg-sky-500',    text: 'text-white', hex: '#0ea5e9',  label: 'Sky' },
+  { bg: 'bg-violet-500', text: 'text-white', hex: '#8b5cf6',  label: 'ViolaChiaro' },
+  { bg: 'bg-fuchsia-500',text: 'text-white', hex: '#d946ef',  label: 'Fucsia' },
+  { bg: 'bg-rose-700',   text: 'text-white', hex: '#be123c',  label: 'Rosso' },
 ];
 
 let state = {
@@ -50,7 +59,9 @@ function getDefaultDoctors() {
     id: generateId(),
     name: d.name,
     patients: d.patients || 850,
-    weeklyHours: calculateDebtByPatients(d.patients || 850),
+    weeklyHours: d.weeklyHours != null ? d.weeklyHours : calculateDebtByPatients(d.patients || 850),
+    monthlyBudget: d.monthlyBudget,  // undefined → auto-computed
+    isPool: d.isPool || false,
     colorIndex: d.colorIndex ?? i,
     preferredPlace: d.preferredPlace || null,
     availability: Object.fromEntries(
@@ -236,6 +247,7 @@ function calculateDebtByPatients(patients) {
   if (patients <= 400) return 38;
   if (patients <= 1000) return 24;
   if (patients <= 1200) return 12;
+  if (patients <= 1500) return 6;
   return 0;
 }
 function getDoctorColor(doctor) { return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0]; }
@@ -243,6 +255,34 @@ function isPlaceCovered(dateKey, place) { return !!state.assignments[`${dateKey}
 function getDayPlacesCoverage(dateKey) {
   const covered = PLACES.filter(p => isPlaceCovered(dateKey, p)).length;
   return { covered, total: PLACES.length };
+}
+
+// ─── Monthly budget helpers ───────────────────────────────
+function getMonthlyBudget(doctor) {
+  if (doctor.monthlyBudget != null) return doctor.monthlyBudget;
+  return (doctor.weeklyHours || 38) * MONTHLY_WEEKS;
+}
+
+function getAssignedHoursInMonth(docId, month, year) {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let hours = 0;
+  for (let day = 1; day <= lastDay; day++) {
+    const d = new Date(year, month, day);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    const dk = toDateKey(d);
+    SLOTS.forEach(slot => {
+      PLACES.forEach(place => {
+        if (state.assignments[`${dk}_${slot.key}_${place}`] === docId) {
+          hours += slot.hours;
+        }
+      });
+    });
+  }
+  return hours;
+}
+
+function getRemainingMonthlyHours(doctor, month, year) {
+  return Math.max(0, getMonthlyBudget(doctor) - getAssignedHoursInMonth(doctor.id, month, year));
 }
 
 // ====================================================
@@ -270,6 +310,8 @@ document.getElementById('btn-export').addEventListener('click', () => {
   a.href = url; a.download = `turni-${toDateKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
 });
 
+document.getElementById('btn-export-excel').addEventListener('click', exportExcel);
+
 document.getElementById('import-file').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -279,11 +321,200 @@ document.getElementById('import-file').addEventListener('change', (e) => {
       const data = JSON.parse(ev.target.result);
       if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
       state.doctors = data.doctors; state.assignments = data.assignments;
-      saveToStorage(); renderAll(); toast('Importazione completata!', 'success');
+      saveToStorage(); renderAll(); renderMonthlyStats(); toast('Importazione completata!', 'success');
     } catch (err) { toast('Errore importazione: ' + err.message, 'error'); }
   };
   reader.readAsText(file); e.target.value = '';
 });
+
+document.getElementById('import-excel-file').addEventListener('change', importExcelFromFile);
+
+// ====================================================
+// EXCEL IMPORT / EXPORT
+// ====================================================
+function importExcelFromFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    toast('Libreria XLSX non caricata', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      importFromRows(rows);
+      toast('Importazione Excel completata!', 'success');
+    } catch (err) {
+      toast('Errore importazione Excel: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+}
+
+function importFromRows(rows) {
+  let currentPlace = null;
+  let inDebtSection = false;
+  let inPoolSection = false;
+  const newAssignments = {};
+  const debtDoctors = {};
+  const poolDoctors = {};
+
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    const c0 = row[0] !== undefined ? String(row[0]).trim() : '';
+    const c1 = row[1];
+    const c3 = row[3] !== undefined ? String(row[3]).trim() : '';
+    const c4 = row[4] !== undefined ? String(row[4]).trim() : '';
+
+    // Detect section title → extract place
+    if (c0 === 'Struttura') {
+      const prev = rows[r - 1];
+      if (prev && prev[1]) {
+        const t = String(prev[1]);
+        if (t.includes('Monte') || t.includes('Savino')) currentPlace = 'M.S.Savino';
+        else if (t.includes('Subbiano')) currentPlace = 'Subbiano';
+      }
+      continue;
+    }
+
+    const c3_trim = (row[3] !== undefined ? String(row[3]).trim() : '');
+    // Debt section header (col A)
+    if (c0.includes('debito orario')) { inDebtSection = true; inPoolSection = false; continue; }
+    // Pool section header (col D)
+    if (c3_trim.includes('disponibilità') || c3_trim.includes('disponibili')) { inDebtSection = false; inPoolSection = true; continue; }
+
+    // Parse assignment rows: "CdC ..." + date object
+    if (c0.startsWith('CdC') && c1 && typeof c1 === 'object' && c1.getMonth !== undefined) {
+      const shiftType = c3;
+      const doctorName = c4;
+      const slotKey = shiftType === 'Mattina' ? 'mat' : shiftType === 'Pomeriggio' ? 'pom' : null;
+      if (slotKey && doctorName && doctorName !== 'SCOPERTO!' && currentPlace) {
+        newAssignments[`${toDateKey(c1)}_${slotKey}_${currentPlace}`] = doctorName;
+      }
+      continue;
+    }
+
+    // Debt table: col A = name, col B = hours
+    if (inDebtSection && c0 && c0 !== 'Medico' && !isNaN(parseFloat(row[1]))) {
+      debtDoctors[c0] = parseFloat(row[1]);
+    }
+    // Pool table: col D = name, col E = hours
+    if (inPoolSection && c3 && c3 !== 'Medico ' && row[4] !== undefined && !isNaN(parseFloat(row[4]))) {
+      poolDoctors[c3] = parseFloat(row[4]);
+    }
+  }
+
+  // Map doctor names from Excel to existing doctors by surname
+  function matchDoctor(excelName) {
+    const excelLast = excelName.split(' ').slice(-1)[0].toLowerCase();
+    return state.doctors.find(d => {
+      const docLast = cleanDoctorName(d.name).split(' ').slice(-1)[0].toLowerCase();
+      return docLast === excelLast;
+    });
+  }
+
+  // Apply assignments: match by surname, skip unmatched
+  let assigned = 0;
+  for (const [key, excelName] of Object.entries(newAssignments)) {
+    const doc = matchDoctor(excelName);
+    if (doc) {
+      state.assignments[key] = doc.id;
+      assigned++;
+    }
+  }
+
+  // Apply debt hours as monthlyBudget override
+  let debtCount = 0;
+  for (const [excelName, hours] of Object.entries(debtDoctors)) {
+    const doc = matchDoctor(excelName);
+    if (doc) { doc.monthlyBudget = hours; debtCount++; }
+  }
+  for (const [excelName, hours] of Object.entries(poolDoctors)) {
+    const doc = matchDoctor(excelName);
+    if (doc) { doc.monthlyBudget = hours; doc.isPool = true; debtCount++; }
+  }
+
+  saveToStorage();
+  renderAll();
+  renderMonthlyStats();
+  toast(`Importate ${assigned} assegnazioni, aggiornati ${debtCount} medici`, 'success');
+}
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') {
+    toast('Libreria XLSX non caricata', 'error');
+    return;
+  }
+  const year = state.calYear;
+  const month = state.calMonth;
+  const monthName = MONTHS_IT[month];
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const DAY_SHORT = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const rows = [];
+
+  // Helper: find doctor name for a slot
+  function getDocName(dateKey, slotKey, place) {
+    const id = state.assignments[`${dateKey}_${slotKey}_${place}`];
+    if (!id) return 'SCOPERTO!';
+    const doc = getDoctorById(id);
+    return doc ? doc.name.replace('Dott. ', '') : 'SCOPERTO!';
+  }
+
+  PLACES.forEach((place, pi) => {
+    const title = pi === 0 ? 'CdC Spoke Civitella in Valdichiana/Monte San Savino'
+                          : 'CdC Spoke Capolona/Castiglion Fibocchi/Subbiano';
+    rows.push([title]);
+    rows.push(['Struttura', 'Data', 'Giorno', 'Turno', 'Medico Assegnato']);
+
+    // Use full place name for the first column
+    const placeLabel = pi === 0 ? 'CdC Monte San Savino' : 'CdC Subbiano';
+
+    for (let day = 1; day <= lastDay; day++) {
+      const d = new Date(year, month, day);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      const dk = toDateKey(d);
+      const dayName = DAY_SHORT[d.getDay()];
+
+      rows.push([placeLabel, d, dayName, 'Mattina', getDocName(dk, 'mat', place)]);
+      rows.push([placeLabel, d, dayName, 'Pomeriggio', getDocName(dk, 'pom', place)]);
+    }
+    rows.push([]);
+  });
+
+  // Debt / pool summary tables
+  const primaries = state.doctors.filter(d => !d.isPool);
+  const pools = state.doctors.filter(d => d.isPool);
+
+  rows.push(['Medici con debito orario residuo', '', '', 'Medici in disponibilità aggiuntiva', '']);
+  rows.push(['Medico', 'ORE*', '', 'Medico ', 'ORE*']);
+
+  const maxRows = Math.max(primaries.length, pools.length);
+  for (let i = 0; i < maxRows; i++) {
+    const pd = i < primaries.length ? primaries[i] : null;
+    const pp = i < pools.length ? pools[i] : null;
+    rows.push([
+      pd ? pd.name.replace('Dott. ', '') : '',
+      pd ? Math.round(getRemainingMonthlyHours(pd, month, year)) : '',
+      '',
+      pp ? pp.name.replace('Dott. ', '') : '',
+      pp ? Math.round(getRemainingMonthlyHours(pp, month, year)) : '',
+    ]);
+  }
+  rows.push([]);
+  rows.push(['*ore mensili']);
+
+  // Build workbook and download
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws, monthName);
+  XLSX.writeFile(wb, `turni-ruap-${monthName.toLowerCase()}-${year}.xlsx`);
+  toast('Excel scaricato', 'success');
+}
 
 // ====================================================
 // RENDERING UI
@@ -516,6 +747,8 @@ function openDoctorModal(doctorId = null) {
       });
     }
     
+    document.getElementById('modal-monthly-budget').value = doc.monthlyBudget || '';
+    document.getElementById('modal-is-pool').checked = doc.isPool || false;
     document.getElementById('modal-aft').value = doc.aft || '';
     document.getElementById('modal-seniority').value = doc.seniority || '';
     
@@ -537,6 +770,8 @@ function openDoctorModal(doctorId = null) {
       });
     }
     
+    document.getElementById('modal-monthly-budget').value = '';
+    document.getElementById('modal-is-pool').checked = false;
     document.getElementById('modal-aft').value = '';
     document.getElementById('modal-seniority').value = '';
     
@@ -601,14 +836,17 @@ document.getElementById('modal-save').addEventListener('click', () => {
   });
 
   const preferredPlace = document.getElementById('modal-preferred-place')?.value || null;
+  const monthlyBudgetVal = document.getElementById('modal-monthly-budget')?.value;
+  const monthlyBudget = monthlyBudgetVal ? parseInt(monthlyBudgetVal) : undefined;
+  const isPool = document.getElementById('modal-is-pool')?.checked || false;
   const aft = document.getElementById('modal-aft')?.value || '';
   const seniority = parseInt(document.getElementById('modal-seniority')?.value) || 0;
 
   if (state.editingDoctorId) {
     const doc = getDoctorById(state.editingDoctorId);
-    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, aft, seniority });
+    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, monthlyBudget, isPool, aft, seniority });
   } else {
-    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, aft, seniority, availability, unavailPeriods: [] });
+    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, monthlyBudget, isPool, aft, seniority, availability, unavailPeriods: [] });
   }
   pushHistory();
   saveToStorage(); closeDoctorModal(); renderAll();
@@ -692,7 +930,7 @@ document.getElementById('sidebar-week-next').addEventListener('click', () => {
   if (state.calendarView === 'weekly') renderCalendar();
 });
 
-function renderAll() { renderCalendar(); renderSidebar(); }
+function renderAll() { updateGeneraButtonLabel(); renderCalendar(); renderSidebar(); }
 
 function toggleCalendarView() {
   state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
@@ -976,6 +1214,159 @@ function autoAssign() {
   processChunk(0);
 }
 
+// ====================================================
+// GENERA MESE SUCCESSIVO
+// ====================================================
+function generateNextMonth() {
+  if (state.doctors.length === 0) {
+    toast('Aggiungi prima dei medici', 'warning');
+    return;
+  }
+
+  pushHistory();
+  const srcYear = state.calYear;
+  const srcMonth = state.calMonth;
+  // Target = next month
+  const tgtYear = srcMonth === 11 ? srcYear + 1 : srcYear;
+  const tgtMonth = srcMonth === 11 ? 0 : srcMonth + 1;
+  const tgtName = MONTHS_IT[tgtMonth];
+  const lastDay = new Date(tgtYear, tgtMonth + 1, 0).getDate();
+
+  const slotsToProcess = [];
+  for (let day = 1; day <= lastDay; day++) {
+    const cellDate = new Date(tgtYear, tgtMonth, day);
+    if (cellDate.getDay() === 0 || cellDate.getDay() === 6) continue;
+    const dateKey = toDateKey(cellDate);
+    SLOTS.forEach(slot => {
+      PLACES.forEach(place => {
+        const slotKey = `${dateKey}_${slot.key}_${place}`;
+        if (!state.assignments[slotKey]) slotsToProcess.push({ dateKey, slotKey, cellDate });
+      });
+    });
+  }
+
+  if (slotsToProcess.length === 0) {
+    toast(`Nessun turno vuoto in ${tgtName}`, 'info');
+    return;
+  }
+
+  // Track hours assigned in target month per doctor
+  const assignedInTarget = {};
+  state.doctors.forEach(d => {
+    assignedInTarget[d.id] = getAssignedHoursInMonth(d.id, tgtMonth, tgtYear);
+  });
+  function getEffectiveRemaining(doc) {
+    return Math.max(0, getMonthlyBudget(doc) - (assignedInTarget[doc.id] || 0));
+  }
+
+  const primaryDocs = state.doctors.filter(d => !d.isPool);
+  const poolDocs = state.doctors.filter(d => d.isPool);
+
+  const progressBar = document.getElementById('autoassign-progress-bar');
+  const progressLabel = document.getElementById('autoassign-progress-label');
+  const loadingEl = document.getElementById('autoassign-loading');
+  const loadingText = document.getElementById('autoassign-loading-text');
+
+  loadingEl.classList.remove('hidden');
+  loadingText.textContent = `Generazione turni ${tgtName}...`;
+  let count = 0;
+  const total = slotsToProcess.length;
+
+  function processChunk(index) {
+    const batchSize = 20;
+    const end = Math.min(index + batchSize, total);
+
+    for (let i = index; i < end; i++) {
+      const { dateKey, slotKey, cellDate } = slotsToProcess[i];
+      const parts = slotKey.split('_');
+      const slotKeyOnly = parts[1];
+      const place = parts.slice(2).join('_');
+      const weekStart = getWeekStart(cellDate);
+
+      // Constraint: not already assigned to same date+slot at another place
+      const notBusy = (doc) => {
+        const prefix = `${dateKey}_${slotKeyOnly}_`;
+        return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
+      };
+
+      // Available = not busy, available for slot, has remaining hours
+      const availablePrimary = primaryDocs.filter(doc =>
+        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
+        && notBusy(doc)
+        && getEffectiveRemaining(doc) > 0
+      );
+      const availablePool = poolDocs.filter(doc =>
+        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
+        && notBusy(doc)
+        && getEffectiveRemaining(doc) > 0
+      );
+
+      // Tier 1: preferred place (among primary)
+      const prefPrimary = availablePrimary.filter(d => d.preferredPlace === place);
+      // Tier 2: no preference (among primary)
+      const neutralPrimary = availablePrimary.filter(d => !d.preferredPlace);
+      // Tier 3: non-preferred place (among primary)
+      const nonPrefPrimary = availablePrimary.filter(d => d.preferredPlace && d.preferredPlace !== place);
+
+      // Tier 4-6: same for pool
+      const prefPool = availablePool.filter(d => d.preferredPlace === place);
+      const neutralPool = availablePool.filter(d => !d.preferredPlace);
+      const nonPrefPool = availablePool.filter(d => d.preferredPlace && d.preferredPlace !== place);
+
+      // Build priority cascade
+      const priorityGroups = [
+        prefPrimary, neutralPrimary, nonPrefPrimary,
+        prefPool, neutralPool, nonPrefPool,
+      ];
+
+      let chosen = null;
+      for (const group of priorityGroups) {
+        if (group.length > 0) {
+          group.sort((a, b) => getEffectiveRemaining(b) - getEffectiveRemaining(a));
+          chosen = group[0];
+          break;
+        }
+      }
+
+      if (!chosen) continue;
+
+      state.assignments[slotKey] = chosen.id;
+      assignedInTarget[chosen.id] = (assignedInTarget[chosen.id] || 0) + 6;
+      count++;
+    }
+
+    const pct = Math.round((end / total) * 100);
+    progressBar.style.width = pct + '%';
+    progressLabel.textContent = `${end} / ${total} turni`;
+    loadingText.textContent = `Generazione turni ${tgtName}... ${pct}%`;
+
+    if (end < total) {
+      requestAnimationFrame(() => processChunk(end));
+    } else {
+      loadingEl.classList.add('hidden');
+      progressBar.style.width = '0%';
+      if (count === 0) {
+        toast(`Nessun turno da generare in ${tgtName}`, 'info');
+        return;
+      }
+      saveToStorage();
+      renderAll();
+      renderMonthlyStats();
+      updateConflictsHeaderBadge();
+      toast(`Generati ${count} turni per ${tgtName}`, 'success');
+    }
+  }
+
+  processChunk(0);
+}
+
+function updateGeneraButtonLabel() {
+  const btn = document.getElementById('btn-genera-label');
+  if (!btn) return;
+  const nextMonth = state.calMonth === 11 ? 0 : state.calMonth + 1;
+  btn.textContent = 'Genera ' + MONTHS_IT[nextMonth];
+}
+
 function buildPdfContent() {
   const year = state.calYear;
   const month = state.calMonth;
@@ -1180,6 +1571,8 @@ const btnGemini = document.getElementById('btn-gemini-assign');
 if (btnGemini) btnGemini.addEventListener('click', callGeminiToAssign);
 const btnAutoAssign = document.getElementById('btn-auto-assign');
 if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
+const btnGeneraMese = document.getElementById('btn-genera-mese');
+if (btnGeneraMese) btnGeneraMese.addEventListener('click', generateNextMonth);
 const btnPdf = document.getElementById('btn-pdf');
 if (btnPdf) btnPdf.addEventListener('click', exportPDF);
 const btnDarkMode = document.getElementById('btn-darkmode');
@@ -1445,6 +1838,43 @@ function renderStats() {
     coverageEl.textContent = `${stats.coverage}%`;
     coverageEl.className = `text-xs font-bold px-2 py-0.5 rounded-full ${stats.coverage === 100 ? 'bg-green-100 text-green-700' : stats.coverage >= 70 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`;
   }
+}
+
+// ─── Monthly stats panel ────────────────────────────────
+function renderMonthlyStats() {
+  const panel = document.getElementById('monthly-stats-panel');
+  if (!panel || panel.classList.contains('hidden')) return;
+
+  const year = state.calYear;
+  const month = state.calMonth;
+  const ordered = [...state.doctors].sort((a, b) => (b.isPool ? 1 : 0) - (a.isPool ? 1 : 0));
+
+  panel.innerHTML = ordered.map(doc => {
+    const budget = getMonthlyBudget(doc);
+    const used = getAssignedHoursInMonth(doc.id, month, year);
+    const rem = Math.max(0, budget - used);
+    const pct = budget > 0 ? Math.round((used / budget) * 100) : 0;
+    const color = getDoctorColor(doc);
+    const label = doc.isPool ? ' (pool)' : '';
+    const barColor = rem === 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
+    return `<div class="flex items-center gap-1.5 py-0.5">
+      <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
+      <span class="flex-1 truncate text-slate-700" title="${doc.name}">${cleanDoctorName(doc.name)}${label}</span>
+      <span class="text-slate-500 flex-shrink-0">${used}h/${budget}h</span>
+      <div class="w-10 h-1.5 bg-slate-200 rounded-full flex-shrink-0">
+        <div style="width:${Math.min(100, pct)}%; background:${barColor}" class="h-1.5 rounded-full"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMonthlyStats() {
+  const panel = document.getElementById('monthly-stats-panel');
+  const chevron = document.getElementById('monthly-stats-chevron');
+  if (!panel) return;
+  const open = panel.classList.toggle('hidden');
+  chevron.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) renderMonthlyStats();
 }
 
 // ====================================================
@@ -1886,8 +2316,15 @@ function init() {
     const now = new Date();
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
-    state.doctors = [];
-    startWizard();
+    state.doctors = getDefaultDoctors();
+    saveToStorage();
+    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
+      Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
+        if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
+      });
+      saveToStorage();
+      document.getElementById('demo-banner').classList.remove('hidden');
+    }
   } else {
     pushHistory();
     if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
@@ -1901,8 +2338,10 @@ function init() {
       }
     }
   }
+  updateGeneraButtonLabel();
   renderAll();
   renderStats();
+  renderMonthlyStats();
   updateUndoRedoButtons();
   updateConflictsHeaderBadge();
 }
