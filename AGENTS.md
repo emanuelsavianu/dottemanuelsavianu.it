@@ -84,3 +84,17 @@ Larger than typical; use offset/limit, and prefer Grep over Read for targeted ed
 - New buttons: *Import XLSX* (parses assignments + remaining-hour table), *Export XLSX*, *Genera [Mese]* (fills next month via budget-aware algorithm)
 - Sidebar: collapsible **Bilancio Mensile** panel showing `used/budget` per doctor
 - See `RUAP/CLAUDE.md` for full schema and patterns
+
+### RUAP schedule generation gotchas
+- **`unavailPeriods` are critical** — the algorithm (`runAutoAssignForMonth`) checks `isDoctorUnavailable()` and skips unavailable doctors. Missing periods = wrong assignments.
+- **Budget-aware priority**: preferred-place primary > neutral primary > non-preferred primary > preferred pool > neutral pool > non-preferred pool. Within each group, highest remaining budget wins.
+- **A neutral doctor (preferredPlace=null) only gets slots where no preferred-place doctor is available** — this can starve a doctor even with high budget.
+- **JSON import/export** is the offline schedule workflow: export current state → edit/regenerate with script → re-import. The JSON schema matches `localStorage` keys: `doctors` array + `assignments` object.
+- **PDF export** uses html2canvas → jsPDF (A4 landscape, multi-page, scale=2). Renders hidden `#pdf-content` div. If PDF is illegible, check scale factor and page format.
+
+## Other instruction files
+
+- **`CLAUDE.md`** — Much more detailed: full architecture, dark mode, responsive patterns, schema markup, SEO/GEO, contact card pattern, DNS/hosting. Read this for design-level changes.
+- **`RUAP/CLAUDE.md`** — RUAP data schema, budget system, import/export format, generate algorithm (gitignored, use Read tool directly).
+- **`gestoreturni/CLAUDE.md`** — Gestore Turni state shape, localStorage keys, migration patterns (gitignored).
+- **`llms.txt`** — AI search optimization file listing services, key pages, and medical specializations. Update when adding/removing public-facing pages.
