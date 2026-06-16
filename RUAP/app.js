@@ -77,6 +77,70 @@ function getDefaultDoctors() {
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function cleanDoctorName(name) { return name.replace('Dott. ', ''); }
 
+function excelDateToDate(excelDate) {
+  if (!excelDate) return null;
+  if (excelDate instanceof Date) return excelDate;
+  if (typeof excelDate === 'number') {
+    return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+  }
+  if (typeof excelDate === 'string') {
+    const d = new Date(excelDate);
+    if (!isNaN(d.getTime())) return d;
+    const parts = excelDate.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+    if (parts) {
+      return new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+    }
+  }
+  return null;
+}
+
+function getEasterDate(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const L = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * L) / 451);
+  const month = Math.floor((h + L - 7 * m + 114) / 31);
+  const day = ((h + L - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function getEasterMondayDate(year) {
+  const easter = getEasterDate(year);
+  const easterMonday = new Date(easter);
+  easterMonday.setDate(easter.getDate() + 1);
+  return easterMonday;
+}
+
+function isItalianHoliday(date) {
+  const d = date.getDate();
+  const m = date.getMonth();
+  const y = date.getFullYear();
+
+  if (d === 1 && m === 0) return true;
+  if (d === 6 && m === 0) return true;
+  if (d === 25 && m === 3) return true;
+  if (d === 1 && m === 4) return true;
+  if (d === 2 && m === 5) return true;
+  if (d === 15 && m === 7) return true;
+  if (d === 1 && m === 10) return true;
+  if (d === 8 && m === 11) return true;
+  if (d === 25 && m === 11) return true;
+  if (d === 26 && m === 11) return true;
+
+  const pasquetta = getEasterMondayDate(y);
+  if (d === pasquetta.getDate() && m === pasquetta.getMonth()) return true;
+
+  return false;
+}
+
 function pushHistory() {
   const snapshot = JSON.stringify({ assignments: state.assignments });
   if (historyIndex < historyStack.length - 1) {
@@ -217,6 +281,7 @@ function isDoctorUnavailable(doctor, dateKey) {
 function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
   if (isDoctorUnavailable(doctor, dateKey)) return false;
   const date = new Date(dateKey + 'T00:00:00');
+  if (isItalianHoliday(date)) return false;
   const jsDay = date.getDay();
   if (jsDay === 0 || jsDay === 6) return false;
   const dayKeyMap = { 1:'lun', 2:'mar', 3:'mer', 4:'gio', 5:'ven' };
@@ -362,14 +427,32 @@ function importFromRows(rows) {
   const debtDoctors = {};
   const poolDoctors = {};
 
+  // Trova il mese e l'anno di riferimento del file Excel importato
+  let importMonth = null;
+  let importYear = null;
+  for (const row of rows) {
+    if (!row) continue;
+    const c1 = row[1];
+    if (c1) {
+      const parsedDate = excelDateToDate(c1);
+      if (parsedDate) {
+        importMonth = parsedDate.getMonth();
+        importYear = parsedDate.getFullYear();
+        break;
+      }
+    }
+  }
+
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
+    if (!row) continue; // Salva la stabilità in caso di righe vuote
+
     const c0 = row[0] !== undefined ? String(row[0]).trim() : '';
     const c1 = row[1];
     const c3 = row[3] !== undefined ? String(row[3]).trim() : '';
     const c4 = row[4] !== undefined ? String(row[4]).trim() : '';
 
-    // Detect section title → extract place
+    // Rileva il titolo della sezione → estrae la sede
     if (c0 === 'Struttura') {
       const prev = rows[r - 1];
       if (prev && prev[1]) {
@@ -380,43 +463,68 @@ function importFromRows(rows) {
       continue;
     }
 
-    const c3_trim = (row[3] !== undefined ? String(row[3]).trim() : '');
-    // Debt section header (col A)
+    // Sezione Debito (colonna A)
     if (c0.includes('debito orario')) { inDebtSection = true; inPoolSection = false; continue; }
-    // Pool section header (col D)
-    if (c3_trim.includes('disponibilità') || c3_trim.includes('disponibili')) { inDebtSection = false; inPoolSection = true; continue; }
+    // Sezione Pool (colonna D)
+    if (c3.includes('disponibilità') || c3.includes('disponibili')) { inDebtSection = false; inPoolSection = true; continue; }
 
-    // Parse assignment rows: "CdC ..." + date object
-    if (c0.startsWith('CdC') && c1 && typeof c1 === 'object' && c1.getMonth !== undefined) {
-      const shiftType = c3;
-      const doctorName = c4;
-      const slotKey = shiftType === 'Mattina' ? 'mat' : shiftType === 'Pomeriggio' ? 'pom' : null;
-      if (slotKey && doctorName && doctorName !== 'SCOPERTO!' && currentPlace) {
-        newAssignments[`${toDateKey(c1)}_${slotKey}_${currentPlace}`] = doctorName;
+    // Analizza righe dei turni: "CdC ..." + data
+    if (c0.startsWith('CdC') && c1) {
+      const parsedDate = excelDateToDate(c1);
+      if (parsedDate) {
+        const shiftType = c3;
+        const doctorName = c4;
+        const slotKey = shiftType === 'Mattina' ? 'mat' : shiftType === 'Pomeriggio' ? 'pom' : null;
+        if (slotKey && doctorName && doctorName !== 'SCOPERTO!' && currentPlace) {
+          newAssignments[`${toDateKey(parsedDate)}_${slotKey}_${currentPlace}`] = doctorName;
+        }
+        continue;
       }
-      continue;
     }
 
-    // Debt table: col A = name, col B = hours
+    // Tabella Debito: col A = nome, col B = ore
     if (inDebtSection && c0 && c0 !== 'Medico' && !isNaN(parseFloat(row[1]))) {
       debtDoctors[c0] = parseFloat(row[1]);
     }
-    // Pool table: col D = name, col E = hours
+    // Tabella Pool: col D = nome, col E = ore
     if (inPoolSection && c3 && c3 !== 'Medico ' && row[4] !== undefined && !isNaN(parseFloat(row[4]))) {
       poolDoctors[c3] = parseFloat(row[4]);
     }
   }
 
-  // Map doctor names from Excel to existing doctors by surname
+  // Associa i nomi dei medici nel file Excel con quelli esistenti
   function matchDoctor(excelName) {
-    const excelLast = excelName.split(' ').slice(-1)[0].toLowerCase();
+    if (!excelName) return null;
+    const cleanExcel = excelName.replace('Dott. ', '').trim().toLowerCase();
+    
+    // 1. Cerca corrispondenza esatta per nome pulito
+    let found = state.doctors.find(d => cleanDoctorName(d.name).toLowerCase() === cleanExcel);
+    if (found) return found;
+
+    // 2. Cerca corrispondenza per cognome (ultimo termine)
+    const excelLast = cleanExcel.split(' ').slice(-1)[0];
     return state.doctors.find(d => {
       const docLast = cleanDoctorName(d.name).split(' ').slice(-1)[0].toLowerCase();
       return docLast === excelLast;
     });
   }
 
-  // Apply assignments: match by surname, skip unmatched
+  // Cancella le assegnazioni esistenti per il mese/anno importati, per riflettere lo stato dell'Excel
+  if (importMonth !== null && importYear !== null) {
+    for (const key of Object.keys(state.assignments)) {
+      const parts = key.split('_');
+      const dateParts = parts[0].split('-');
+      if (dateParts.length === 3) {
+        const y = parseInt(dateParts[0]);
+        const m = parseInt(dateParts[1]) - 1; // 0-indexed
+        if (y === importYear && m === importMonth) {
+          delete state.assignments[key];
+        }
+      }
+    }
+  }
+
+  // Applica le nuove assegnazioni dall'Excel
   let assigned = 0;
   for (const [key, excelName] of Object.entries(newAssignments)) {
     const doc = matchDoctor(excelName);
@@ -426,7 +534,7 @@ function importFromRows(rows) {
     }
   }
 
-  // Apply debt hours as monthlyBudget override
+  // Sovrascrivi il budget mensile
   let debtCount = 0;
   for (const [excelName, hours] of Object.entries(debtDoctors)) {
     const doc = matchDoctor(excelName);
@@ -439,7 +547,6 @@ function importFromRows(rows) {
 
   saveToStorage();
   renderAll();
-  renderMonthlyStats();
   toast(`Importate ${assigned} assegnazioni, aggiornati ${debtCount} medici`, 'success');
 }
 
@@ -956,7 +1063,13 @@ document.getElementById('sidebar-week-next').addEventListener('click', () => {
   if (state.calendarView === 'weekly') renderCalendar();
 });
 
-function renderAll() { updateGeneraButtonLabel(); renderCalendar(); renderSidebar(); }
+function renderAll() {
+  updateGeneraButtonLabel();
+  renderCalendar();
+  renderSidebar();
+  renderMonthlyStats();
+  updateConflictsHeaderBadge();
+}
 
 function toggleCalendarView() {
   state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
@@ -996,56 +1109,69 @@ function renderCalendarWeek() {
     cellDate.setDate(cellDate.getDate() + i);
     const dateKey = toDateKey(cellDate);
     const isToday = toDateKey(new Date()) === dateKey;
+    const isHoliday = isItalianHoliday(cellDate);
     
     const cell = document.createElement('div');
-    cell.className = 'rounded-xl p-3 min-h-48 bg-white shadow-sm border border-slate-200';
-    
-    cell.innerHTML = `
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-        <span class="text-xs text-slate-400">${cellDate.toLocaleDateString('it-IT', { weekday: 'short' })}</span>
-      </div>
-    `;
-    
-    PLACES.forEach(place => {
-      const placeSection = document.createElement('div');
-      placeSection.className = 'mb-2 pb-2 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
+    if (isHoliday) {
+      cell.className = 'rounded-xl p-3 min-h-48 holiday-cell border border-slate-200 flex flex-col justify-between';
+      cell.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+          <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase tracking-wider">Festivo</span>
+        </div>
+        <div class="flex-1 flex items-center justify-center py-12 text-xs font-bold text-red-500 uppercase tracking-widest">
+          Chiuso
+        </div>
+      `;
+    } else {
+      cell.className = 'rounded-xl p-3 min-h-48 bg-white shadow-sm border border-slate-200';
+      cell.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+          <span class="text-xs text-slate-400">${cellDate.toLocaleDateString('it-IT', { weekday: 'short' })}</span>
+        </div>
+      `;
       
-      const matKey = `${dateKey}_mat_${place}`;
-      const pomKey = `${dateKey}_pom_${place}`;
-      const matAssigned = !!state.assignments[matKey];
-      const pomAssigned = !!state.assignments[pomKey];
-      const bothAssigned = matAssigned && pomAssigned;
-      const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-      const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
-      
-      placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${place}</div>
-        <button onclick="copyWeek('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
-        <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
-      </div>`;
-      
-      SLOTS.forEach(slot => {
-        const slotKey = `${dateKey}_${slot.key}_${place}`;
-        const assignedId = state.assignments[slotKey];
-        const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-        const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+      PLACES.forEach(place => {
+        const placeSection = document.createElement('div');
+        placeSection.className = 'mb-2 pb-2 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
         
-        const slotBtn = document.createElement('button');
-        slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
-          (assignedDoc ? 'border-transparent text-white shadow-sm' : 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700');
-        if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
+        const matKey = `${dateKey}_mat_${place}`;
+        const pomKey = `${dateKey}_pom_${place}`;
+        const matAssigned = !!state.assignments[matKey];
+        const pomAssigned = !!state.assignments[pomKey];
+        const bothAssigned = matAssigned && pomAssigned;
+        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
         
-        slotBtn.innerHTML = assignedDoc
-          ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-          : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${place}</div>
+          <button onclick="copyWeek('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
+          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+        </div>`;
         
-        slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-        placeSection.appendChild(slotBtn);
+        SLOTS.forEach(slot => {
+          const slotKey = `${dateKey}_${slot.key}_${place}`;
+          const assignedId = state.assignments[slotKey];
+          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+          
+          const slotBtn = document.createElement('button');
+          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
+            (assignedDoc ? 'border-transparent text-white shadow-sm' : 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700');
+          if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
+          
+          slotBtn.innerHTML = assignedDoc
+            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+          
+          slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+          placeSection.appendChild(slotBtn);
+        });
+        
+        cell.appendChild(placeSection);
       });
-      
-      cell.appendChild(placeSection);
-    });
+    }
     weekRow.appendChild(cell);
   }
   
@@ -1080,53 +1206,66 @@ function renderCalendarMonth() {
       const dateKey = toDateKey(cellDate);
       const inMonth = cellDate.getMonth() === month;
       const isToday = toDateKey(new Date()) === dateKey;
+      const isHoliday = isItalianHoliday(cellDate);
 
       const cell = document.createElement('div');
-      cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
-      
-      cell.innerHTML = `
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-        </div>
-      `;
+      if (isHoliday) {
+        cell.className = `rounded-xl p-2 min-h-24 holiday-cell border border-slate-100 flex flex-col justify-between ${inMonth ? '' : 'opacity-40'}`;
+        cell.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+            <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase tracking-wider">Festivo</span>
+          </div>
+          <div class="flex-1 flex items-center justify-center py-4 text-[11px] font-bold text-red-500 uppercase tracking-widest">
+            Chiuso
+          </div>
+        `;
+      } else {
+        cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
+        cell.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+          </div>
+        `;
 
-      PLACES.forEach(place => {
-        const placeSection = document.createElement('div');
-        placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-        
-        const matKey = `${dateKey}_mat_${place}`;
-        const pomKey = `${dateKey}_pom_${place}`;
-        const matAssigned = !!state.assignments[matKey];
-        const pomAssigned = !!state.assignments[pomKey];
-        const bothAssigned = matAssigned && pomAssigned;
-        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
-        
-        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
-          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
-        </div>`;
+        PLACES.forEach(place => {
+          const placeSection = document.createElement('div');
+          placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
+          
+          const matKey = `${dateKey}_mat_${place}`;
+          const pomKey = `${dateKey}_pom_${place}`;
+          const matAssigned = !!state.assignments[matKey];
+          const pomAssigned = !!state.assignments[pomKey];
+          const bothAssigned = matAssigned && pomAssigned;
+          const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+          const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
+          
+          placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
+            <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+          </div>`;
 
-        SLOTS.forEach(slot => {
-          const slotKey = `${dateKey}_${slot.key}_${place}`;
-          const assignedId = state.assignments[slotKey];
-          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
+          SLOTS.forEach(slot => {
+            const slotKey = `${dateKey}_${slot.key}_${place}`;
+            const assignedId = state.assignments[slotKey];
+            const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
+            const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
 
-          const slotBtn = document.createElement('button');
-          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1 mb-0.5 text-xs font-medium border transition-all ' +
-            (assignedDoc ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
-          if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
+            const slotBtn = document.createElement('button');
+            slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1 mb-0.5 text-xs font-medium border transition-all ' +
+              (assignedDoc ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
+            if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
 
-          slotBtn.innerHTML = assignedDoc
-            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+            slotBtn.innerHTML = assignedDoc
+              ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+              : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
 
-          if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-          placeSection.appendChild(slotBtn);
+            if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+            placeSection.appendChild(slotBtn);
+          });
+          cell.appendChild(placeSection);
         });
-        cell.appendChild(placeSection);
-      });
+      }
       weekRow.appendChild(cell);
     }
     grid.appendChild(weekRow);
@@ -1136,22 +1275,21 @@ function renderCalendarMonth() {
 // ====================================================
 // AUTO-ASSIGN LOCALE (no API required)
 // ====================================================
-function autoAssign() {
+function runAutoAssignForMonth(year, month) {
   if (state.doctors.length === 0) {
     toast('Aggiungi prima dei medici', 'warning');
     return;
   }
 
   pushHistory();
-  const year = state.calYear;
-  const month = state.calMonth;
+  const monthName = MONTHS_IT[month];
   const lastDay = new Date(year, month + 1, 0).getDate();
 
   const slotsToProcess = [];
   for (let day = 1; day <= lastDay; day++) {
     const cellDate = new Date(year, month, day);
-    const jsDay = cellDate.getDay();
-    if (jsDay === 0 || jsDay === 6) continue;
+    // Salta fine settimana e festività nazionali
+    if (cellDate.getDay() === 0 || cellDate.getDay() === 6 || isItalianHoliday(cellDate)) continue;
     const dateKey = toDateKey(cellDate);
     SLOTS.forEach(slot => {
       PLACES.forEach(place => {
@@ -1162,124 +1300,14 @@ function autoAssign() {
   }
 
   if (slotsToProcess.length === 0) {
-    toast('Nessun turno vuoto da assegnare', 'info');
-    return;
-  }
-
-  const progressBar = document.getElementById('autoassign-progress-bar');
-  const progressLabel = document.getElementById('autoassign-progress-label');
-  const loadingEl = document.getElementById('autoassign-loading');
-  const loadingText = document.getElementById('autoassign-loading-text');
-
-  loadingEl.classList.remove('hidden');
-  let count = 0;
-  const total = slotsToProcess.length;
-
-  function processChunk(index) {
-    const batchSize = 20;
-    const end = Math.min(index + batchSize, total);
-
-    for (let i = index; i < end; i++) {
-      const { dateKey, slotKey, cellDate } = slotsToProcess[i];
-      const slotKeyParts = slotKey.split('_');
-      const slotKeyOnly = slotKeyParts[1];
-      const place = slotKeyParts.slice(2).join('_');
-      const weekStart = getWeekStart(cellDate);
-
-      const notBusy = (doc) => {
-        const prefix = `${dateKey}_${slotKeyOnly}_`;
-        return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
-      };
-
-      const available = state.doctors.filter(doc =>
-        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly) && notBusy(doc)
-      );
-
-      if (available.length === 0) continue;
-
-      const preferred  = available.filter(d => d.preferredPlace === place);
-      const neutral    = available.filter(d => !d.preferredPlace);
-      const nonPreferred = available.filter(d => d.preferredPlace && d.preferredPlace !== place);
-
-      const pool = preferred.length > 0 ? preferred
-        : neutral.length > 0 ? neutral
-        : nonPreferred;
-
-      if (pool.length === 0) continue;
-
-      pool.sort((a, b) =>
-        getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
-      );
-
-      state.assignments[slotKey] = pool[0].id;
-      count++;
-    }
-
-    const pct = Math.round((end / total) * 100);
-    progressBar.style.width = pct + '%';
-    progressLabel.textContent = `${end} / ${total} turni`;
-    loadingText.textContent = `Assegnazione in corso... ${pct}%`;
-
-    if (end < total) {
-      requestAnimationFrame(() => processChunk(end));
-    } else {
-      loadingEl.classList.add('hidden');
-      progressBar.style.width = '0%';
-      if (count === 0) {
-        toast('Nessun turno vuoto da assegnare', 'info');
-        return;
-      }
-      saveToStorage();
-      renderAll();
-      renderStats();
-      updateConflictsHeaderBadge();
-      toast(`Assegnati ${count} turni automaticamente`, 'success');
-    }
-  }
-
-  processChunk(0);
-}
-
-// ====================================================
-// GENERA MESE SUCCESSIVO
-// ====================================================
-function generateNextMonth() {
-  if (state.doctors.length === 0) {
-    toast('Aggiungi prima dei medici', 'warning');
-    return;
-  }
-
-  pushHistory();
-  const srcYear = state.calYear;
-  const srcMonth = state.calMonth;
-  // Target = next month
-  const tgtYear = srcMonth === 11 ? srcYear + 1 : srcYear;
-  const tgtMonth = srcMonth === 11 ? 0 : srcMonth + 1;
-  const tgtName = MONTHS_IT[tgtMonth];
-  const lastDay = new Date(tgtYear, tgtMonth + 1, 0).getDate();
-
-  const slotsToProcess = [];
-  for (let day = 1; day <= lastDay; day++) {
-    const cellDate = new Date(tgtYear, tgtMonth, day);
-    if (cellDate.getDay() === 0 || cellDate.getDay() === 6) continue;
-    const dateKey = toDateKey(cellDate);
-    SLOTS.forEach(slot => {
-      PLACES.forEach(place => {
-        const slotKey = `${dateKey}_${slot.key}_${place}`;
-        if (!state.assignments[slotKey]) slotsToProcess.push({ dateKey, slotKey, cellDate });
-      });
-    });
-  }
-
-  if (slotsToProcess.length === 0) {
-    toast(`Nessun turno vuoto in ${tgtName}`, 'info');
+    toast(`Nessun turno vuoto in ${monthName}`, 'info');
     return;
   }
 
   // Track hours assigned in target month per doctor
   const assignedInTarget = {};
   state.doctors.forEach(d => {
-    assignedInTarget[d.id] = getAssignedHoursInMonth(d.id, tgtMonth, tgtYear);
+    assignedInTarget[d.id] = getAssignedHoursInMonth(d.id, month, year);
   });
   function getEffectiveRemaining(doc) {
     return Math.max(0, getMonthlyBudget(doc) - (assignedInTarget[doc.id] || 0));
@@ -1294,7 +1322,7 @@ function generateNextMonth() {
   const loadingText = document.getElementById('autoassign-loading-text');
 
   loadingEl.classList.remove('hidden');
-  loadingText.textContent = `Generazione turni ${tgtName}...`;
+  loadingText.textContent = `Generazione turni ${monthName}...`;
   let count = 0;
   const total = slotsToProcess.length;
 
@@ -1307,7 +1335,6 @@ function generateNextMonth() {
       const parts = slotKey.split('_');
       const slotKeyOnly = parts[1];
       const place = parts.slice(2).join('_');
-      const weekStart = getWeekStart(cellDate);
 
       // Constraint: not already assigned to same date+slot at another place
       const notBusy = (doc) => {
@@ -1364,7 +1391,7 @@ function generateNextMonth() {
     const pct = Math.round((end / total) * 100);
     progressBar.style.width = pct + '%';
     progressLabel.textContent = `${end} / ${total} turni`;
-    loadingText.textContent = `Generazione turni ${tgtName}... ${pct}%`;
+    loadingText.textContent = `Generazione turni ${monthName}... ${pct}%`;
 
     if (end < total) {
       requestAnimationFrame(() => processChunk(end));
@@ -1372,18 +1399,31 @@ function generateNextMonth() {
       loadingEl.classList.add('hidden');
       progressBar.style.width = '0%';
       if (count === 0) {
-        toast(`Nessun turno da generare in ${tgtName}`, 'info');
+        toast(`Nessun turno da generare in ${monthName}`, 'info');
         return;
       }
       saveToStorage();
       renderAll();
       renderMonthlyStats();
       updateConflictsHeaderBadge();
-      toast(`Generati ${count} turni per ${tgtName}`, 'success');
+      toast(`Generati ${count} turni per ${monthName}`, 'success');
     }
   }
 
   processChunk(0);
+}
+
+function autoAssign() {
+  runAutoAssignForMonth(state.calYear, state.calMonth);
+}
+
+// ====================================================
+// GENERA MESE SUCCESSIVO
+// ====================================================
+function generateNextMonth() {
+  const nextMonth = state.calMonth === 11 ? 0 : state.calMonth + 1;
+  const nextYear = state.calMonth === 11 ? state.calYear + 1 : state.calYear;
+  runAutoAssignForMonth(nextYear, nextMonth);
 }
 
 function updateGeneraButtonLabel() {
@@ -1483,11 +1523,33 @@ async function exportPDF() {
   el.classList.remove('hidden');
 
   try {
-    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width / 1.5, canvas.height / 1.5] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 1.5, canvas.height / 1.5);
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableW = pageW - 2 * margin;
+    const usableH = pageH - 2 * margin;
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const scaleRatio = usableW / imgW;
+    const totalRenderH = imgH * scaleRatio;
+    const pagesNeeded = Math.ceil(totalRenderH / usableH);
+
+    for (let p = 0; p < pagesNeeded; p++) {
+      const startY = p * usableH / scaleRatio;
+      const pageRenderH = Math.min(usableH, totalRenderH - p * usableH);
+      const chunkImgH = pageRenderH / scaleRatio;
+      const chunkCanvas = document.createElement('canvas');
+      chunkCanvas.width = imgW;
+      chunkCanvas.height = Math.ceil(chunkImgH);
+      const ctx = chunkCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, startY, imgW, chunkImgH, 0, 0, imgW, chunkImgH);
+      if (p > 0) pdf.addPage('a4', 'landscape');
+      pdf.addImage(chunkCanvas.toDataURL('image/png'), 'PNG', margin, margin, usableW, pageRenderH);
+    }
+
     pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
     toast('PDF scaricato', 'success');
   } catch (err) {
@@ -1719,7 +1781,10 @@ function openConflictsModal() {
             <p class="font-semibold text-slate-800 text-sm truncate">${doc?.name || 'Medico sconosciuto'}</p>
             <p class="text-xs text-slate-500">${dateFormatted} · ${slotLabel}</p>
           </div>
-          <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">${c.keys.length} sedi</span>
+          <div class="flex items-center gap-1">
+            ${c.isUnavailable ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">Assente / Ferie</span>' : ''}
+            <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">${c.keys.length} sedi</span>
+          </div>
         </div>
         <div class="p-3 bg-white">${placesHtml}</div>
       </div>`;
@@ -1748,9 +1813,17 @@ function autoResolveAllConflicts() {
   if (conflicts.length === 0) return;
   pushHistory();
   for (const c of conflicts) {
-    const keysToRemove = c.keys.slice(1);
-    for (const k of keysToRemove) {
-      delete state.assignments[k];
+    if (c.isUnavailable) {
+      // For unavailability, remove all conflicting assignments
+      for (const k of c.keys) {
+        delete state.assignments[k];
+      }
+    } else {
+      // For double-booking, keep the first assignment, remove duplicates
+      const keysToRemove = c.keys.slice(1);
+      for (const k of keysToRemove) {
+        delete state.assignments[k];
+      }
     }
   }
   saveToStorage();
@@ -2023,19 +2096,31 @@ function hasConflict(docId, dateKey, slotKey) {
 }
 
 function getConflicts() {
-  const conflicts = [];
+  const conflictsMap = {};
   for (const [key, docId] of Object.entries(state.assignments)) {
     const parts = key.split('_');
     const dateKey = parts[0];
     const slotKey = parts[1];
-    if (hasConflict(docId, dateKey, slotKey)) {
-      const matches = Object.entries(state.assignments).filter(([k, v]) => v === docId && k.startsWith(`${dateKey}_${slotKey}_`));
-      if (matches.length > 1) {
-        conflicts.push({ docId, dateKey, slotKey, keys: matches.map(m => m[0]) });
+    
+    const doc = getDoctorById(docId);
+    const isUnavailable = doc ? isDoctorUnavailable(doc, dateKey) : false;
+    
+    const conflictKey = `${docId}_${dateKey}_${slotKey}`;
+    const matches = Object.entries(state.assignments).filter(([k, v]) => v === docId && k.startsWith(`${dateKey}_${slotKey}_`));
+    
+    if (matches.length > 1 || isUnavailable) {
+      if (!conflictsMap[conflictKey]) {
+        conflictsMap[conflictKey] = {
+          docId,
+          dateKey,
+          slotKey,
+          keys: matches.map(m => m[0]),
+          isUnavailable
+        };
       }
     }
   }
-  return conflicts;
+  return Object.values(conflictsMap);
 }
 
 // ====================================================

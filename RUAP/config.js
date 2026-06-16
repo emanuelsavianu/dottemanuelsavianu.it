@@ -21,14 +21,6 @@ const CONFIG = {
     { name: 'Dott. Graziotti',  patients: 850, colorIndex: 7,  preferredPlace: 'M.S.Savino' },
     { name: 'Dott. Miroballo',  patients: 850, colorIndex: 8,  preferredPlace: 'M.S.Savino' },
     { name: 'Dott. Zuppardo',   patients: 850, colorIndex: 9,  preferredPlace: 'Subbiano' },
-
-    // ── Disponibilità aggiuntiva (24h/mese fissi) ──
-    { name: 'Dott. Dragoni',      patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 10, preferredPlace: null },
-    { name: 'Dott. Bonacci',      patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 11, preferredPlace: null },
-    { name: 'Dott. De Napoli',    patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 12, preferredPlace: null },
-    { name: 'Dott. Marzotti',     patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 13, preferredPlace: null },
-    { name: 'Dott. Santini',      patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 14, preferredPlace: null },
-    { name: 'Dott. Menchetti',    patients: 9999, weeklyHours: 6, monthlyBudget: 24, isPool: true, colorIndex: 15, preferredPlace: null },
   ],
 
   demoAssignments: {},
