@@ -1,174 +1,97 @@
 # RUAP Attività Diurne — Implementation
 
-This is a specialized demo for RUAP (Attività Diurne) with pre-configured doctors and sedi. Built on the same shift manager architecture as `../gestoreturni`, but optimized for immediate demo use with baked-in configuration.
+Specialized shift manager for RUAP (Attività Diurne) with pre-configured doctors and sedi. Built on the same architecture as `../gestoreturni`, but config-driven and optimized for monthly budget tracking.
 
-**Relationship to gestoreturni:** RUAP shares the core state management (`app.js`) and rendering pipeline with gestoreturni. Both projects:
-- Use Tailwind CDN + vanilla JS (no build step)
-- Persist state to localStorage (keys prefixed with `ruap-*` for historical reasons)
-- Support toast notifications, dark mode, auto-assign, and PDF export
-- Have no backend or external dependencies
-
-Main differences: RUAP uses `config.js` (pre-configured doctors/sedi), gestoreturni allows full CRUD via UI settings.
+**Relationship to gestoreturni:** Both use Tailwind CDN + vanilla JS, same localStorage prefix (`ruap-*`), same assignment key format, toast system, conflict detection, and undo/redo. RUAP adds monthly budgets, Excel import/export, and the "Genera Mese" algorithm.
 
 ## Quick Start
 
-- Edit **`config.js`** to modify doctors, sedi, shifts (no code changes needed)
-- Run: `npx serve .` in the RUAP directory
-- Open browser to `http://localhost:8000`
-- First run loads demo data with dismissible banner: "Stai vedendo dati di esempio..."
-
-## Configuration
-
-### config.js Structure
-
-```javascript
-const CONFIG = {
-  places: ['M.S.Savino', 'Subbiano'],  // Sedi (locations)
-  slots: [                              // Shift times
-    { key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' },
-    { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
-  ],
-  doctors: [                            // Pre-configured doctors
-    { name: 'Dott. Savianu', patients: 850, colorIndex: 0, preferredPlace: 'M.S.Savino' },
-    // ... more doctors
-  ]
-}
-```
-
-### How to Modify
-
-**Add a doctor:**
-```javascript
-doctors: [
-  // ... existing
-  { name: 'Dott. NewDoctor', patients: 850, colorIndex: 7, preferredPlace: 'M.S.Savino' },
-]
-```
-
-**Change a sedi name:**
-```javascript
-places: ['M.S.Savino RENAMED', 'Subbiano'],
-```
-
-**Update preferred place:**
-```javascript
-doctors: [
-  { name: 'Dott. Savianu', patients: 850, colorIndex: 0, preferredPlace: 'Subbiano' },  // changed
-]
-```
-
-**Swap shift times:**
-```javascript
-slots: [
-  { key: 'mat', label: '07:00–13:00', hours: 6, icon: '🌅' },  // changed
-  { key: 'pom', label: '13:00–19:00', hours: 6, icon: '🌆' },  // changed
-]
+```bash
+cd RUAP && npx serve .
+# Open http://localhost:8000 — first run auto-loads config.js doctors
 ```
 
 ## Architecture
 
-- **config.js** — Loaded before app.js, seeds first run with doctors/sedi/shifts
-- **index.html** — Structure + toast container + PDF content div
-- **app.js** — All logic (state, rendering, toast system, auto-assign, PDF export)
-- **localStorage** — Persists doctor/assignment/config state (keys: ruap-turni-medici, ruap-turni-assegnazioni, ruap-dark-mode)
-
-Config-driven approach means non-technical users can modify `config.js` without touching app logic.
-
-## Key Patterns
-
-**Assignment key format:** `YYYY-MM-DD_slotKey_placeName` (e.g., `2026-04-07_mat_M.S.Savino`)
-- Central to calendar rendering, hour calculations, export, and auto-assign logic
-- Composite key replaces separate fields for maximum clarity
-
-**`cleanDoctorName(name)`** — strips `'Dott. '` prefix; used in calendar cells and PDF output.
-
-**preferredPlace field:** Doctor's preferred location — impacts auto-assign priority order:
-1. Doctors with preferred place + fewest weekly hours
-2. Doctors with no preference + fewest weekly hours
-3. Doctors preferring other places (only if 1-2 exhausted)
-
-**Toast notifications:** Replaced all `alert()`/`confirm()` dialogs:
-- 4 types: success (green ✓), warning (⚠️ amber), error (✗ red), info (ℹ️ blue)
-- Fixed position bottom-right, 3-second auto-dismiss
-- Examples: import success/error, AI assignment, delete confirmation
-
-## Data Persistence
-
-**localStorage keys:**
-- `ruap-turni-medici` — doctor objects array (JSON)
-- `ruap-turni-assegnazioni` — shift assignments map (JSON)
-- `ruap-dark-mode` — `'true'`/`'false'` string
-
-**First-run behavior:** If no localStorage exists, loads CONFIG doctors + shows demo banner. Banner dismissible; wizard accessible via Settings → "Ricomincia la Configurazione Guidata".
-
-**Import/Export:** JSON backup works with v2 schema including preferredPlace field.
+- **config.js** — 16 doctors (10 primary + 6 pool), 2 places, 2 shift slots. Loaded before app.js.
+- **index.html** — Tailwind CDN, FontAwesome, jsPDF, html2canvas, **xlsx (SheetJS)** for Excel
+- **app.js** (~2400 lines) — All logic. Read with offset/limit.
+- **localStorage** — keys: `ruap-turni-medici`, `ruap-turni-assegnazioni`, `ruap-turni-history`, `ruap-dark-mode`
 
 ## Data Schema
 
-**Doctor object (from CONFIG):**
+### Doctor object
 ```javascript
 {
-  id: string (generated on first run),
-  name: string (e.g., 'Dott. Savianu'),
-  patients: number (determines weeklyHours: ≤400→38h, ≤1000→24h, ≤1200→12h, ≤1500→6h),
-  weeklyHours: number (calculated from patients),
-  colorIndex: number (0-7, maps to COLOR_PALETTE),
-  preferredPlace: string (sede name, e.g., 'M.S.Savino') | null,
+  id: string,
+  name: string (e.g. 'Dott. Savianu'),
+  patients: number,                     // → weeklyHours via formula
+  weeklyHours: number,                  // override-able in config.js
+  monthlyBudget: number | undefined,    // if unset = weeklyHours × 4
+  isPool: boolean,                      // true = "disponibilità aggiuntiva" (2nd priority)
+  colorIndex: number (0-15),
+  preferredPlace: string | null,
   availability: { lun/mar/mer/gio/ven: { mat: bool, pom: bool } },
-  unavailPeriods: array
+  unavailPeriods: array,
+  aft: string,
+  seniority: number,
 }
 ```
 
-**Assignment key format:** `YYYY-MM-DD_slotKey_placeName`
-- Example: `2026-04-07_mat_M.S.Savino`
-- Immutable and used across calendar, PDF export, auto-assign, and import/export
-- `slotKey`: `mat` or `pom`
-- `placeName`: must match exactly a place from CONFIG.places
+### Assignment key
+`YYYY-MM-DD_slotKey_placeName` — e.g., `2026-06-10_mat_M.S.Savino`
 
-**Assignment map:** `{ slotKey: doctorId, ... }`
-- Maps assignment keys to doctor IDs
-- Example: `{ '2026-04-07_mat_M.S.Savino': 'doc-abc123', ... }`
+- slotKey: `mat` (08-14, 6h) or `pom` (14-20, 6h)
+- placeName: must match `CONFIG.places` exactly
 
-**App state:**
-```javascript
-{
-  doctors: array of doctor objects,
-  assignments: { slotKey: doctorId, ... },
-  calYear: number,
-  calMonth: number (0-11),
-  sidebarWeekStart: Date,
-  editingDoctorId: string | null,
-  activeSlotKey: string | null
-}
-```
+### Monthly budget system
+- **Primary doctors** (10): `monthlyBudget = weeklyHours × 4` (default 24×4=96h)
+- **Pool doctors** (6): `monthlyBudget = 24` (fixed), `isPool: true`
+- `getMonthlyBudget(doc)` — returns `monthlyBudget` if set, else `weeklyHours × 4`
+- `getAssignedHoursInMonth(docId, month, year)` — sums all slot hours for a doctor in a calendar month
+- `getRemainingMonthlyHours(doc, month, year)` — `budget - assigned`
 
-## Features Implemented
+## Features
 
-- Auto-assign with 3-tier priority (⭐ preferred place → no preference → other places) — **with real-time progress bar overlay**
-- PDF export — landscape, table per sede, html2canvas → jsPDF
-- Reset Turni button — clears assignments only, preserves doctors and preferences
-- Dark mode toggle — persisted in `ruap-dark-mode` localStorage key
-- Smart dropdown positioning — appears above the button if insufficient space below (`DROPDOWN_HEIGHT = 350`)
-- **Conflict Resolution Center** — amber "Conflitti" button in header with red count badge, modal showing all double-bookings with per-slot remove and auto-resolve-all
-- **Undo/Redo** — 50-state history, Ctrl+Z / Ctrl+Y, buttons in bottom-right corner
+### Standard
+- Manual slot assignment (click empty slot → dropdown with availability/hour bar)
+- Weekly sidebar with per-doctor hour progress bar
+- Monthly/weekly calendar toggle
+- PDF export (html2canvas → jsPDF, landscape, table per sede)
+- Dark mode, conflict detection with resolution modal
+- Undo/Redo (50-state stack, Ctrl+Z / Ctrl+Y)
+- Copy/paste week assignments
+- JSON export/import for backup
 
-## Troubleshooting
+### Monthly budget features (new 2026-06)
+- **Bilancio Mensile** — collapsible sidebar panel: per-doctor `used / budget` + progress bar. Click heading to toggle.
+- **Import XLSX** — parses the same tabular Excel format ("turni Giugno CdC MODIFICATI.xlsx"):
+  - Assignment sections: `Struttura | Data | Giorno | Turno | Medico Assegnato`
+  - Debt table (col A-B): sets `monthlyBudget` = remaining hours
+  - Pool table (col D-E): sets `monthlyBudget` + `isPool` on matched doctors
+  - Matches doctors by surname (handles "Savianu Emanuel" ↔ "Dott. Savianu")
+- **Export XLSX** — generates identical Excel format with current month's assignments + remaining hour summary
+- **Genera [Mese]** — fills next month weekdays:
+  1. Primary doctors sorted by remaining hours → first priority (preferred place > neutral > other)
+  2. Pool doctors → second priority (same sub-priority)
+  3. Within each group: doctor with most remaining monthly hours gets the slot
+  4. Leaves unfilled slots where capacity is exhausted (= "SCOPERTO!")
+  5. Uses the same progress bar overlay as Auto-Assegna
 
-| Issue | Solution |
-|-------|----------|
-| **Assignments not saving** | Check browser localStorage quota (DevTools → Application → Storage). Clear via Settings → "Ripristina Dati Iniziali" or reset localStorage manually |
-| **Demo banner won't dismiss** | Click the X button. If localStorage is full or corrupted, use DevTools to clear `ruap-*` keys and reload |
-| **Auto-assign skips all doctors** | Verify doctors have `preferredPlace` matching a CONFIG.places entry exactly. Check spelling; `'M.S.Savino'` ≠ `'M.S. Savino'` |
-| **Colors not matching config** | Verify `colorIndex` (0-7) matches available colors in `COLOR_PALETTE`. Index >7 falls back to default |
-| **PDF export blank or cut off** | Try landscape orientation (already set). If table overflows, reduce doctor count or increase page width. Check browser zoom (100%+) |
-| **Hours wrong after import** | Verify import JSON has correct schema: `{ id, name, patients, weeklyHours, colorIndex, preferredPlace, availability, unavailPeriods }`. Missing `weeklyHours` causes calculation errors |
-| **Dropdown appears below fold** | Mobile viewport: dropdowns positioned via `DROPDOWN_HEIGHT = 350`. On very small screens, may extend off-screen. Use dropdown sparingly on mobile |
+### Auto-Assegna Mese
+Original local algorithm (weekly hours, not monthly). Fills current month with 3-tier preferred-place priority. `isPool` is ignored — all doctors treated equally.
 
-## Development
+## First-run behavior
+1. No localStorage → `getDefaultDoctors()` loads from `config.js` → `saveToStorage()`
+2. No wizard shown. Setup button restarts wizard (manual config).
+3. Doctors are pre-populated with 16 entries. Users can edit/remove via modal.
 
-No build step. Tailwind CDN + vanilla JS. Open `index.html` directly or serve locally:
-```bash
-cd RUAP && npx serve .
-```
-
-Manual browser testing only. Demo-ready when all 8 tasks complete.
+## Key gotchas
+- **COLOR_PALETTE** has 16 entries (index 0-15). `colorIndex` in config must match. Index >15 wraps to `COLOR_PALETTE[0]`.
+- **`config.js` is the single source of truth** for initial doctor list. Change config → clear localStorage to reload.
+- **weeklyHours override** in config.js: set `weeklyHours: 6` on pool doctors, overriding the patient-count formula.
+- **monthlyBudget** in config is optional. If unset, `weeklyHours × 4` is used. After Excel import, it's overwritten with remaining hours.
+- **Import matches by surname only** — "Savianu Emanuel" in Excel matches "Dott. Savianu" in app. Ensure surnames are unique.
+- **Generate target = next month** from current calendar view. Generate from June → fills July. Does NOT touch the current month.
+- **No test suite** — manual browser testing.
+- **xlsx CDN** required for import/export. If CDN fails, buttons show toast error.

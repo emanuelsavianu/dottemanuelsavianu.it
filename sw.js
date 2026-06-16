@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v170: Address change — Update all address references from Via Ubaldo Pasqui 38 to Piazza Saione 3, Arezzo (effective 27 April 2026)
-const CACHE_NAME = 'savianu-v170';
+// Cache version bumped to v171: Fix doctor unavailability periods modal populate & save logic in RUAP/app.js
+const CACHE_NAME = 'savianu-v171';
 const urlsToCache = [
   '/',
   '/index.html',

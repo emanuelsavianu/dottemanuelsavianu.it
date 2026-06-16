@@ -753,6 +753,17 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-seniority').value = doc.seniority || '';
     
     renderAvailabilityTable(doc.availability);
+
+    // Popola i periodi di indisponibilità esistenti
+    const container = document.getElementById('unavail-periods');
+    if (container) {
+      container.innerHTML = '';
+      if (doc.unavailPeriods && doc.unavailPeriods.length > 0) {
+        doc.unavailPeriods.forEach(p => {
+          addUnavailPeriodRow(p.from, p.to);
+        });
+      }
+    }
   } else {
     document.getElementById('modal-name').value = '';
     document.getElementById('modal-patients').value = '';
@@ -776,6 +787,12 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-seniority').value = '';
     
     renderAvailabilityTable(null);
+
+    // Pulisce i periodi di indisponibilità per un nuovo medico
+    const container = document.getElementById('unavail-periods');
+    if (container) {
+      container.innerHTML = '';
+    }
   }
 }
 
@@ -842,11 +859,20 @@ document.getElementById('modal-save').addEventListener('click', () => {
   const aft = document.getElementById('modal-aft')?.value || '';
   const seniority = parseInt(document.getElementById('modal-seniority')?.value) || 0;
 
+  const unavailPeriods = [];
+  document.querySelectorAll('#unavail-periods .unavail-period-row').forEach(row => {
+    const fromVal = row.querySelector('.unavail-from').value;
+    const toVal = row.querySelector('.unavail-to').value;
+    if (fromVal && toVal) {
+      unavailPeriods.push({ from: fromVal, to: toVal });
+    }
+  });
+
   if (state.editingDoctorId) {
     const doc = getDoctorById(state.editingDoctorId);
-    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, monthlyBudget, isPool, aft, seniority });
+    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, monthlyBudget, isPool, aft, seniority, unavailPeriods });
   } else {
-    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, monthlyBudget, isPool, aft, seniority, availability, unavailPeriods: [] });
+    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, monthlyBudget, isPool, aft, seniority, availability, unavailPeriods });
   }
   pushHistory();
   saveToStorage(); closeDoctorModal(); renderAll();
@@ -1753,20 +1779,24 @@ document.getElementById('modal-patients')?.addEventListener('input', (e) => {
 });
 
 // Unavailability periods functionality
-document.getElementById('btn-add-period')?.addEventListener('click', () => {
+function addUnavailPeriodRow(from = '', to = '') {
   const container = document.getElementById('unavail-periods');
-  const periodId = 'period-' + Date.now();
+  if (!container) return;
   const periodEl = document.createElement('div');
-  periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2';
+  periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2 unavail-period-row';
   periodEl.innerHTML = `
-    <input type="date" id="${periodId}-from" class="border border-slate-300 rounded px-2 py-1 text-xs" placeholder="Da">
+    <input type="date" value="${from}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-from" placeholder="Da">
     <span class="text-slate-400">—</span>
-    <input type="date" id="${periodId}-to" class="border border-slate-300 rounded px-2 py-1 text-xs" placeholder="A">
+    <input type="date" value="${to}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-to" placeholder="A">
     <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-xs">
       <i class="fa-solid fa-trash-can"></i>
     </button>
   `;
   container.appendChild(periodEl);
+}
+
+document.getElementById('btn-add-period')?.addEventListener('click', () => {
+  addUnavailPeriodRow('', '');
 });
 
 // ====================================================

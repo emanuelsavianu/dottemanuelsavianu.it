@@ -13,7 +13,7 @@
 - Forgetting this means returning visitors see stale cached content. GitHub Pages deploy lag: 45-60s.
 
 ### `config.js` is NOT loaded on every page
-- Only `index.html` and `colleghi.html` include `<script src="config.js">`
+- Root `index.html` does **not** include `config.js`. Pages that do: `colleghi.html`, `faq.html`, `impegnative.html`, `cert-malattia.html`, `esenzioni.html`, `RUAP/index.html`
 - Before any `CONFIG.*` access in `app.js`, guard with: `if (typeof CONFIG === 'undefined') return;`
 - New pages needing schedule/absence data must explicitly add the script tag
 
@@ -39,6 +39,9 @@ For manual overrides: use raw hex (`#f3efe6`, `#0d1e33`) — CSS variables in da
 
 ### Large file: `visite-private.html` (~17k tokens)
 Always read with `offset`/`limit` to avoid context overflow.
+
+### `RUAP/app.js` (~2400 lines, multimodal)
+Larger than typical; use offset/limit, and prefer Grep over Read for targeted edits. When editing, read key sections (COLOR_PALETTE, config-seeding, monthlyBudget helpers, importFromRows, generateNextMonth) to understand context before changes.
 
 ## Conventions
 
@@ -68,8 +71,16 @@ Always read with `offset`/`limit` to avoid context overflow.
 
 ## Sub-apps at a glance
 
-| App | Dir | Stack | Local server |
-|-----|-----|-------|-------------|
-| Main site | `/` | styles.css + app.js | `npx serve .` |
-| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | `cd gestoreturni && npx serve .` |
-| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | `cd RUAP && npx serve .` |
+| App | Dir | Stack | Local server | Notes |
+|-----|-----|-------|-------------|-------|
+| Main site | `/` | styles.css + app.js | `npx serve .` | Service-worker'd, config.js NOT on root index (see gotcha above) |
+| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | `cd gestoreturni && npx serve .` | Full CRUD; localStorage keys `ruap-*` |
+| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | `cd RUAP && npx serve .` | 16 doctors, monthly budget, Excel import/export, Genera Mese |
+
+**RUAP key facts (2026-06 update):**
+- `config.js` pre-configures 10 primary + 6 pool doctors, each with `monthlyBudget` (default: `weeklyHours × 4`) and `isPool` flag
+- Pool doctors (24h/month fixed) are 2nd-priority in "Genera Mese" after primary doctors
+- First run auto-loads from `config.js` (no wizard). Setup button restarts wizard.
+- New buttons: *Import XLSX* (parses assignments + remaining-hour table), *Export XLSX*, *Genera [Mese]* (fills next month via budget-aware algorithm)
+- Sidebar: collapsible **Bilancio Mensile** panel showing `used/budget` per doctor
+- See `RUAP/CLAUDE.md` for full schema and patterns
