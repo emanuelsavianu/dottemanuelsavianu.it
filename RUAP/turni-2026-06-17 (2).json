@@ -1,0 +1,513 @@
+{
+  "version": 1,
+  "exportDate": "2026-06-17T10:37:25.997Z",
+  "doctors": [
+    {
+      "id": "mqgp5xpec24f6",
+      "name": "Dott. Savianu",
+      "patients": 225,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 0,
+      "preferredPlace": "Subbiano",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": false
+        },
+        "mar": {
+          "mat": false,
+          "pom": true
+        },
+        "mer": {
+          "mat": true,
+          "pom": false
+        },
+        "gio": {
+          "mat": false,
+          "pom": true
+        },
+        "ven": {
+          "mat": true,
+          "pom": false
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-10",
+          "to": "2026-07-10"
+        },
+        {
+          "from": "2026-07-27",
+          "to": "2026-07-31"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 152
+    },
+    {
+      "id": "mqgp5xpev7h1m",
+      "name": "Dott. Fiori",
+      "patients": 126,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 1,
+      "preferredPlace": "Subbiano",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": true
+        },
+        "mar": {
+          "mat": true,
+          "pom": true
+        },
+        "mer": {
+          "mat": true,
+          "pom": true
+        },
+        "gio": {
+          "mat": true,
+          "pom": true
+        },
+        "ven": {
+          "mat": true,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-07-10"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 152
+    },
+    {
+      "id": "mqgp5xpe79zho",
+      "name": "Dott. Cerofolini",
+      "patients": 133,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 2,
+      "preferredPlace": "M.S.Savino",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": false
+        },
+        "mar": {
+          "mat": false,
+          "pom": true
+        },
+        "mer": {
+          "mat": true,
+          "pom": false
+        },
+        "gio": {
+          "mat": false,
+          "pom": true
+        },
+        "ven": {
+          "mat": false,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-07-03"
+        },
+        {
+          "from": "2026-07-21",
+          "to": "2026-07-21"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 152
+    },
+    {
+      "id": "mqgp5xpemfnc0",
+      "name": "Dott. Gavetta",
+      "patients": 648,
+      "weeklyHours": 24,
+      "isPool": false,
+      "colorIndex": 3,
+      "preferredPlace": null,
+      "availability": {
+        "lun": {
+          "mat": false,
+          "pom": true
+        },
+        "mar": {
+          "mat": true,
+          "pom": false
+        },
+        "mer": {
+          "mat": false,
+          "pom": true
+        },
+        "gio": {
+          "mat": true,
+          "pom": false
+        },
+        "ven": {
+          "mat": false,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-21",
+          "to": "2026-07-21"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 96
+    },
+    {
+      "id": "mqgp5xpehbrke",
+      "name": "Dott. Sodo",
+      "patients": 1200,
+      "weeklyHours": 12,
+      "isPool": false,
+      "colorIndex": 4,
+      "preferredPlace": "Subbiano",
+      "availability": {
+        "lun": {
+          "mat": false,
+          "pom": true
+        },
+        "mar": {
+          "mat": true,
+          "pom": false
+        },
+        "mer": {
+          "mat": false,
+          "pom": true
+        },
+        "gio": {
+          "mat": false,
+          "pom": true
+        },
+        "ven": {
+          "mat": true,
+          "pom": false
+        }
+      },
+      "unavailPeriods": [],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 48
+    },
+    {
+      "id": "mqgp5xpe8eeqy",
+      "name": "Dott. Bensi",
+      "patients": 1126,
+      "weeklyHours": 12,
+      "isPool": false,
+      "colorIndex": 5,
+      "preferredPlace": "Subbiano",
+      "availability": {
+        "lun": {
+          "mat": false,
+          "pom": true
+        },
+        "mar": {
+          "mat": true,
+          "pom": false
+        },
+        "mer": {
+          "mat": false,
+          "pom": true
+        },
+        "gio": {
+          "mat": false,
+          "pom": true
+        },
+        "ven": {
+          "mat": true,
+          "pom": false
+        }
+      },
+      "unavailPeriods": [],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 45
+    },
+    {
+      "id": "mqgp5xpe3wotk",
+      "name": "Dott. Gabrielli",
+      "patients": 52,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 6,
+      "preferredPlace": "M.S.Savino",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": false
+        },
+        "mar": {
+          "mat": false,
+          "pom": true
+        },
+        "mer": {
+          "mat": true,
+          "pom": false
+        },
+        "gio": {
+          "mat": true,
+          "pom": false
+        },
+        "ven": {
+          "mat": false,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-02",
+          "to": "2026-07-02"
+        },
+        {
+          "from": "2026-07-20",
+          "to": "2026-07-24"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 152
+    },
+    {
+      "id": "mqgp5xpeohiai",
+      "name": "Dott. Graziotti",
+      "patients": 60,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 7,
+      "preferredPlace": "M.S.Savino",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": false
+        },
+        "mar": {
+          "mat": true,
+          "pom": false
+        },
+        "mer": {
+          "mat": false,
+          "pom": true
+        },
+        "gio": {
+          "mat": true,
+          "pom": false
+        },
+        "ven": {
+          "mat": false,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-17",
+          "to": "2026-07-17"
+        },
+        {
+          "from": "2026-07-24",
+          "to": "2026-07-24"
+        }
+      ],
+      "monthlyBudget": 152,
+      "aft": "",
+      "seniority": 0
+    },
+    {
+      "id": "mqgp5xpekiw12",
+      "name": "Dott. Miroballo",
+      "patients": 554,
+      "weeklyHours": 24,
+      "isPool": false,
+      "colorIndex": 8,
+      "preferredPlace": "M.S.Savino",
+      "availability": {
+        "lun": {
+          "mat": false,
+          "pom": true
+        },
+        "mar": {
+          "mat": false,
+          "pom": false
+        },
+        "mer": {
+          "mat": false,
+          "pom": true
+        },
+        "gio": {
+          "mat": false,
+          "pom": true
+        },
+        "ven": {
+          "mat": false,
+          "pom": false
+        }
+      },
+      "unavailPeriods": [],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 96
+    },
+    {
+      "id": "mqgp5xpe6gb6b",
+      "name": "Dott. Zuppardo",
+      "patients": 1,
+      "weeklyHours": 38,
+      "isPool": false,
+      "colorIndex": 9,
+      "preferredPlace": "Subbiano",
+      "availability": {
+        "lun": {
+          "mat": true,
+          "pom": false
+        },
+        "mar": {
+          "mat": false,
+          "pom": true
+        },
+        "mer": {
+          "mat": true,
+          "pom": false
+        },
+        "gio": {
+          "mat": true,
+          "pom": false
+        },
+        "ven": {
+          "mat": false,
+          "pom": true
+        }
+      },
+      "unavailPeriods": [
+        {
+          "from": "2026-07-10",
+          "to": "2026-07-10"
+        },
+        {
+          "from": "2026-07-17",
+          "to": "2026-07-17"
+        },
+        {
+          "from": "2026-07-20",
+          "to": "2026-07-20"
+        },
+        {
+          "from": "2026-07-28",
+          "to": "2026-07-31"
+        }
+      ],
+      "aft": "",
+      "seniority": 0,
+      "monthlyBudget": 152
+    }
+  ],
+  "assignments": {
+    "2026-07-16_pom_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-17_mat_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-21_pom_M.S.Savino": "mqgp5xpec24f6",
+    "2026-07-23_pom_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-28_pom_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-30_pom_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-01_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-01_pom_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-01_mat_Subbiano": "mqgp5xpec24f6",
+    "2026-07-01_pom_Subbiano": "mqgp5xpehbrke",
+    "2026-07-02_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-02_pom_Subbiano": "mqgp5xpec24f6",
+    "2026-07-03_pom_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-03_mat_Subbiano": "mqgp5xpec24f6",
+    "2026-07-03_pom_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-06_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-06_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-06_pom_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-07_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-07_pom_Subbiano": "mqgp5xpec24f6",
+    "2026-07-08_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-08_pom_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-08_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-08_pom_Subbiano": "mqgp5xpekiw12",
+    "2026-07-09_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-09_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-09_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-09_pom_Subbiano": "mqgp5xpec24f6",
+    "2026-07-10_pom_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-10_pom_Subbiano": "mqgp5xpe79zho",
+    "2026-07-13_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-13_mat_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-14_mat_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-14_pom_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-14_mat_Subbiano": "mqgp5xpehbrke",
+    "2026-07-14_pom_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-15_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-15_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-15_mat_Subbiano": "mqgp5xpec24f6",
+    "2026-07-15_pom_Subbiano": "mqgp5xpe8eeqy",
+    "2026-07-16_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-16_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-17_mat_M.S.Savino": "mqgp5xpec24f6",
+    "2026-07-17_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-20_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-20_mat_Subbiano": "mqgp5xpec24f6",
+    "2026-07-21_pom_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-22_pom_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-22_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-22_pom_Subbiano": "mqgp5xpe8eeqy",
+    "2026-07-23_mat_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-23_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-23_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-24_mat_M.S.Savino": "mqgp5xpec24f6",
+    "2026-07-24_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-24_mat_Subbiano": "mqgp5xpehbrke",
+    "2026-07-24_pom_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-27_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-27_mat_Subbiano": "mqgp5xpe6gb6b",
+    "2026-07-28_mat_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-28_pom_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-28_mat_Subbiano": "mqgp5xpehbrke",
+    "2026-07-29_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-29_pom_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-30_mat_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-30_pom_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-31_pom_M.S.Savino": "mqgp5xpe3wotk",
+    "2026-07-31_mat_Subbiano": "mqgp5xpev7h1m",
+    "2026-07-07_mat_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-02_mat_M.S.Savino": "mqgp5xpemfnc0",
+    "2026-07-07_mat_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-13_pom_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-17_pom_Subbiano": "mqgp5xpe3wotk",
+    "2026-07-20_pom_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-21_mat_M.S.Savino": "mqgp5xpeohiai",
+    "2026-07-21_mat_Subbiano": "mqgp5xpehbrke",
+    "2026-07-27_pom_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-29_pom_Subbiano": "mqgp5xpe8eeqy",
+    "2026-07-30_mat_Subbiano": "mqgp5xpemfnc0",
+    "2026-07-31_pom_Subbiano": "mqgp5xpe79zho",
+    "2026-07-03_mat_M.S.Savino": "mqgp5xpe8eeqy",
+    "2026-07-02_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-06_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-10_mat_M.S.Savino": "mqgp5xpehbrke",
+    "2026-07-13_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-16_pom_M.S.Savino": "mqgp5xpec24f6",
+    "2026-07-20_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-27_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-07-22_mat_M.S.Savino": "mqgp5xpe79zho",
+    "2026-07-29_mat_Subbiano": "mqgp5xpe79zho",
+    "2026-07-31_mat_M.S.Savino": "mqgp5xpe8eeqy",
+    "2026-07-10_mat_Subbiano": "mqgp5xpe8eeqy"
+  }
+}

@@ -55,19 +55,12 @@ let historyIndex = -1;
 
 function getDefaultDoctors() {
   if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
-  return CONFIG.doctors.map((d, i) => ({
-    id: generateId(),
-    name: d.name,
-    patients: d.patients || 850,
-    weeklyHours: d.weeklyHours != null ? d.weeklyHours : calculateDebtByPatients(d.patients || 850),
-    monthlyBudget: d.monthlyBudget,  // undefined → auto-computed
-    isPool: d.isPool || false,
-    colorIndex: d.colorIndex ?? i,
-    preferredPlace: d.preferredPlace || null,
-    availability: Object.fromEntries(
+  return CONFIG.doctors.map(d => ({
+    ...d,
+    availability: d.availability ? JSON.parse(JSON.stringify(d.availability)) : Object.fromEntries(
       ['lun','mar','mer','gio','ven'].map(k => [k, { mat: true, pom: true }])
     ),
-    unavailPeriods: [],
+    unavailPeriods: d.unavailPeriods ? JSON.parse(JSON.stringify(d.unavailPeriods)) : [],
   }));
 }
 
@@ -775,6 +768,12 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
 
   const availDocs = state.doctors
     .filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key))
+    .filter(doc => {
+      if (state.assignments[slotKey] === doc.id) return true;
+      const prefix = `${dateKey}_${slot.key}_`;
+      return !Object.entries(state.assignments)
+        .some(([k, v]) => v === doc.id && k.startsWith(prefix));
+    })
     .sort((a, b) => {
       const aP = a.preferredPlace === place ? 0 : 1;
       const bP = b.preferredPlace === place ? 0 : 1;
@@ -812,10 +811,18 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
   const rect = e.currentTarget.getBoundingClientRect();
   const spaceBelow = window.innerHeight - rect.bottom;
-  dropdown.style.top = spaceBelow < DROPDOWN_HEIGHT
-    ? `${rect.top + window.scrollY - DROPDOWN_HEIGHT - 4}px`
-    : `${rect.bottom + window.scrollY + 4}px`;
-  dropdown.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - DROPDOWN_WIDTH)}px`;
+  const spaceAbove = rect.top;
+  let top;
+  if (spaceBelow >= DROPDOWN_HEIGHT || spaceBelow > spaceAbove) {
+    top = Math.min(rect.bottom + 4, window.innerHeight - DROPDOWN_HEIGHT - 4);
+  } else {
+    top = Math.max(4, rect.top - DROPDOWN_HEIGHT - 4);
+  }
+  top = Math.max(4, top);
+  let left = Math.min(rect.left, window.innerWidth - DROPDOWN_WIDTH - 4);
+  left = Math.max(4, left);
+  dropdown.style.top = `${top}px`;
+  dropdown.style.left = `${left}px`;
   dropdown.classList.remove('hidden');
 }
 
@@ -2432,26 +2439,15 @@ function init() {
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
     state.doctors = getDefaultDoctors();
-    saveToStorage();
-    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
-      Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
-        if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
+    if (typeof CONFIG !== 'undefined' && CONFIG.assignments) {
+      Object.entries(CONFIG.assignments).forEach(([key, docId]) => {
+        if (state.doctors.some(d => d.id === docId)) state.assignments[key] = docId;
       });
-      saveToStorage();
-      document.getElementById('demo-banner').classList.remove('hidden');
     }
+    saveToStorage();
+    document.getElementById('demo-banner').classList.remove('hidden');
   } else {
     pushHistory();
-    if (typeof CONFIG !== 'undefined' && CONFIG.demoAssignments) {
-      const hasAssignments = Object.keys(state.assignments).length > 0;
-      if (!hasAssignments) {
-        Object.entries(CONFIG.demoAssignments).forEach(([key, idx]) => {
-          if (state.doctors[idx]) state.assignments[key] = state.doctors[idx].id;
-        });
-        saveToStorage();
-        document.getElementById('demo-banner').classList.remove('hidden');
-      }
-    }
   }
   updateGeneraButtonLabel();
   renderAll();
