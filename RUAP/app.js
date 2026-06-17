@@ -4,6 +4,8 @@
 const STORAGE_DOCTORS = 'ruap-turni-medici';
 const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
 const STORAGE_HISTORY = 'ruap-turni-history';
+const STORAGE_VERSION_KEY = 'ruap-storage-version';
+const STORAGE_VERSION = 2;
 const HISTORY_MAX = 50;
 
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
@@ -2431,6 +2433,14 @@ function renderWizardStep4() {
 // ====================================================
 function init() {
   initDarkMode();
+  const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+  const isVersionMismatch = storedVersion !== String(STORAGE_VERSION);
+  if (isVersionMismatch) {
+    localStorage.removeItem(STORAGE_DOCTORS);
+    localStorage.removeItem(STORAGE_ASSIGNMENTS);
+    localStorage.removeItem(STORAGE_HISTORY);
+    localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_VERSION));
+  }
   loadFromStorage();
   loadHistory();
   const isFirstRun = state.doctors.length === 0;

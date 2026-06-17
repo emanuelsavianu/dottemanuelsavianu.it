@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v172: Fix RUAP PDF export readability (A4 landscape multi-page) + AGENTS.md updates
-const CACHE_NAME = 'savianu-v172';
+// Cache version bumped to v173: RUAP storage version check to force reseed from config.js
+const CACHE_NAME = 'savianu-v173';
 const urlsToCache = [
   '/',
   '/index.html',
