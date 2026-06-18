@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v179: hide-zero-docs toggle (RUAP/index.html, RUAP/app.js)
-const CACHE_NAME = 'savianu-v179';
+// Cache version bumped to v180: print bilancio on page 2, revert aside from print (RUAP/index.html, RUAP/app.js)
+const CACHE_NAME = 'savianu-v180';
 const urlsToCache = [
   '/',
   '/index.html',

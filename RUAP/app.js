@@ -1876,6 +1876,25 @@ function renderMonthlyStats() {
       </div>
     </div>`;
   }).join('');
+
+  const printGrid = document.getElementById('print-bilancio-grid');
+  if (printGrid) {
+    const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+    const titleEl = document.getElementById('print-bilancio-title');
+    if (titleEl) titleEl.textContent = `${months[state.calMonth]} ${state.calYear}`;
+    printGrid.innerHTML = visible.map(doc => {
+      const budget = getMonthlyBudget(doc);
+      const used = stats.doctorHours[doc.id] || 0;
+      const pct = budget > 0 ? Math.round((used / budget) * 100) : 0;
+      const barColor = (budget - used) <= 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
+      return `<div class="p-row">
+        <span class="p-dot" style="background:${getDoctorColor(doc).hex}"></span>
+        <span class="p-name">${doc.name}${doc.isPool ? ' (pool)' : ''}</span>
+        <span class="p-hours">${used}h / ${budget}h</span>
+        <div class="p-bar"><div class="p-fill" style="width:${Math.min(100, pct)}%;background:${barColor}"></div></div>
+      </div>`;
+    }).join('');
+  }
 }
 
 function toggleMonthlyStats() {

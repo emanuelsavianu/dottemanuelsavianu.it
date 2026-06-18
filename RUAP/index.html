@@ -161,21 +161,26 @@
     }
     #ruap-wizard #wizard-step-content { animation: wizard-pop 0.25s ease-out; }
     @media print {
-      header, #demo-banner, #toast-container,
+      header, aside, #demo-banner, #toast-container,
       #assign-dropdown, #doctor-modal, #conflict-modal, #conflicts-modal,
       #instructions-modal, #ruap-wizard, #autoassign-loading,
       .fixed.bottom-4.right-4 { display: none !important; }
-      aside { display: block !important; width: 100% !important; max-height: none !important; overflow: visible !important; position: static !important; box-shadow: none !important; margin-bottom: 12px !important; padding: 8px 12px !important; }
-      aside #filter-aft, aside #doctor-search, aside #sidebar-doctors,
-      aside > .flex.items-center.justify-between { display: none !important; }
       body { background: white !important; }
       main { margin: 0; padding: 0; overflow: visible !important; }
       .max-w-screen-xl { max-width: 100%; padding: 0; margin: 0; display: block !important; }
       .bg-white, .shadow, .shadow-sm, .rounded-xl { background: transparent !important; box-shadow: none !important; }
       #cal-grid .grid-cols-5 { gap: 1px; }
       #cal-grid .rounded-xl { border: 1px solid #e2e8f0 !important; min-height: auto !important; }
-      #monthly-stats-panel { display: block !important; max-height: none !important; overflow: visible !important; }
+      #print-bilancio { display: block !important; page-break-before: always; }
     }
+    #print-bilancio { display: none; }
+    #print-bilancio h2 { font-size: 18px; font-weight: bold; margin-bottom: 16px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }
+    #print-bilancio .p-row { display: flex; align-items: center; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+    #print-bilancio .p-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-right: 10px; }
+    #print-bilancio .p-name { flex: 1; }
+    #print-bilancio .p-hours { flex-shrink: 0; margin: 0 16px; color: #64748b; }
+    #print-bilancio .p-bar { width: 120px; height: 10px; background: #e2e8f0; border-radius: 5px; flex-shrink: 0; }
+    #print-bilancio .p-fill { height: 10px; border-radius: 5px; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
@@ -728,5 +733,9 @@
   </div>
 </div>
 
+<div id="print-bilancio">
+  <h2>Bilancio Mensile - <span id="print-bilancio-title"></span></h2>
+  <div id="print-bilancio-grid"></div>
+</div>
 </body>
 </html>
