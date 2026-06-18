@@ -161,16 +161,20 @@
     }
     #ruap-wizard #wizard-step-content { animation: wizard-pop 0.25s ease-out; }
     @media print {
-      header, aside, #demo-banner, #toast-container,
+      header, #demo-banner, #toast-container,
       #assign-dropdown, #doctor-modal, #conflict-modal, #conflicts-modal,
       #instructions-modal, #ruap-wizard, #autoassign-loading,
       .fixed.bottom-4.right-4 { display: none !important; }
+      aside { display: block !important; width: 100% !important; max-height: none !important; overflow: visible !important; position: static !important; box-shadow: none !important; margin-bottom: 12px !important; padding: 8px 12px !important; }
+      aside #filter-aft, aside #doctor-search, aside #sidebar-doctors,
+      aside > .flex.items-center.justify-between { display: none !important; }
       body { background: white !important; }
-      main { margin: 0; padding: 0; }
-      .max-w-screen-xl { max-width: 100%; padding: 0; margin: 0; }
+      main { margin: 0; padding: 0; overflow: visible !important; }
+      .max-w-screen-xl { max-width: 100%; padding: 0; margin: 0; display: block !important; }
       .bg-white, .shadow, .shadow-sm, .rounded-xl { background: transparent !important; box-shadow: none !important; }
       #cal-grid .grid-cols-5 { gap: 1px; }
       #cal-grid .rounded-xl { border: 1px solid #e2e8f0 !important; min-height: auto !important; }
+      #monthly-stats-panel { display: block !important; max-height: none !important; overflow: visible !important; }
     }
   </style>
 </head>
@@ -294,9 +298,10 @@
     <!-- Bilancio Mensile collassabile -->
     <button id="btn-toggle-monthly-stats" class="w-full text-left text-xs font-semibold text-brand-700 hover:text-brand-500 my-1.5 flex items-center gap-1.5 px-1" onclick="toggleMonthlyStats()">
       <i class="fa-solid fa-chart-simple text-brand-400"></i> Bilancio Mensile
-      <i class="fa-solid fa-chevron-down ml-auto text-slate-400 text-[10px] transition-transform" id="monthly-stats-chevron"></i>
+      <i class="fa-regular fa-eye ml-auto text-slate-400 text-[10px] cursor-pointer hover:text-brand-600" id="btn-hide-zero-docs" title="Nascondi inattivi" onclick="event.stopPropagation(); toggleHideZeroDocs()"></i>
+      <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform ml-1" id="monthly-stats-chevron" style="transform: rotate(180deg)"></i>
     </button>
-    <div id="monthly-stats-panel" class="hidden text-xs space-y-1 mb-3 max-h-48 overflow-y-auto thin-scroll px-1"></div>
+    <div id="monthly-stats-panel" class="text-sm space-y-1.5 mb-3 px-1"></div>
 
     <!-- Filtro AFT (Facoltativo) -->
     <div class="mb-3">

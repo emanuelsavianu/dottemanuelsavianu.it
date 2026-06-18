@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v177: RUAP review fixes 1-12 (wizard slots, copyDay, renderStats merge, duplicate validation, processing guard, dead code removal, ARIA, print styles)
-const CACHE_NAME = 'savianu-v177';
+// Cache version bumped to v179: hide-zero-docs toggle (RUAP/index.html, RUAP/app.js)
+const CACHE_NAME = 'savianu-v179';
 const urlsToCache = [
   '/',
   '/index.html',

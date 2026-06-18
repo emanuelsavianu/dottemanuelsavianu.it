@@ -1821,11 +1821,32 @@ function getMonthlyStats() {
 }
 
 // ─── Monthly stats panel + coverage badge ────────────────
+let hideZeroDocs = false;
+
+function toggleHideZeroDocs() {
+  hideZeroDocs = !hideZeroDocs;
+  const icon = document.getElementById('btn-hide-zero-docs');
+  if (hideZeroDocs) {
+    icon.className = 'fa-solid fa-eye-slash text-brand-500 text-[10px] cursor-pointer hover:text-brand-600';
+    icon.title = 'Mostra tutti';
+  } else {
+    icon.className = 'fa-regular fa-eye text-slate-400 text-[10px] cursor-pointer hover:text-brand-600';
+    icon.title = 'Nascondi inattivi';
+  }
+  renderMonthlyStats();
+}
+
 function renderMonthlyStats() {
   const panel = document.getElementById('monthly-stats-panel');
   const stats = getMonthlyStats();
 
-  document.getElementById('total-doctors').textContent = state.doctors.length;
+  const totalEl = document.getElementById('total-doctors');
+  if (hideZeroDocs) {
+    const activeCount = state.doctors.filter(d => (stats.doctorHours[d.id] || 0) > 0).length;
+    totalEl.innerHTML = `<span class="text-brand-600">${activeCount}</span>/${state.doctors.length}`;
+  } else {
+    totalEl.textContent = state.doctors.length;
+  }
   document.getElementById('total-hours').textContent = Object.values(stats.doctorHours).reduce((a, b) => a + b, 0);
 
   const coverageEl = document.getElementById('coverage-badge');
@@ -1836,8 +1857,9 @@ function renderMonthlyStats() {
 
   if (!panel) return;
   const ordered = [...state.doctors].sort((a, b) => (b.isPool ? 1 : 0) - (a.isPool ? 1 : 0));
+  const visible = hideZeroDocs ? ordered.filter(d => (stats.doctorHours[d.id] || 0) > 0) : ordered;
 
-  panel.innerHTML = ordered.map(doc => {
+  panel.innerHTML = visible.map(doc => {
     const budget = getMonthlyBudget(doc);
     const used = stats.doctorHours[doc.id] || 0;
     const rem = Math.max(0, budget - used);
@@ -1845,12 +1867,12 @@ function renderMonthlyStats() {
     const color = getDoctorColor(doc);
     const label = doc.isPool ? ' (pool)' : '';
     const barColor = rem === 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
-    return `<div class="flex items-center gap-1.5 py-0.5">
-      <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
+    return `<div class="flex items-center gap-2 py-1">
+      <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
       <span class="flex-1 truncate text-slate-700" title="${doc.name}">${cleanDoctorName(doc.name)}${label}</span>
       <span class="text-slate-500 flex-shrink-0">${used}h/${budget}h</span>
-      <div class="w-10 h-1.5 bg-slate-200 rounded-full flex-shrink-0">
-        <div style="width:${Math.min(100, pct)}%; background:${barColor}" class="h-1.5 rounded-full"></div>
+      <div class="w-16 h-2.5 bg-slate-200 rounded-full flex-shrink-0">
+        <div style="width:${Math.min(100, pct)}%; background:${barColor}" class="h-2.5 rounded-full"></div>
       </div>
     </div>`;
   }).join('');

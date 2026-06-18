@@ -9,9 +9,10 @@
 ## Must-know gotchas
 
 ### Service worker bump (MANDATORY on every edit)
-- Bump `CACHE_NAME` in `sw.js` (e.g. `'savianu-v177'`). List edited files in the CACHE_NAME comment.
+- Bump `CACHE_NAME` in `sw.js` (e.g. `'savianu-v178'`). List edited files in the CACHE_NAME comment.
 - Add new `.html` files to `urlsToCache` array.
 - Returning visitors see stale content without a bump. GH Pages deploy lag: 45-60s.
+- **`offline.html` exists but is NOT in `urlsToCache`** — the SW falls back to `/` (index.html) when offline, not `offline.html`. To enable the custom offline page, add it to `urlsToCache` and update the `networkFirst` catch handler.
 
 ### `config.js` NOT loaded on every page
 - Root `index.html` does **not** include `config.js`. Pages that do: `colleghi.html`, `faq.html`, `impegnative.html`, `cert-malattia.html`, `esenzioni.html`, `RUAP/index.html`.
@@ -33,8 +34,11 @@ For manual overrides: use **raw hex** (`#f3efe6`, `#0d1e33`) — CSS variables i
 - Separate localStorage prefix: `calcolatore-ferie-mdg-*`. Don't apply main site patterns to it.
 
 ### Large files
-- `visite-private.html` (~17k tokens) — read with `offset`/`limit`
-- `RUAP/app.js` (~2500 lines) — prefer Grep over Read for targeted edits
+- `visite-private.html` (~1250 lines) — read with `offset`/`limit`
+- `RUAP/app.js` (~2380 lines) — prefer Grep over Read for targeted edits
+
+### CDN dependencies
+- jsPDF, html2canvas, XLSX (SheetJS) loaded from CDN in `RUAP/index.html` and `gestoreturni/gestoreturni.html`. Not vendored. If CDN fails, features show a toast error.
 
 ## Conventions
 
@@ -47,23 +51,24 @@ For manual overrides: use **raw hex** (`#f3efe6`, `#0d1e33`) — CSS variables i
 - Title ≤60 chars, meta description ≤155 chars (Google truncates beyond)
 - `og:image`: `bluelogo.png` (physician/general pages) or `bronzelogo.png` (certificates/services)
 - Pages with `<meta name="robots" content="noindex">` must NOT be in `sitemap.xml` (currently violated: `faq.html`, `impegnative.html`, `esenzioni.html`, `cert-malattia.html`, `calcolatore-ferie.html`, `calcolatoreferiegemini.html`, `ferie.html`, `installazione.html`, `protocollo-certificati-inps.html`, `rsa.html`, `xsegretarie.html` are `noindex` but in sitemap)
+- Public indexed pages: `index.html`, `visite-private.html`, `faq-riforma.html`, `certificato-invalidita-civile.html`, `malattia.html`, `privacy.html`
 - Update `llms.txt` when adding/removing public-facing pages
 
 ### Git
 - **Always commit AND push together** (never commit-only)
 - Repo enforces LF line endings via `.gitattributes` — Windows commits auto-convert
-- `.gitignore` has `*.md` → `!README.md` `!AGENTS.md`, but `CLAUDE.md` files are **already tracked** (committed before gitignore entry). They will show in `git status` despite the gitignore pattern.
+- `.gitignore` has `*.md` → `!README.md` `!AGENTS.md` `!CLAUDE.md`, but CLAUDE.md files are **already tracked** (committed before gitignore entry). They show in `git status` regardless.
 
 ### Print styles
-Every new page needs: hide `.topbar, footer, nav`, reset `.page-hero` background, expand `.faq-answer` max-height. See `styles.css` `@media print` for patterns.
+Every new page needs: hide `.topbar, footer, nav`, reset `.page-hero` background, expand `.faq-answer` max-height. See `styles.css` `@media print` for patterns. RUAP sub-app has its own print styles in `index.html`.
 
 ## Sub-apps
 
 | App | Dir | Stack | Notes |
 |-----|-----|-------|-------|
 | Main site | `/` | styles.css + app.js | PWA (sw.js + manifest.json + offline.html), config.js NOT on root index |
-| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*` |
-| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese |
+| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*`; read `CLAUDE.md` for migration patterns |
+| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese; read `CLAUDE.md` for budget schema |
 
 ## Other instruction files
 - **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting (258 lines, tracked in git)
