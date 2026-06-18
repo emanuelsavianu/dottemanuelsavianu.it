@@ -5,13 +5,15 @@ const STORAGE_DOCTORS = 'ruap-turni-medici';
 const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
 const STORAGE_HISTORY = 'ruap-turni-history';
 const STORAGE_VERSION_KEY = 'ruap-storage-version';
+const STORAGE_PLACES = 'ruap-places';
+const STORAGE_SLOTS = 'ruap-slots';
 const STORAGE_VERSION = 2;
 const HISTORY_MAX = 50;
 
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
 // Read from config.js if available, fall back to hardcoded defaults
-const PLACES = (typeof CONFIG !== 'undefined' && CONFIG.places) ? CONFIG.places : ['M.S.Savino', 'Subbiano'];
+let PLACES = (typeof CONFIG !== 'undefined' && CONFIG.places) ? [...CONFIG.places] : ['M.S.Savino', 'Subbiano'];
 const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
   { key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' },
   { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
@@ -43,6 +45,8 @@ const COLOR_PALETTE = [
 let state = {
   doctors: [],
   assignments: {},
+  places: [],
+  slots: [],
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
   sidebarWeekStart: getWeekStart(new Date()),
@@ -54,6 +58,7 @@ let state = {
 
 let historyStack = [];
 let historyIndex = -1;
+let isProcessing = false;
 
 function getDefaultDoctors() {
   if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
@@ -136,21 +141,8 @@ function isItalianHoliday(date) {
   return false;
 }
 
-function pushHistory() {
-  const snapshot = JSON.stringify({ assignments: state.assignments });
-  if (historyIndex < historyStack.length - 1) {
-    historyStack = historyStack.slice(0, historyIndex + 1);
-  }
-  historyStack.push(snapshot);
-  if (historyStack.length > HISTORY_MAX) {
-    historyStack.shift();
-  } else {
-    historyIndex++;
-  }
-  updateUndoRedoButtons();
-}
-
 function undo() {
+  if (isProcessing) return;
   if (historyIndex > 0) {
     historyIndex--;
     const snapshot = JSON.parse(historyStack[historyIndex]);
@@ -164,6 +156,7 @@ function undo() {
 }
 
 function redo() {
+  if (isProcessing) return;
   if (historyIndex < historyStack.length - 1) {
     historyIndex++;
     const snapshot = JSON.parse(historyStack[historyIndex]);
@@ -311,10 +304,10 @@ function calculateDebtByPatients(patients) {
   return 0;
 }
 function getDoctorColor(doctor) { return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0]; }
-function isPlaceCovered(dateKey, place) { return !!state.assignments[`${dateKey}_mat_${place}`] && !!state.assignments[`${dateKey}_pom_${place}`]; }
-function getDayPlacesCoverage(dateKey) {
-  const covered = PLACES.filter(p => isPlaceCovered(dateKey, p)).length;
-  return { covered, total: PLACES.length };
+function getProgressBarData(assigned, debt) {
+  const pct = debt > 0 ? Math.min(100, Math.round((assigned / debt) * 100)) : 0;
+  const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
+  return { pct, barColor };
 }
 
 // ─── Monthly budget helpers ───────────────────────────────
@@ -348,17 +341,51 @@ function getRemainingMonthlyHours(doctor, month, year) {
 // ====================================================
 // PERSISTENCE & EXPORT
 // ====================================================
+function reloadPlaces() {
+  if (state.places && state.places.length > 0) {
+    PLACES = [...state.places];
+  } else if (typeof CONFIG !== 'undefined' && CONFIG.places) {
+    PLACES = [...CONFIG.places];
+  } else {
+    PLACES = ['M.S.Savino', 'Subbiano'];
+  }
+}
+
+function reloadSlots() {
+  if (state.slots && state.slots.length > 0) {
+    SLOTS = [...state.slots];
+  } else if (typeof CONFIG !== 'undefined' && CONFIG.slots) {
+    SLOTS = CONFIG.slots.map(s => ({ ...s }));
+  } else {
+    SLOTS = [
+      { key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' },
+      { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
+    ];
+  }
+}
+
+function updateHeaderSubtitle() {
+  const el = document.getElementById('header-subtitle');
+  if (el) el.textContent = 'Attività Diurne — ' + PLACES.join(' · ');
+}
+
 function saveToStorage() {
   localStorage.setItem(STORAGE_DOCTORS, JSON.stringify(state.doctors));
   localStorage.setItem(STORAGE_ASSIGNMENTS, JSON.stringify(state.assignments));
+  localStorage.setItem(STORAGE_PLACES, JSON.stringify(state.places));
+  localStorage.setItem(STORAGE_SLOTS, JSON.stringify(state.slots));
 }
 
 function loadFromStorage() {
   try {
     const docs = localStorage.getItem(STORAGE_DOCTORS);
     const asgn = localStorage.getItem(STORAGE_ASSIGNMENTS);
+    const plcs = localStorage.getItem(STORAGE_PLACES);
+    const slts = localStorage.getItem(STORAGE_SLOTS);
     if (docs) state.doctors = JSON.parse(docs);
     if (asgn) state.assignments = JSON.parse(asgn);
+    if (plcs) state.places = JSON.parse(plcs);
+    if (slts) state.slots = JSON.parse(slts);
   } catch (e) { console.error(e); }
 }
 
@@ -449,11 +476,17 @@ function importFromRows(rows) {
 
     // Rileva il titolo della sezione → estrae la sede
     if (c0 === 'Struttura') {
-      const prev = rows[r - 1];
-      if (prev && prev[1]) {
-        const t = String(prev[1]);
-        if (t.includes('Monte') || t.includes('Savino')) currentPlace = 'M.S.Savino';
-        else if (t.includes('Subbiano')) currentPlace = 'Subbiano';
+      // Cerca il nome sede nella riga precedente o in quella stessa
+      const titleRow = rows[r - 1] || [];
+      const t = titleRow[1] ? String(titleRow[1]) : String(row[0] || '');
+      currentPlace = PLACES.find(p => {
+        const tLower = t.toLowerCase().replace(/[.\s]/g, '');
+        const pLower = p.toLowerCase().replace(/[.\s]/g, '');
+        return tLower.includes(pLower) || pLower.includes(tLower);
+      }) || null;
+      if (!currentPlace) {
+        if (/monte/i.test(t) || /savino/i.test(t)) currentPlace = 'M.S.Savino';
+        else if (/subbiano/i.test(t)) currentPlace = 'Subbiano';
       }
       continue;
     }
@@ -557,62 +590,44 @@ function exportExcel() {
   const DAY_SHORT = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
   const rows = [];
 
-  // Helper: find doctor name for a slot
   function getDocName(dateKey, slotKey, place) {
     const id = state.assignments[`${dateKey}_${slotKey}_${place}`];
-    if (!id) return 'SCOPERTO!';
+    if (!id) return '';
+    if (typeof id === 'string' && id.startsWith('__ext__::')) return id.replace('__ext__::', '');
     const doc = getDoctorById(id);
-    return doc ? doc.name.replace('Dott. ', '') : 'SCOPERTO!';
+    return doc ? cleanDoctorName(doc.name) : '';
   }
 
-  PLACES.forEach((place, pi) => {
-    const title = pi === 0 ? 'CdC Spoke Civitella in Valdichiana/Monte San Savino'
-                          : 'CdC Spoke Capolona/Castiglion Fibocchi/Subbiano';
-    rows.push([title]);
-    rows.push(['Struttura', 'Data', 'Giorno', 'Turno', 'Medico Assegnato']);
+  const headers = ['Data', 'Giorno'];
+  PLACES.forEach(place => {
+    SLOTS.forEach(slot => {
+      headers.push(`${place} ${slot.label}`);
+    });
+  });
+  rows.push(headers);
 
-    // Use full place name for the first column
-    const placeLabel = pi === 0 ? 'CdC Monte San Savino' : 'CdC Subbiano';
+  for (let day = 1; day <= lastDay; day++) {
+    const d = new Date(year, month, day);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    const dk = toDateKey(d);
+    const row = [`${day}/${month + 1}`, DAY_SHORT[d.getDay()]];
+    PLACES.forEach(place => {
+      SLOTS.forEach(slot => {
+        row.push(getDocName(dk, slot.key, place));
+      });
+    });
+    rows.push(row);
+  }
 
-    for (let day = 1; day <= lastDay; day++) {
-      const d = new Date(year, month, day);
-      if (d.getDay() === 0 || d.getDay() === 6) continue;
-      const dk = toDateKey(d);
-      const dayName = DAY_SHORT[d.getDay()];
-
-      rows.push([placeLabel, d, dayName, 'Mattina', getDocName(dk, 'mat', place)]);
-      rows.push([placeLabel, d, dayName, 'Pomeriggio', getDocName(dk, 'pom', place)]);
-    }
-    rows.push([]);
+  rows.push([]);
+  rows.push(['Medico', 'Ore residue mensili']);
+  state.doctors.forEach(doc => {
+    rows.push([cleanDoctorName(doc.name), Math.round(getRemainingMonthlyHours(doc, month, year))]);
   });
 
-  // Debt / pool summary tables
-  const primaries = state.doctors.filter(d => !d.isPool);
-  const pools = state.doctors.filter(d => d.isPool);
-
-  rows.push(['Medici con debito orario residuo', '', '', 'Medici in disponibilità aggiuntiva', '']);
-  rows.push(['Medico', 'ORE*', '', 'Medico ', 'ORE*']);
-
-  const maxRows = Math.max(primaries.length, pools.length);
-  for (let i = 0; i < maxRows; i++) {
-    const pd = i < primaries.length ? primaries[i] : null;
-    const pp = i < pools.length ? pools[i] : null;
-    rows.push([
-      pd ? pd.name.replace('Dott. ', '') : '',
-      pd ? Math.round(getRemainingMonthlyHours(pd, month, year)) : '',
-      '',
-      pp ? pp.name.replace('Dott. ', '') : '',
-      pp ? Math.round(getRemainingMonthlyHours(pp, month, year)) : '',
-    ]);
-  }
-  rows.push([]);
-  rows.push(['*ore mensili']);
-
-  // Build workbook and download
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  // Column widths
-  ws['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 22 }];
+  ws['!cols'] = [{ wch: 10 }, { wch: 8 }, ...PLACES.flatMap(() => [{ wch: 24 }, { wch: 24 }])];
   XLSX.utils.book_append_sheet(wb, ws, monthName);
   XLSX.writeFile(wb, `turni-ruap-${monthName.toLowerCase()}-${year}.xlsx`);
   toast('Excel scaricato', 'success');
@@ -643,8 +658,7 @@ function renderSidebar() {
     const color = getDoctorColor(doc);
     const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
     const debt = doc.weeklyHours || 38;
-    const pct = Math.min(100, Math.round((assigned / debt) * 100));
-    const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
+    const { pct, barColor } = getProgressBarData(assigned, debt);
     
     const card = document.createElement('div');
     card.className = `doctor-card rounded-xl border p-3 border-slate-200 bg-slate-50 cursor-pointer`;
@@ -657,8 +671,8 @@ function renderSidebar() {
           ${doc.preferredPlace ? '<span class="text-amber-500 text-xs ml-1">⭐</span>' : ''}
         </div>
         <div class="flex items-center gap-1">
-          <button class="text-slate-400 hover:text-brand-600 text-xs" onclick="event.stopPropagation(); openDoctorModal('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
-          <button class="text-slate-400 hover:text-red-500 text-xs ml-1" onclick="event.stopPropagation(); deleteDoctor('${doc.id}')"><i class="fa-solid fa-trash-can"></i></button>
+          <button class="text-slate-400 hover:text-brand-600 text-xs" onclick="event.stopPropagation(); openDoctorModal('${doc.id}')" aria-label="Modifica ${doc.name}"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="text-slate-400 hover:text-red-500 text-xs ml-1" onclick="event.stopPropagation(); deleteDoctor('${doc.id}')" aria-label="Elimina ${doc.name}"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       </div>
       <div class="flex items-baseline justify-between mb-1.5">
@@ -672,87 +686,6 @@ function renderSidebar() {
     docCardsSection.appendChild(card);
   });
   container.appendChild(docCardsSection);
-}
-
-function renderCalendar() {
-  const year = state.calYear;
-  const month = state.calMonth;
-  document.getElementById('cal-title').textContent = `${MONTHS_IT[month]} ${year}`;
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '';
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startDate = getWeekStart(firstDay);
-
-  let currentWeekStart = new Date(startDate);
-  const weeks = [];
-  while (true) {
-    if (currentWeekStart > lastDay) break;
-    weeks.push(new Date(currentWeekStart));
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  }
-
-  weeks.forEach(weekStart => {
-    const weekRow = document.createElement('div');
-    weekRow.className = 'grid grid-cols-5 gap-2';
-    for (let i = 0; i < 5; i++) {
-      const cellDate = new Date(weekStart);
-      cellDate.setDate(cellDate.getDate() + i);
-      const dateKey = toDateKey(cellDate);
-      const inMonth = cellDate.getMonth() === month;
-      const isToday = toDateKey(new Date()) === dateKey;
-
-      const cell = document.createElement('div');
-      cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
-      
-      cell.innerHTML = `
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-        </div>
-      `;
-
-      PLACES.forEach(place => {
-        const placeSection = document.createElement('div');
-        placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-        
-        const matKey = `${dateKey}_mat_${place}`;
-        const pomKey = `${dateKey}_pom_${place}`;
-        const matAssigned = !!state.assignments[matKey];
-        const pomAssigned = !!state.assignments[pomKey];
-        const bothAssigned = matAssigned && pomAssigned;
-        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
-        
-        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
-          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
-        </div>`;
-
-        SLOTS.forEach(slot => {
-          const slotKey = `${dateKey}_${slot.key}_${place}`;
-          const assignedId = state.assignments[slotKey];
-          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
-
-          const slotBtn = document.createElement('button');
-          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1 mb-0.5 text-xs font-medium border transition-all ' +
-            (assignedDoc ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
-          if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
-
-          slotBtn.innerHTML = assignedDoc
-            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
-
-          if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-          placeSection.appendChild(slotBtn);
-        });
-        cell.appendChild(placeSection);
-      });
-      weekRow.appendChild(cell);
-    }
-    grid.appendChild(weekRow);
-  });
 }
 
 // ====================================================
@@ -789,8 +722,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
       const color = getDoctorColor(doc);
       const isPref = doc.preferredPlace === place;
       const weeklyH = getWeeklyAssignedHours(doc.id, getWeekStart(new Date(dateKey + 'T00:00:00')));
-      const pct = Math.min(100, Math.round((weeklyH / (doc.weeklyHours || 24)) * 100));
-      const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
+      const { pct, barColor } = getProgressBarData(weeklyH, doc.weeklyHours || 24);
       const btn = document.createElement('button');
       btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-start gap-2 transition';
       btn.innerHTML = `
@@ -806,10 +738,34 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
           </div>
         </div>
       `;
-      btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll(); renderStats(); });
+      btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll();  });
       list.appendChild(btn);
     });
   }
+  // Popola sezione eccezioni (tutti i medici non nella lista disponibili)
+  const unavailSection = document.getElementById('assign-unavail-section');
+  const customSection = document.getElementById('assign-custom-section');
+  const exceptionBtn = document.getElementById('assign-exception-btn');
+  const unavailList = document.getElementById('assign-unavail-list');
+  unavailSection.classList.add('hidden');
+  customSection.classList.add('hidden');
+  const availIds = new Set(availDocs.map(d => d.id));
+  const unavailDocs = state.doctors.filter(doc => !availIds.has(doc.id));
+  unavailList.innerHTML = '';
+  unavailDocs.forEach(doc => {
+    const color = getDoctorColor(doc);
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
+    btn.innerHTML = `
+      <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
+      <span class="flex-1 font-medium text-xs">${doc.name}</span>
+      <span class="text-[10px] text-slate-400 italic">eccezione</span>
+    `;
+    btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll();  });
+    unavailList.appendChild(btn);
+  });
+  exceptionBtn.classList.remove('hidden');
+  document.getElementById('assign-custom-input').value = '';
   removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
   const rect = e.currentTarget.getBoundingClientRect();
   const spaceBelow = window.innerHeight - rect.bottom;
@@ -829,15 +785,43 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
 }
 
 document.getElementById('assign-remove').addEventListener('click', () => {
-  if (state.activeSlotKey) { pushHistory(); delete state.assignments[state.activeSlotKey]; saveToStorage(); closeAssignDropdown(); renderAll(); renderStats(); }
+  if (state.activeSlotKey) { pushHistory(); delete state.assignments[state.activeSlotKey]; saveToStorage(); closeAssignDropdown(); renderAll();  }
 });
 
 function closeAssignDropdown() {
   document.getElementById('assign-dropdown').classList.add('hidden');
+  document.getElementById('assign-unavail-section').classList.add('hidden');
+  document.getElementById('assign-custom-section').classList.add('hidden');
+  document.getElementById('assign-custom-input').value = '';
   state.activeSlotKey = null;
 }
 document.addEventListener('click', (e) => { if (!document.getElementById('assign-dropdown').contains(e.target)) closeAssignDropdown(); });
 document.getElementById('assign-close').addEventListener('click', closeAssignDropdown);
+
+// Apri/chiudi sezione eccezioni
+document.getElementById('assign-exception-btn').addEventListener('click', () => {
+  const section = document.getElementById('assign-unavail-section');
+  const custom = document.getElementById('assign-custom-section');
+  const isHidden = section.classList.contains('hidden');
+  section.classList.toggle('hidden');
+  custom.classList.toggle('hidden');
+});
+
+// Assegna nome personalizzato (eccezione)
+document.getElementById('assign-custom-add').addEventListener('click', () => {
+  const input = document.getElementById('assign-custom-input');
+  const name = input.value.trim();
+  if (!name || !state.activeSlotKey) return;
+  pushHistory();
+  state.assignments[state.activeSlotKey] = '__ext__::' + name;
+  saveToStorage();
+  closeAssignDropdown();
+  renderAll();
+  
+});
+document.getElementById('assign-custom-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('assign-custom-add').click();
+});
 
 // Modale Medico Logic (Simplified for brevity but fully functional)
 function openDoctorModal(doctorId = null) {
@@ -954,7 +938,10 @@ document.getElementById('btn-add-doctor').addEventListener('click', () => openDo
 document.getElementById('modal-close').addEventListener('click', closeDoctorModal);
 document.getElementById('modal-cancel').addEventListener('click', closeDoctorModal);
 document.getElementById('modal-save').addEventListener('click', () => {
-  const name = document.getElementById('modal-name').value;
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name) { toast('Inserisci il nome del medico', 'warning'); return; }
+  const duplicate = state.doctors.find(d => d.name.toLowerCase() === name.toLowerCase() && d.id !== state.editingDoctorId);
+  if (duplicate) { toast('Esiste già un medico con questo nome', 'warning'); return; }
   const patients = parseInt(document.getElementById('modal-patients').value) || 0;
   const weeklyHours = calculateDebtByPatients(patients);
   const colorBtn = document.querySelector('#color-picker button.border-slate-800');
@@ -1015,10 +1002,10 @@ function deleteDoctor(id) {
     toast(`${doc.name} rimosso`, 'info');
   };
   document.getElementById(`cancel-delete-${id}`).onclick = () => el.remove();
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
 }
 
 function resetAssignments() {
+  if (isProcessing) return;
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = 'toast-item pointer-events-auto bg-white border border-orange-200 rounded-xl shadow-lg px-4 py-3 text-sm flex items-center gap-3';
@@ -1035,7 +1022,6 @@ function resetAssignments() {
     toast('Tutti i turni resettati', 'success');
   };
   document.getElementById('cancel-reset-all').onclick = () => el.remove();
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
 }
 
 // Navigazione
@@ -1094,6 +1080,41 @@ function toggleCalendarView() {
   renderCalendar();
 }
 
+function getCoverageBadge(dateKey, place) {
+  const matKey = `${dateKey}_mat_${place}`;
+  const pomKey = `${dateKey}_pom_${place}`;
+  const matAssigned = !!state.assignments[matKey];
+  const pomAssigned = !!state.assignments[pomKey];
+  const bothAssigned = matAssigned && pomAssigned;
+  return {
+    coverageClass: bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700',
+    coverageIcon: bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○',
+  };
+}
+
+function createSlotButton(dateKey, place, slot, inMonth) {
+  const slotKey = `${dateKey}_${slot.key}_${place}`;
+  const assignedId = state.assignments[slotKey];
+  const isExt = assignedId && typeof assignedId === 'string' && assignedId.startsWith('__ext__::');
+  const assignedDoc = !isExt && assignedId ? getDoctorById(assignedId) : null;
+  const extName = isExt ? assignedId.replace('__ext__::', '') : null;
+  const color = assignedDoc ? getDoctorColor(assignedDoc) : (extName ? { hex: '#d97706' } : null);
+  const displayName = assignedDoc ? cleanDoctorName(assignedDoc.name) : extName;
+
+  const slotBtn = document.createElement('button');
+  slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
+    (displayName ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
+  if (color && displayName) slotBtn.style.backgroundColor = color.hex;
+
+  slotBtn.innerHTML = displayName
+    ? `<div class="truncate font-semibold text-xs">${displayName}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+    : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+  slotBtn.setAttribute('aria-label', displayName ? `${displayName} · ${place} · ${slot.label}` : `Assegna turno · ${place} · ${slot.label}`);
+
+  if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+  return slotBtn;
+}
+
 function renderCalendar() {
   if (state.calendarView === 'weekly') {
     renderCalendarWeek();
@@ -1144,40 +1165,13 @@ function renderCalendarWeek() {
       PLACES.forEach(place => {
         const placeSection = document.createElement('div');
         placeSection.className = 'mb-2 pb-2 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-        
-        const matKey = `${dateKey}_mat_${place}`;
-        const pomKey = `${dateKey}_pom_${place}`;
-        const matAssigned = !!state.assignments[matKey];
-        const pomAssigned = !!state.assignments[pomKey];
-        const bothAssigned = matAssigned && pomAssigned;
-        const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-        const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
-        
+        const badge = getCoverageBadge(dateKey, place);
         placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
           <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${place}</div>
-          <button onclick="copyWeek('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
-          <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+          <button onclick="copyDay('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
+          <span class="text-[10px] font-bold ${badge.coverageClass} px-1.5 py-0.5 rounded-full">${badge.coverageIcon}</span>
         </div>`;
-        
-        SLOTS.forEach(slot => {
-          const slotKey = `${dateKey}_${slot.key}_${place}`;
-          const assignedId = state.assignments[slotKey];
-          const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-          const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
-          
-          const slotBtn = document.createElement('button');
-          slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
-            (assignedDoc ? 'border-transparent text-white shadow-sm' : 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700');
-          if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
-          
-          slotBtn.innerHTML = assignedDoc
-            ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-            : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
-          
-          slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-          placeSection.appendChild(slotBtn);
-        });
-        
+        SLOTS.forEach(slot => placeSection.appendChild(createSlotButton(dateKey, place, slot, true)));
         cell.appendChild(placeSection);
       });
     }
@@ -1240,38 +1234,12 @@ function renderCalendarMonth() {
         PLACES.forEach(place => {
           const placeSection = document.createElement('div');
           placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-          
-          const matKey = `${dateKey}_mat_${place}`;
-          const pomKey = `${dateKey}_pom_${place}`;
-          const matAssigned = !!state.assignments[matKey];
-          const pomAssigned = !!state.assignments[pomKey];
-          const bothAssigned = matAssigned && pomAssigned;
-          const coverageClass = bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-          const coverageIcon = bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○';
-          
+          const badge = getCoverageBadge(dateKey, place);
           placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
-            <span class="text-[10px] font-bold ${coverageClass} px-1.5 py-0.5 rounded-full">${coverageIcon}</span>
+            <span class="text-[10px] font-bold ${badge.coverageClass} px-1.5 py-0.5 rounded-full">${badge.coverageIcon}</span>
           </div>`;
-
-          SLOTS.forEach(slot => {
-            const slotKey = `${dateKey}_${slot.key}_${place}`;
-            const assignedId = state.assignments[slotKey];
-            const assignedDoc = assignedId ? getDoctorById(assignedId) : null;
-            const color = assignedDoc ? getDoctorColor(assignedDoc) : null;
-
-            const slotBtn = document.createElement('button');
-            slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1 mb-0.5 text-xs font-medium border transition-all ' +
-              (assignedDoc ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
-            if (assignedDoc && color) slotBtn.style.backgroundColor = color.hex;
-
-            slotBtn.innerHTML = assignedDoc
-              ? `<div class="truncate font-semibold text-xs">${cleanDoctorName(assignedDoc.name)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-              : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
-
-            if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-            placeSection.appendChild(slotBtn);
-          });
+          SLOTS.forEach(slot => placeSection.appendChild(createSlotButton(dateKey, place, slot, inMonth)));
           cell.appendChild(placeSection);
         });
       }
@@ -1285,11 +1253,13 @@ function renderCalendarMonth() {
 // AUTO-ASSIGN LOCALE (no API required)
 // ====================================================
 function runAutoAssignForMonth(year, month) {
+  if (isProcessing) return;
   if (state.doctors.length === 0) {
     toast('Aggiungi prima dei medici', 'warning');
     return;
   }
 
+  isProcessing = true;
   pushHistory();
   const monthName = MONTHS_IT[month];
   const lastDay = new Date(year, month + 1, 0).getDate();
@@ -1309,6 +1279,7 @@ function runAutoAssignForMonth(year, month) {
   }
 
   if (slotsToProcess.length === 0) {
+    isProcessing = false;
     toast(`Nessun turno vuoto in ${monthName}`, 'info');
     return;
   }
@@ -1343,6 +1314,8 @@ function runAutoAssignForMonth(year, month) {
       const { dateKey, slotKey, cellDate } = slotsToProcess[i];
       const parts = slotKey.split('_');
       const slotKeyOnly = parts[1];
+      const slotDef = SLOTS.find(s => s.key === slotKeyOnly);
+      const slotHours = slotDef ? slotDef.hours : 6;
       const place = parts.slice(2).join('_');
 
       // Constraint: not already assigned to same date+slot at another place
@@ -1393,7 +1366,7 @@ function runAutoAssignForMonth(year, month) {
       if (!chosen) continue;
 
       state.assignments[slotKey] = chosen.id;
-      assignedInTarget[chosen.id] = (assignedInTarget[chosen.id] || 0) + 6;
+      assignedInTarget[chosen.id] = (assignedInTarget[chosen.id] || 0) + slotHours;
       count++;
     }
 
@@ -1411,6 +1384,7 @@ function runAutoAssignForMonth(year, month) {
         toast(`Nessun turno da generare in ${monthName}`, 'info');
         return;
       }
+      isProcessing = false;
       saveToStorage();
       renderAll();
       renderMonthlyStats();
@@ -1423,6 +1397,7 @@ function runAutoAssignForMonth(year, month) {
 }
 
 function autoAssign() {
+  if (isProcessing) return;
   runAutoAssignForMonth(state.calYear, state.calMonth);
 }
 
@@ -1430,6 +1405,7 @@ function autoAssign() {
 // GENERA MESE SUCCESSIVO
 // ====================================================
 function generateNextMonth() {
+  if (isProcessing) return;
   const nextMonth = state.calMonth === 11 ? 0 : state.calMonth + 1;
   const nextYear = state.calMonth === 11 ? state.calYear + 1 : state.calYear;
   runAutoAssignForMonth(nextYear, nextMonth);
@@ -1446,84 +1422,104 @@ function buildPdfContent() {
   const year = state.calYear;
   const month = state.calMonth;
   const monthName = MONTHS_IT[month];
-
-  document.getElementById('pdf-subtitle').textContent = `${monthName} ${year} — Sedi: ${PLACES.join(', ')}`;
-  document.getElementById('pdf-footer').textContent = `Generato il ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })} — RUAP Attività Diurne`;
-
-  const table = document.getElementById('pdf-table');
-  table.innerHTML = '';
   const doctorMap = Object.fromEntries(state.doctors.map(d => [d.id, d]));
+  const dayNames = ['Luned\u00EC', 'Marted\u00EC', 'Mercoled\u00EC', 'Gioved\u00EC', 'Venerd\u00EC'];
 
-  PLACES.forEach(place => {
-    const section = document.createElement('div');
-    section.style.cssText = 'margin-bottom: 24px;';
+  document.getElementById('pdf-subtitle').textContent = `${monthName} ${year} \u2014 Sedi: ${PLACES.join(', ')}`;
+  document.getElementById('pdf-footer').textContent = `Generato il ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })} \u2014 RUAP Attivit\u00E0 Diurne`;
 
-    const placeTitle = document.createElement('h2');
-    placeTitle.style.cssText = 'font-size: 15px; font-weight: bold; color: #1e40af; margin: 0 0 8px; padding: 6px 10px; background: #eff6ff; border-radius: 6px;';
-    placeTitle.textContent = place;
-    section.appendChild(placeTitle);
+  const container = document.getElementById('pdf-table');
+  container.innerHTML = '';
 
-    const t = document.createElement('table');
-    t.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 13px;';
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = getWeekStart(firstDay);
 
-    // Header row
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    headerRow.style.cssText = 'background: #1e40af; color: white;';
-    ['Data', 'Giorno', ...SLOTS.map(s => s.label)].forEach(h => {
-      const th = document.createElement('th');
-      th.style.cssText = 'padding: 8px 12px; text-align: left; font-weight: bold;';
-      th.textContent = h;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    t.appendChild(thead);
+  const table = document.createElement('table');
+  table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed;';
 
-    // Data rows (weekdays only)
-    const tbody = document.createElement('tbody');
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    for (let day = 1; day <= lastDay; day++) {
-      const d = new Date(year, month, day);
-      const jsDay = d.getDay();
-      if (jsDay === 0 || jsDay === 6) continue;
-
-      const dateKey = toDateKey(d);
-      const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-      const isToday = dateKey === toDateKey(new Date());
-
-      const tr = document.createElement('tr');
-      tr.style.cssText = `border-bottom: 1px solid #e2e8f0; ${isToday ? 'background: #eff6ff;' : day % 2 === 0 ? 'background: #f8fafc;' : ''}`;
-
-      const tdDate = document.createElement('td');
-      tdDate.style.cssText = 'padding: 5px 8px; font-weight: bold; color: #1e40af;';
-      tdDate.textContent = `${day}/${month + 1}`;
-      tr.appendChild(tdDate);
-
-      const tdDay = document.createElement('td');
-      tdDay.style.cssText = 'padding: 5px 8px; color: #64748b;';
-      tdDay.textContent = dayNames[jsDay];
-      tr.appendChild(tdDay);
-
-      SLOTS.forEach(slot => {
-        const key = `${dateKey}_${slot.key}_${place}`;
-        const doc = state.assignments[key] ? doctorMap[state.assignments[key]] : null;
-        const td = document.createElement('td');
-        td.style.cssText = 'padding: 8px 12px; overflow-wrap: break-word; word-break: break-word;';
-        if (doc) {
-          const color = getDoctorColor(doc);
-          td.innerHTML = `<span style="background:${color.hex}; color:white; padding: 4px 12px; border-radius: 4px; font-weight:bold; display: inline-block; white-space: normal;">${cleanDoctorName(doc.name)}</span>`;
-        } else {
-          td.innerHTML = '<span style="color: #cbd5e1;">—</span>';
-        }
-        tr.appendChild(td);
-      });
-
-      tbody.appendChild(tr);
-    }
-    t.appendChild(tbody);
-    section.appendChild(t);
-    table.appendChild(section);
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  dayNames.forEach(name => {
+    const th = document.createElement('th');
+    th.style.cssText = 'padding: 5px 6px; background: #1e40af; color: white; font-weight: bold; text-align: center; font-size: 10px;';
+    th.textContent = name;
+    headerRow.appendChild(th);
   });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  let currentWeekStart = new Date(startDate);
+
+  while (true) {
+    if (currentWeekStart > lastDay) break;
+
+    const tr = document.createElement('tr');
+
+    for (let i = 0; i < 5; i++) {
+      const cellDate = new Date(currentWeekStart);
+      cellDate.setDate(cellDate.getDate() + i);
+      const dateKey = toDateKey(cellDate);
+      const inMonth = cellDate.getMonth() === month;
+      const isHoliday = isItalianHoliday(cellDate);
+
+      const td = document.createElement('td');
+      let bg = inMonth ? '#ffffff' : '#f8fafc';
+      if (isHoliday) bg = '#fef2f2';
+      td.style.cssText = `padding: 4px 5px; border: 1px solid #e2e8f0; vertical-align: top; background: ${bg};${inMonth ? '' : ' color: #cbd5e1;'}`;
+
+      if (inMonth) {
+        const dayDiv = document.createElement('div');
+        dayDiv.style.cssText = 'font-weight: bold; font-size: 11px; color: #1e40af; margin-bottom: 3px;';
+        dayDiv.textContent = cellDate.getDate();
+        td.appendChild(dayDiv);
+
+        if (isHoliday) {
+          const holDiv = document.createElement('div');
+          holDiv.style.cssText = 'font-size: 8px; color: #dc2626; font-weight: bold; text-transform: uppercase;';
+          holDiv.textContent = 'CHIUSO';
+          td.appendChild(holDiv);
+        } else {
+          PLACES.forEach((place, pi) => {
+            const placeDiv = document.createElement('div');
+            placeDiv.style.cssText = `margin-bottom: 2px;${pi > 0 ? ' margin-top: 3px; padding-top: 3px; border-top: 1px dashed #e2e8f0;' : ''}`;
+
+            const pName = document.createElement('div');
+            pName.style.cssText = 'font-weight: bold; color: #64748b; font-size: 7px; text-transform: uppercase; margin-bottom: 1px;';
+            pName.textContent = place;
+            placeDiv.appendChild(pName);
+
+            SLOTS.forEach(slot => {
+              const key = `${dateKey}_${slot.key}_${place}`;
+              const docId = state.assignments[key];
+              const doc = docId ? doctorMap[docId] : null;
+              const sDiv = document.createElement('div');
+              sDiv.style.cssText = 'padding: 1px 3px; border-radius: 2px; font-size: 8px; margin-bottom: 1px;';
+
+              if (doc) {
+                const color = getDoctorColor(doc);
+                sDiv.style.cssText += `background: ${color.hex}; color: white; font-weight: bold;`;
+                sDiv.textContent = `${slot.key === 'mat' ? 'M' : 'P'}: ${cleanDoctorName(doc.name)}`;
+              } else {
+                sDiv.style.cssText += 'color: #cbd5e1;';
+                sDiv.textContent = `${slot.key === 'mat' ? 'M' : 'P'}: \u2014`;
+              }
+              placeDiv.appendChild(sDiv);
+            });
+            td.appendChild(placeDiv);
+          });
+        }
+      }
+      tr.appendChild(td);
+    }
+
+    tbody.appendChild(tr);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 async function exportPDF() {
@@ -1532,33 +1528,16 @@ async function exportPDF() {
   el.classList.remove('hidden');
 
   try {
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const usableW = pageW - 2 * margin;
-    const usableH = pageH - 2 * margin;
-    const imgW = canvas.width;
-    const imgH = canvas.height;
-    const scaleRatio = usableW / imgW;
-    const totalRenderH = imgH * scaleRatio;
-    const pagesNeeded = Math.ceil(totalRenderH / usableH);
-
-    for (let p = 0; p < pagesNeeded; p++) {
-      const startY = p * usableH / scaleRatio;
-      const pageRenderH = Math.min(usableH, totalRenderH - p * usableH);
-      const chunkImgH = pageRenderH / scaleRatio;
-      const chunkCanvas = document.createElement('canvas');
-      chunkCanvas.width = imgW;
-      chunkCanvas.height = Math.ceil(chunkImgH);
-      const ctx = chunkCanvas.getContext('2d');
-      ctx.drawImage(canvas, 0, startY, imgW, chunkImgH, 0, 0, imgW, chunkImgH);
-      if (p > 0) pdf.addPage('a4', 'landscape');
-      pdf.addImage(chunkCanvas.toDataURL('image/png'), 'PNG', margin, margin, usableW, pageRenderH);
-    }
-
+    const margin = 8;
+    const maxW = pageW - 2 * margin;
+    const maxH = pageH - 2 * margin;
+    const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, canvas.width * ratio, canvas.height * ratio);
     pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
     toast('PDF scaricato', 'success');
   } catch (err) {
@@ -1569,103 +1548,7 @@ async function exportPDF() {
   }
 }
 
-// ====================================================
-// GEMINI AI INTEGRATION
-// ====================================================
-
-async function callGeminiToAssign() {
-  if (state.doctors.length === 0) {
-    toast('Aggiungi prima dei medici', 'warning');
-    return;
-  }
-
-  pushHistory();
-  const year = state.calYear;
-  const month = state.calMonth;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  
-  const emptySlots = [];
-  for (let day = 1; day <= lastDay; day++) {
-    const cellDate = new Date(year, month, day);
-    const jsDay = cellDate.getDay();
-    if (jsDay === 0 || jsDay === 6) continue;
-    const dateKey = toDateKey(cellDate);
-    
-    PLACES.forEach(place => {
-      SLOTS.forEach(slot => {
-        const slotKey = `${dateKey}_${slot.key}_${place}`;
-        if (!state.assignments[slotKey]) emptySlots.push(slotKey);
-      });
-    });
-  }
-
-  if (emptySlots.length === 0) {
-    toast('Nessun turno vuoto da assegnare', 'info');
-    return;
-  }
-
-  document.getElementById('gemini-loading').classList.remove('hidden');
-  const loadingText = document.getElementById('gemini-loading-text');
-  if (loadingText) loadingText.textContent = `Invio richiesta a Gemini AI...`;
-
-  const promptData = {
-    task: "Assign doctors to the empty hospital shifts.",
-    rules: "Do not assign the same doctor to two different places on the same day and time slot. Respect the weeklyHours limit (6 hours per shift). Return a JSON object where the key is the shift string and the value is the doctor ID. Output ONLY valid JSON, no markdown formatting.",
-    doctors: state.doctors.map(d => ({ id: d.id, name: d.name, maxWeeklyHours: d.weeklyHours })),
-    emptyShiftsToFill: emptySlots,
-    alreadyAssignedShifts: state.assignments
-  };
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: JSON.stringify(promptData) }] }],
-        generationConfig: { 
-          response_mime_type: "application/json",
-          temperature: 0.2
-        } 
-      })
-    });
-
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
-
-    const generatedJsonText = data.candidates[0].content.parts[0].text;
-    if (loadingText) loadingText.textContent = `Elaborazione della risposta...`;
-    const newAssignments = JSON.parse(generatedJsonText);
-
-    let count = 0;
-    for (const [key, doctorId] of Object.entries(newAssignments)) {
-      if (emptySlots.includes(key)) {
-        state.assignments[key] = doctorId;
-        count++;
-      }
-    }
-
-    if (loadingText) loadingText.textContent = `Applicazione delle assegnazioni...`;
-    saveToStorage();
-    renderAll();
-    renderStats();
-    updateConflictsHeaderBadge();
-    toast(`Assegnati ${count} turni automaticamente`, 'success');
-
-  } catch (err) {
-    console.error(err);
-    toast('Errore AI: ' + err.message, 'error');
-  } finally {
-    // Hide loading overlay
-    document.getElementById('gemini-loading').classList.add('hidden');
-  }
-}
-
 // Event listeners (defensive checks for optional buttons)
-const btnGemini = document.getElementById('btn-gemini-assign');
-if (btnGemini) btnGemini.addEventListener('click', callGeminiToAssign);
 const btnAutoAssign = document.getElementById('btn-auto-assign');
 if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
 const btnGeneraMese = document.getElementById('btn-genera-mese');
@@ -1728,10 +1611,6 @@ if (btnOggi) {
 function closeInstructions() {
   const modal = document.getElementById('instructions-modal');
   if (modal) modal.classList.add('hidden');
-}
-
-function closeSettingsModal() {
-  // No settings modal in RUAP, just a placeholder
 }
 
 // Close conflict modal function
@@ -1813,7 +1692,7 @@ function removeAssignmentFromConflict(slotKey) {
   delete state.assignments[slotKey];
   saveToStorage();
   renderAll();
-  renderStats();
+  
   openConflictsModal();
 }
 
@@ -1837,7 +1716,7 @@ function autoResolveAllConflicts() {
   }
   saveToStorage();
   renderAll();
-  renderStats();
+  
   openConflictsModal();
   toast(`Risolti ${conflicts.length} conflitti automaticamente`, 'success');
 }
@@ -1903,6 +1782,7 @@ document.addEventListener('keydown', (e) => {
     if (konamiIndex === konamiCode.length) {
       toast('🎉 Sei un vero utente RUAP!', 'success');
       document.body.style.animation = 'rainbow 2s';
+      setTimeout(() => { document.body.style.animation = ''; }, 2000);
       konamiIndex = 0;
     }
   } else {
@@ -1940,30 +1820,26 @@ function getMonthlyStats() {
   return { totalSlots, filledSlots, emptySlots: totalSlots - filledSlots, coverage: totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0, doctorHours };
 }
 
-function renderStats() {
+// ─── Monthly stats panel + coverage badge ────────────────
+function renderMonthlyStats() {
+  const panel = document.getElementById('monthly-stats-panel');
   const stats = getMonthlyStats();
+
   document.getElementById('total-doctors').textContent = state.doctors.length;
   document.getElementById('total-hours').textContent = Object.values(stats.doctorHours).reduce((a, b) => a + b, 0);
-  
+
   const coverageEl = document.getElementById('coverage-badge');
   if (coverageEl) {
     coverageEl.textContent = `${stats.coverage}%`;
     coverageEl.className = `text-xs font-bold px-2 py-0.5 rounded-full ${stats.coverage === 100 ? 'bg-green-100 text-green-700' : stats.coverage >= 70 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`;
   }
-}
 
-// ─── Monthly stats panel ────────────────────────────────
-function renderMonthlyStats() {
-  const panel = document.getElementById('monthly-stats-panel');
-  if (!panel || panel.classList.contains('hidden')) return;
-
-  const year = state.calYear;
-  const month = state.calMonth;
+  if (!panel) return;
   const ordered = [...state.doctors].sort((a, b) => (b.isPool ? 1 : 0) - (a.isPool ? 1 : 0));
 
   panel.innerHTML = ordered.map(doc => {
     const budget = getMonthlyBudget(doc);
-    const used = getAssignedHoursInMonth(doc.id, month, year);
+    const used = stats.doctorHours[doc.id] || 0;
     const rem = Math.max(0, budget - used);
     const pct = budget > 0 ? Math.round((used / budget) * 100) : 0;
     const color = getDoctorColor(doc);
@@ -2036,6 +1912,21 @@ function pasteWeekToCurrentView() {
   pasteWeek(weekStart);
 }
 
+function copyDay(dateKey) {
+  if (!dateKey) return;
+  copyWeekSource = { weekStart: null, assignments: {} };
+  PLACES.forEach(place => {
+    SLOTS.forEach(slot => {
+      const key = `${dateKey}_${slot.key}_${place}`;
+      if (state.assignments[key]) {
+        copyWeekSource.assignments[key] = state.assignments[key];
+      }
+    });
+  });
+  const d = new Date(dateKey + 'T00:00:00');
+  toast(`Giorno del ${d.toLocaleDateString('it-IT')} copiato (${Object.keys(copyWeekSource.assignments).length} turni)`, 'success');
+}
+
 function copyWeek(weekStart) {
   const startDate = weekStart instanceof Date ? weekStart : new Date(weekStart + 'T00:00:00');
   copyWeekSource = { weekStart: startDate, assignments: {} };
@@ -2079,31 +1970,13 @@ function pasteWeek(weekStart) {
   }
   saveToStorage();
   renderAll();
-  renderStats();
+  
   toast(`${count} turni incollati`, 'success');
-}
-
-// ====================================================
-// SWAP MEDICI
-// ====================================================
-function swapDoctorsInSlot(slotKey1, slotKey2) {
-  pushHistory();
-  const temp = state.assignments[slotKey1];
-  state.assignments[slotKey1] = state.assignments[slotKey2];
-  state.assignments[slotKey2] = temp;
-  saveToStorage();
-  renderAll();
-  toast('Turni scambiati', 'success');
 }
 
 // ====================================================
 // CONFLICT DETECTION
 // ====================================================
-function hasConflict(docId, dateKey, slotKey) {
-  const prefix = `${dateKey}_${slotKey}_`;
-  return Object.entries(state.assignments).some(([k, v]) => v === docId && k.startsWith(prefix));
-}
-
 function getConflicts() {
   const conflictsMap = {};
   for (const [key, docId] of Object.entries(state.assignments)) {
@@ -2142,7 +2015,7 @@ let wSlots = [];
 let wDoctors = [];
 
 function startWizard() {
-  wPlaces = [];
+  wPlaces = [...PLACES];
   wSlots = [{ key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' }, { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' }];
   wDoctors = [];
   wizardStep = 1;
@@ -2155,12 +2028,13 @@ function restartWizard() {
   localStorage.removeItem(STORAGE_DOCTORS);
   localStorage.removeItem(STORAGE_ASSIGNMENTS);
   localStorage.removeItem(STORAGE_HISTORY);
+  localStorage.removeItem(STORAGE_PLACES);
   state.doctors = [];
-  state.assignments = [];
+  state.assignments = {};
+  state.places = [];
   historyStack = [];
   historyIndex = -1;
   document.getElementById('demo-banner').classList.add('hidden');
-  closeSettingsModal();
   startWizard();
 }
 
@@ -2221,14 +2095,18 @@ function wizardAdvance() {
 function finishWizard() {
   state.doctors = wDoctors;
   state.assignments = {};
+  state.places = [...wPlaces];
+  state.slots = wSlots.map(s => ({ ...s }));
   historyStack = [];
   historyIndex = -1;
   document.getElementById('ruap-wizard').classList.add('hidden');
+  reloadPlaces();
+  reloadSlots();
   saveToStorage();
   pushHistory();
   renderAll();
-  renderStats();
   updateUndoRedoButtons();
+  updateHeaderSubtitle();
   toast('Configurazione completata!', 'success');
 }
 
@@ -2396,7 +2274,7 @@ function renderWizardStep4() {
     <button id="w-doctor-add" class="wizard-big-btn outline w-full mb-3" style="padding:0.75rem; font-size:1rem">+ Aggiungi medico</button>
     <div id="w-doctor-list" class="flex flex-wrap gap-2 mb-4">
       ${wDoctors.map((d, i) => `
-        <span class="wizard-chip" style="background:${COLOR_PALETTE[i % 8].hex}; color:white">
+        <span class="wizard-chip" style="background:${COLOR_PALETTE[i % COLOR_PALETTE.length].hex}; color:white">
           ${d.name}
           <button class="chip-remove w-remove-doctor" data-index="${i}">×</button>
         </span>
@@ -2442,6 +2320,8 @@ function init() {
     localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_VERSION));
   }
   loadFromStorage();
+  reloadPlaces();
+  reloadSlots();
   loadHistory();
   const isFirstRun = state.doctors.length === 0;
   if (isFirstRun) {
@@ -2449,6 +2329,7 @@ function init() {
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
     state.doctors = getDefaultDoctors();
+    if (typeof CONFIG !== 'undefined' && CONFIG.places) state.places = [...CONFIG.places];
     if (typeof CONFIG !== 'undefined' && CONFIG.assignments) {
       Object.entries(CONFIG.assignments).forEach(([key, docId]) => {
         if (state.doctors.some(d => d.id === docId)) state.assignments[key] = docId;
@@ -2461,10 +2342,11 @@ function init() {
   }
   updateGeneraButtonLabel();
   renderAll();
-  renderStats();
+  
   renderMonthlyStats();
   updateUndoRedoButtons();
   updateConflictsHeaderBadge();
+  updateHeaderSubtitle();
 }
 
 function loadHistory() {

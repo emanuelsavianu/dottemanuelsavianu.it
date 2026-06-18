@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v173: RUAP storage version check to force reseed from config.js
-const CACHE_NAME = 'savianu-v173';
+// Cache version bumped to v177: RUAP review fixes 1-12 (wizard slots, copyDay, renderStats merge, duplicate validation, processing guard, dead code removal, ARIA, print styles)
+const CACHE_NAME = 'savianu-v177';
 const urlsToCache = [
   '/',
   '/index.html',
