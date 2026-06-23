@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v181: RUAP refactor + PDF cell padding fix (RUAP/app.js, RUAP/CLAUDE.md)
-const CACHE_NAME = 'savianu-v181';
+// Cache version bumped to v182: fix missing month/week nav listeners (RUAP/app.js)
+const CACHE_NAME = 'savianu-v182';
 const urlsToCache = [
   '/',
   '/index.html',
