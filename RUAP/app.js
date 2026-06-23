@@ -1180,8 +1180,8 @@ function buildPdfContent() {
       if (d.getDay() === 0 || d.getDay() === 6) continue;
       const dk = toDateKey(d);
       html += `<tr>
-        <td style="padding:3px 6px;border:1px solid #ddd">${day}/${month + 1}</td>
-        <td style="padding:3px 6px;border:1px solid #ddd">${DAY_SHORT[d.getDay()]}</td>`;
+        <td style="padding:5px 6px;border:1px solid #ddd">${day}/${month + 1}</td>
+        <td style="padding:5px 6px;border:1px solid #ddd">${DAY_SHORT[d.getDay()]}</td>`;
       SLOTS.forEach(slot => {
         const id = state.assignments[`${dk}_${slot.key}_${place}`];
         let name = '';
@@ -1193,7 +1193,7 @@ function buildPdfContent() {
             if (doc) name = cleanDoctorName(doc.name);
           }
         }
-        html += `<td style="padding:3px 6px;border:1px solid #ddd;${name ? 'background:#f0f9ff' : ''}">${name || ''}</td>`;
+        html += `<td style="padding:5px 6px;border:1px solid #ddd;${name ? 'background:#f0f9ff' : ''}">${name || ''}</td>`;
       });
       html += `</tr>`;
     }
