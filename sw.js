@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v180: print bilancio on page 2, revert aside from print (RUAP/index.html, RUAP/app.js)
-const CACHE_NAME = 'savianu-v180';
+// Cache version bumped to v181: RUAP refactor — bug fixes, helper extraction, long function splits, section reorg (RUAP/app.js, RUAP/CLAUDE.md)
+const CACHE_NAME = 'savianu-v181';
 const urlsToCache = [
   '/',
   '/index.html',

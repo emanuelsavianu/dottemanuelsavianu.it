@@ -15,7 +15,7 @@ cd RUAP && npx serve .
 
 - **config.js** — 16 doctors (10 primary + 6 pool), 2 places, 2 shift slots. Loaded before app.js.
 - **index.html** — Tailwind CDN, FontAwesome, jsPDF, html2canvas, **xlsx (SheetJS)** for Excel
-- **app.js** (~2400 lines) — All logic. Read with offset/limit.
+- **app.js** (~2110 lines, refactored Jun 2026) — All logic. Read with offset/limit. Refactored: bug fixes, extracted helpers (`assignDoctor`, `removeAssignment`, `sumSlotHours`, `el`), split long functions (importFromRows, runAutoAssignForMonth, buildPdfContent, openAssignDropdown, renderCalendarWeek/Month), 18 section banners, reorganized into 19 logical sections within single file. See section headers for navigation.
 - **localStorage** — keys: `ruap-turni-medici`, `ruap-turni-assegnazioni`, `ruap-turni-history`, `ruap-dark-mode`
 
 ## Data Schema

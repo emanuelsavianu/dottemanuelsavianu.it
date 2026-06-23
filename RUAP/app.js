@@ -1,5 +1,5 @@
 // ====================================================
-// COSTANTI E CONFIGURAZIONE
+// 1. COSTANTI E CONFIGURAZIONE
 // ====================================================
 const STORAGE_DOCTORS = 'ruap-turni-medici';
 const STORAGE_ASSIGNMENTS = 'ruap-turni-assegnazioni';
@@ -7,14 +7,15 @@ const STORAGE_HISTORY = 'ruap-turni-history';
 const STORAGE_VERSION_KEY = 'ruap-storage-version';
 const STORAGE_PLACES = 'ruap-places';
 const STORAGE_SLOTS = 'ruap-slots';
+const STORAGE_DARK_MODE = 'ruap-dark-mode';
 const STORAGE_VERSION = 2;
 const HISTORY_MAX = 50;
 
 const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 const DAY_KEYS  = ['lun', 'mar', 'mer', 'gio', 'ven'];
-// Read from config.js if available, fall back to hardcoded defaults
+
 let PLACES = (typeof CONFIG !== 'undefined' && CONFIG.places) ? [...CONFIG.places] : ['M.S.Savino', 'Subbiano'];
-const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
+let SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
   { key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' },
   { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' },
 ];
@@ -22,6 +23,12 @@ const SLOTS = (typeof CONFIG !== 'undefined' && CONFIG.slots) ? CONFIG.slots : [
 const DROPDOWN_HEIGHT = 350;
 const DROPDOWN_WIDTH  = 320;
 const MONTHLY_WEEKS = 4;
+
+const EXTERNAL_PREFIX = '__ext__::';
+const MS_PER_DAY = 86400 * 1000;
+const EXCEL_EPOCH_OFFSET = 25569;
+
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 const COLOR_PALETTE = [
   { bg: 'bg-blue-500',   text: 'text-white', hex: '#3b82f6',  label: 'Blu' },
@@ -42,6 +49,9 @@ const COLOR_PALETTE = [
   { bg: 'bg-rose-700',   text: 'text-white', hex: '#be123c',  label: 'Rosso' },
 ];
 
+// ====================================================
+// 2. STATE & HISTORY
+// ====================================================
 let state = {
   doctors: [],
   assignments: {},
@@ -60,134 +70,77 @@ let historyStack = [];
 let historyIndex = -1;
 let isProcessing = false;
 
-function getDefaultDoctors() {
-  if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
-  return CONFIG.doctors.map(d => ({
-    ...d,
-    availability: d.availability ? JSON.parse(JSON.stringify(d.availability)) : Object.fromEntries(
-      ['lun','mar','mer','gio','ven'].map(k => [k, { mat: true, pom: true }])
-    ),
-    unavailPeriods: d.unavailPeriods ? JSON.parse(JSON.stringify(d.unavailPeriods)) : [],
-  }));
+// ====================================================
+// 3. DOMAIN HELPERS (pure — no DOM access)
+// ====================================================
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-// ====================================================
-// UTILITY FUNCTIONS
-// ====================================================
-function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-function cleanDoctorName(name) { return name.replace('Dott. ', ''); }
+function cleanDoctorName(name) {
+  return name.replace(/^Dott\.\s*/i, '');
+}
 
 function excelDateToDate(excelDate) {
-  if (!excelDate) return null;
-  if (excelDate instanceof Date) return excelDate;
   if (typeof excelDate === 'number') {
-    return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+    const utcDays = excelDate - EXCEL_EPOCH_OFFSET;
+    const utcValue = utcDays * MS_PER_DAY;
+    return new Date(utcValue);
   }
   if (typeof excelDate === 'string') {
-    const d = new Date(excelDate);
-    if (!isNaN(d.getTime())) return d;
-    const parts = excelDate.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-    if (parts) {
-      return new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+    if (/^\d{4}-\d{2}-\d{2}/.test(excelDate)) return new Date(excelDate + 'T00:00:00');
+    if (/\//.test(excelDate)) {
+      const parts = excelDate.split('/');
+      if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
     }
+    return new Date(excelDate);
   }
+  if (excelDate instanceof Date && !isNaN(excelDate)) return excelDate;
   return null;
 }
 
 function getEasterDate(year) {
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const L = (32 + 2 * e + 2 * i - h - k) % 7;
-  const m = Math.floor((a + 11 * h + 22 * L) / 451);
-  const month = Math.floor((h + L - 7 * m + 114) / 31);
-  const day = ((h + L - 7 * m + 114) % 31) + 1;
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
   return new Date(year, month - 1, day);
 }
 
 function getEasterMondayDate(year) {
   const easter = getEasterDate(year);
-  const easterMonday = new Date(easter);
-  easterMonday.setDate(easter.getDate() + 1);
-  return easterMonday;
+  return new Date(easter.getTime() + MS_PER_DAY);
 }
 
 function isItalianHoliday(date) {
-  const d = date.getDate();
-  const m = date.getMonth();
-  const y = date.getFullYear();
-
-  if (d === 1 && m === 0) return true;
-  if (d === 6 && m === 0) return true;
-  if (d === 25 && m === 3) return true;
-  if (d === 1 && m === 4) return true;
-  if (d === 2 && m === 5) return true;
-  if (d === 15 && m === 7) return true;
-  if (d === 1 && m === 10) return true;
-  if (d === 8 && m === 11) return true;
-  if (d === 25 && m === 11) return true;
-  if (d === 26 && m === 11) return true;
-
-  const pasquetta = getEasterMondayDate(y);
-  if (d === pasquetta.getDate() && m === pasquetta.getMonth()) return true;
-
+  const d = date.getDate(), m = date.getMonth(), y = date.getFullYear();
+  if (m === 0 && d === 1) return true;
+  if (m === 0 && d === 6) return true;
+  if (m === 3 && d === 25) return true;
+  if (m === 4 && d === 1) return true;
+  if (m === 5 && d === 2) return true;
+  if (m === 5 && d === 24) return true;
+  if (m === 7 && d === 15) return true;
+  if (m === 10 && d === 1) return true;
+  if (m === 11 && d === 8) return true;
+  if (m === 11 && d === 25) return true;
+  if (m === 11 && d === 26) return true;
+  const easter = getEasterDate(y);
+  const easterMon = getEasterMondayDate(y);
+  if (date.getTime() === easter.getTime()) return true;
+  if (date.getTime() === easterMon.getTime()) return true;
   return false;
-}
-
-function undo() {
-  if (isProcessing) return;
-  if (historyIndex > 0) {
-    historyIndex--;
-    const snapshot = JSON.parse(historyStack[historyIndex]);
-    state.assignments = snapshot.assignments;
-    saveToStorage();
-    renderAll();
-    updateUndoRedoButtons();
-    updateConflictsHeaderBadge();
-    toast('Annullato', 'info');
-  }
-}
-
-function redo() {
-  if (isProcessing) return;
-  if (historyIndex < historyStack.length - 1) {
-    historyIndex++;
-    const snapshot = JSON.parse(historyStack[historyIndex]);
-    state.assignments = snapshot.assignments;
-    saveToStorage();
-    renderAll();
-    updateUndoRedoButtons();
-    updateConflictsHeaderBadge();
-    toast('Ripristinato', 'info');
-  }
-}
-
-function updateUndoRedoButtons() {
-  const btnUndo = document.getElementById('btn-undo');
-  const btnRedo = document.getElementById('btn-redo');
-  if (btnUndo) {
-    btnUndo.style.opacity = historyIndex > 0 ? '1' : '0';
-    btnUndo.style.pointerEvents = historyIndex > 0 ? 'auto' : 'none';
-  }
-  if (btnRedo) {
-    btnRedo.style.opacity = historyIndex < historyStack.length - 1 ? '1' : '0';
-    btnRedo.style.pointerEvents = historyIndex < historyStack.length - 1 ? 'auto' : 'none';
-  }
 }
 
 function getWeekStart(date) {
   const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
   return d;
 }
 
@@ -198,103 +151,38 @@ function toDateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-function formatDateShort(date) { return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
-
-const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-
-// ====================================================
-// DARK MODE TOGGLE
-// ====================================================
-function toggleDarkMode() {
-  const html = document.documentElement;
-  const isDark = html.classList.contains('dark');
-  if (isDark) {
-    html.classList.remove('dark');
-    localStorage.setItem('ruap-dark-mode', 'false');
-  } else {
-    html.classList.add('dark');
-    localStorage.setItem('ruap-dark-mode', 'true');
-  }
-}
-
-// Load dark mode preference on page load
-function initDarkMode() {
-  const isDarkPref = localStorage.getItem('ruap-dark-mode') === 'true';
-  if (isDarkPref) {
-    document.documentElement.classList.add('dark');
-  }
-}
-
-// ====================================================
-// TOAST NOTIFICATIONS
-// ====================================================
-function toast(message, type = 'success', duration = 3000) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-
-  const colors = {
-    success: 'bg-green-600 text-white',
-    warning: 'bg-amber-500 text-white',
-    error:   'bg-red-600 text-white',
-    info:    'bg-brand-700 text-white',
-  };
-  const icons = {
-    success: 'fa-circle-check',
-    warning: 'fa-triangle-exclamation',
-    error:   'fa-circle-xmark',
-    info:    'fa-circle-info',
-  };
-
-  const el = document.createElement('div');
-  el.className = `toast-item pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${colors[type] || colors.info} opacity-0 translate-y-2`;
-  el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-  el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${message}</span>`;
-  container.appendChild(el);
-
-  requestAnimationFrame(() => {
-    el.classList.remove('opacity-0', 'translate-y-2');
-  });
-
-  setTimeout(() => {
-    el.classList.add('opacity-0', 'translate-y-2');
-    setTimeout(() => el.remove(), 300);
-  }, duration);
+function formatDateShort(date) {
+  return date.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function isDoctorUnavailable(doctor, dateKey) {
-  if (!doctor.unavailPeriods) return false;
-  return doctor.unavailPeriods.some(p => dateKey >= p.from && dateKey <= p.to);
+  if (!doctor.unavailPeriods || doctor.unavailPeriods.length === 0) return false;
+  const d = new Date(dateKey + 'T00:00:00');
+  return doctor.unavailPeriods.some(p => {
+    const from = new Date(p.from + 'T00:00:00');
+    const to = new Date(p.to + 'T00:00:00');
+    return d >= from && d <= to;
+  });
 }
 
 function isDoctorAvailableForSlot(doctor, dateKey, slotKey) {
+  if (!doctor.availability) return false;
   if (isDoctorUnavailable(doctor, dateKey)) return false;
-  const date = new Date(dateKey + 'T00:00:00');
-  if (isItalianHoliday(date)) return false;
-  const jsDay = date.getDay();
-  if (jsDay === 0 || jsDay === 6) return false;
-  const dayKeyMap = { 1:'lun', 2:'mar', 3:'mer', 4:'gio', 5:'ven' };
-  const dayKey = dayKeyMap[jsDay];
-  if (!doctor.availability || !doctor.availability[dayKey]) return false;
-  return !!doctor.availability[dayKey][slotKey];
+  const d = new Date(dateKey + 'T00:00:00');
+  if (d.getDay() === 0 || d.getDay() === 6) return false;
+  if (isItalianHoliday(d)) return false;
+  const dayMap = { 1: 'lun', 2: 'mar', 3: 'mer', 4: 'gio', 5: 'ven' };
+  const dayKey = dayMap[d.getDay()];
+  if (!dayKey) return false;
+  const avail = doctor.availability[dayKey];
+  if (!avail) return false;
+  return avail[slotKey] === true;
 }
 
-function getWeeklyAssignedHours(doctorId, weekStart) {
-  let hours = 0;
-  for (let i = 0; i < 5; i++) {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    const dk = toDateKey(d);
-    SLOTS.forEach(slot => {
-      PLACES.forEach(place => {
-         const key = `${dk}_${slot.key}_${place}`;
-         if (state.assignments[key] === doctorId) hours += slot.hours;
-      });
-    });
-  }
-  return hours;
+function getDoctorById(id) {
+  return state.doctors.find(d => d.id === id);
 }
 
-function getDoctorById(id) { return state.doctors.find(d => d.id === id); }
 function calculateDebtByPatients(patients) {
   if (!patients || patients < 0) return 38;
   if (patients <= 400) return 38;
@@ -303,17 +191,31 @@ function calculateDebtByPatients(patients) {
   if (patients <= 1500) return 6;
   return 0;
 }
-function getDoctorColor(doctor) { return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0]; }
-function getProgressBarData(assigned, debt) {
-  const pct = debt > 0 ? Math.min(100, Math.round((assigned / debt) * 100)) : 0;
-  const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
-  return { pct, barColor };
+
+function getDoctorColor(doctor) {
+  return COLOR_PALETTE[doctor.colorIndex ?? 0] || COLOR_PALETTE[0];
 }
 
-// ─── Monthly budget helpers ───────────────────────────────
-function getMonthlyBudget(doctor) {
-  if (doctor.monthlyBudget != null) return doctor.monthlyBudget;
-  return (doctor.weeklyHours || 38) * MONTHLY_WEEKS;
+function getDefaultDoctors() {
+  if (typeof CONFIG === 'undefined' || !CONFIG.doctors) return [];
+  return CONFIG.doctors.map(d => ({
+    ...d,
+    availability: d.availability ? JSON.parse(JSON.stringify(d.availability)) : Object.fromEntries(
+      DAY_KEYS.map(k => [k, { mat: true, pom: true }])
+    ),
+    unavailPeriods: d.unavailPeriods ? JSON.parse(JSON.stringify(d.unavailPeriods)) : [],
+  }));
+}
+
+function getWeeklyAssignedHours(doctorId, weekStart) {
+  let hours = 0;
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const dk = toDateKey(d);
+    hours += sumSlotHours((slot, place) => state.assignments[`${dk}_${slot.key}_${place}`] === doctorId);
+  }
+  return hours;
 }
 
 function getAssignedHoursInMonth(docId, month, year) {
@@ -323,24 +225,64 @@ function getAssignedHoursInMonth(docId, month, year) {
     const d = new Date(year, month, day);
     if (d.getDay() === 0 || d.getDay() === 6) continue;
     const dk = toDateKey(d);
-    SLOTS.forEach(slot => {
-      PLACES.forEach(place => {
-        if (state.assignments[`${dk}_${slot.key}_${place}`] === docId) {
-          hours += slot.hours;
-        }
-      });
-    });
+    hours += sumSlotHours((slot, place) => state.assignments[`${dk}_${slot.key}_${place}`] === docId);
   }
   return hours;
+}
+
+function sumSlotHours(predicate) {
+  let hours = 0;
+  SLOTS.forEach(slot => {
+    PLACES.forEach(place => {
+      if (predicate(slot, place)) hours += slot.hours;
+    });
+  });
+  return hours;
+}
+
+function getMonthlyBudget(doctor) {
+  if (doctor.monthlyBudget != null) return doctor.monthlyBudget;
+  return (doctor.weeklyHours || 38) * MONTHLY_WEEKS;
 }
 
 function getRemainingMonthlyHours(doctor, month, year) {
   return Math.max(0, getMonthlyBudget(doctor) - getAssignedHoursInMonth(doctor.id, month, year));
 }
 
+function getProgressBarData(assigned, debt) {
+  const pct = debt > 0 ? Math.min(100, Math.round((assigned / debt) * 100)) : 0;
+  const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e';
+  return { pct, barColor };
+}
+
 // ====================================================
-// PERSISTENCE & EXPORT
+// 4. STORAGE LAYER
 // ====================================================
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_DOCTORS, JSON.stringify(state.doctors));
+    localStorage.setItem(STORAGE_ASSIGNMENTS, JSON.stringify(state.assignments));
+    localStorage.setItem(STORAGE_PLACES, JSON.stringify(state.places));
+    localStorage.setItem(STORAGE_SLOTS, JSON.stringify(state.slots));
+  } catch (e) {
+    toast('Errore salvataggio: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+function loadFromStorage() {
+  try {
+    const docs = localStorage.getItem(STORAGE_DOCTORS);
+    const asgn = localStorage.getItem(STORAGE_ASSIGNMENTS);
+    const plcs = localStorage.getItem(STORAGE_PLACES);
+    const slts = localStorage.getItem(STORAGE_SLOTS);
+    if (docs) state.doctors = JSON.parse(docs);
+    if (asgn) state.assignments = JSON.parse(asgn);
+    if (plcs) state.places = JSON.parse(plcs);
+    if (slts) state.slots = JSON.parse(slts);
+  } catch (e) { console.error(e); }
+}
+
 function reloadPlaces() {
   if (state.places && state.places.length > 0) {
     PLACES = [...state.places];
@@ -369,56 +311,648 @@ function updateHeaderSubtitle() {
   if (el) el.textContent = 'Attività Diurne — ' + PLACES.join(' · ');
 }
 
-function saveToStorage() {
-  localStorage.setItem(STORAGE_DOCTORS, JSON.stringify(state.doctors));
-  localStorage.setItem(STORAGE_ASSIGNMENTS, JSON.stringify(state.assignments));
-  localStorage.setItem(STORAGE_PLACES, JSON.stringify(state.places));
-  localStorage.setItem(STORAGE_SLOTS, JSON.stringify(state.slots));
+function initDarkMode() {
+  const enabled = localStorage.getItem(STORAGE_DARK_MODE) === 'true';
+  if (enabled) document.documentElement.classList.add('dark');
 }
 
-function loadFromStorage() {
+function toggleDarkMode() {
+  const html = document.documentElement;
+  html.classList.toggle('dark');
+  localStorage.setItem(STORAGE_DARK_MODE, html.classList.contains('dark') ? 'true' : 'false');
+}
+
+function loadHistory() {
   try {
-    const docs = localStorage.getItem(STORAGE_DOCTORS);
-    const asgn = localStorage.getItem(STORAGE_ASSIGNMENTS);
-    const plcs = localStorage.getItem(STORAGE_PLACES);
-    const slts = localStorage.getItem(STORAGE_SLOTS);
-    if (docs) state.doctors = JSON.parse(docs);
-    if (asgn) state.assignments = JSON.parse(asgn);
-    if (plcs) state.places = JSON.parse(plcs);
-    if (slts) state.slots = JSON.parse(slts);
+    const saved = localStorage.getItem(STORAGE_HISTORY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      historyStack = data.stack || [];
+      historyIndex = data.index || -1;
+    }
   } catch (e) { console.error(e); }
 }
 
-document.getElementById('btn-export').addEventListener('click', () => {
-  const data = { version: 1, exportDate: new Date().toISOString(), doctors: state.doctors, assignments: state.assignments };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `turni-${toDateKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
-});
+function saveHistory() {
+  try {
+    localStorage.setItem(STORAGE_HISTORY, JSON.stringify({ stack: historyStack, index: historyIndex }));
+  } catch (e) { console.error(e); }
+}
 
-document.getElementById('btn-export-excel').addEventListener('click', exportExcel);
+function pushHistory() {
+  const snapshot = JSON.stringify({ assignments: state.assignments });
+  if (historyIndex < historyStack.length - 1) {
+    historyStack = historyStack.slice(0, historyIndex + 1);
+  }
+  historyStack.push(snapshot);
+  if (historyStack.length > HISTORY_MAX) {
+    historyStack.shift();
+  } else {
+    historyIndex++;
+  }
+  saveHistory();
+  updateUndoRedoButtons();
+}
 
-document.getElementById('import-file').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
-      state.doctors = data.doctors; state.assignments = data.assignments;
-      saveToStorage(); renderAll(); renderMonthlyStats(); toast('Importazione completata!', 'success');
-    } catch (err) { toast('Errore importazione: ' + err.message, 'error'); }
+// ====================================================
+// 5. STATE ACTIONS
+// ====================================================
+function assignDoctor(slotKey, docId) {
+  pushHistory();
+  state.assignments[slotKey] = docId;
+  saveToStorage();
+  closeAssignDropdown();
+  renderAll();
+}
+
+function removeAssignment(slotKey) {
+  pushHistory();
+  delete state.assignments[slotKey];
+  saveToStorage();
+  closeAssignDropdown();
+  renderAll();
+}
+
+function undo() {
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  state.assignments = JSON.parse(historyStack[historyIndex]);
+  saveToStorage();
+  renderAll();
+  updateUndoRedoButtons();
+}
+
+function redo() {
+  if (historyIndex >= historyStack.length - 1) return;
+  historyIndex++;
+  state.assignments = JSON.parse(historyStack[historyIndex]);
+  saveToStorage();
+  renderAll();
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('btn-undo');
+  const redoBtn = document.getElementById('btn-redo');
+  if (undoBtn) {
+    undoBtn.classList.toggle('opacity-30', historyIndex <= 0);
+    undoBtn.classList.toggle('pointer-events-none', historyIndex <= 0);
+  }
+  if (redoBtn) {
+    redoBtn.classList.toggle('opacity-30', historyIndex >= historyStack.length - 1);
+    redoBtn.classList.toggle('pointer-events-none', historyIndex >= historyStack.length - 1);
+  }
+}
+
+// ====================================================
+// 6. DOM HELPERS
+// ====================================================
+function el(id) { return document.getElementById(id); }
+
+function toast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const colors = { info: 'bg-slate-800', success: 'bg-green-600', warning: 'bg-amber-500', error: 'bg-red-500' };
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast-item ${colors[type] || colors.info} text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 transition-all duration-300`;
+  const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
+  toastEl.innerHTML = `<span>${icons[type] || icons.info}</span><span>${message}</span>`;
+  container.appendChild(toastEl);
+  requestAnimationFrame(() => { toastEl.style.opacity = '1'; toastEl.style.transform = 'translateY(0)'; });
+  setTimeout(() => { toastEl.style.opacity = '0'; toastEl.style.transform = 'translateY(-10px)'; setTimeout(() => toastEl.remove(), 300); }, duration);
+}
+
+// ====================================================
+// 7. RENDERING
+// ====================================================
+function renderSidebar() {
+  const container = document.getElementById('sidebar-doctors');
+  if (!container) return;
+  const filtered = filterDoctors();
+  container.innerHTML = filtered.map(doc => {
+    const color = getDoctorColor(doc);
+    const weeklyH = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
+    const { pct, barColor } = getProgressBarData(weeklyH, doc.weeklyHours || 24);
+    const monthH = getAssignedHoursInMonth(doc.id, state.calMonth, state.calYear);
+    const budget = getMonthlyBudget(doc);
+    const remH = Math.max(0, budget - monthH);
+    return `
+      <div class="doctor-card bg-white rounded-xl shadow-sm border border-slate-200 p-3 cursor-pointer hover:shadow-md transition-shadow" onclick="openDoctorModal('${doc.id}')" title="Click per modificare">
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
+          <span class="font-semibold text-sm text-slate-800 truncate">${cleanDoctorName(doc.name)}</span>
+          <span class="text-[10px] text-slate-400 ml-auto">${remH}h residue</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="flex-1 h-1.5 bg-slate-100 rounded-full">
+            <div style="width:${pct}%; background:${barColor}" class="h-1.5 rounded-full transition-all"></div>
+          </div>
+          <span class="text-[10px] text-slate-400 flex-shrink-0">${weeklyH}/${doc.weeklyHours || 24}h</span>
+        </div>
+      </div>`;
+  }).join('');
+  updateConflictsHeaderBadge();
+}
+
+function filterDoctors() {
+  let filtered = state.doctors;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.preferredPlace && d.preferredPlace.toLowerCase().includes(q)));
+  }
+  if (filterAFT) {
+    if (filterAFT === 'none') {
+      filtered = filtered.filter(d => !d.aft || d.aft === '');
+    } else {
+      filtered = filtered.filter(d => d.aft === filterAFT);
+    }
+  }
+  return filtered;
+}
+
+function getCoverageBadge(dateKey, place) {
+  const matKey = `${dateKey}_mat_${place}`;
+  const pomKey = `${dateKey}_pom_${place}`;
+  const matAssigned = !!state.assignments[matKey];
+  const pomAssigned = !!state.assignments[pomKey];
+  const bothAssigned = matAssigned && pomAssigned;
+  return {
+    coverageClass: bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700',
+    coverageIcon: bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○',
   };
-  reader.readAsText(file); e.target.value = '';
-});
+}
 
-document.getElementById('import-excel-file').addEventListener('change', importExcelFromFile);
+function createSlotButton(dateKey, place, slot, inMonth) {
+  const slotKey = `${dateKey}_${slot.key}_${place}`;
+  const assignedId = state.assignments[slotKey];
+  const isExt = assignedId && typeof assignedId === 'string' && assignedId.startsWith(EXTERNAL_PREFIX);
+  const assignedDoc = !isExt && assignedId ? getDoctorById(assignedId) : null;
+  const extName = isExt ? assignedId.replace(EXTERNAL_PREFIX, '') : null;
+  const color = assignedDoc ? getDoctorColor(assignedDoc) : (extName ? { hex: '#d97706' } : null);
+  const displayName = assignedDoc ? cleanDoctorName(assignedDoc.name) : extName;
+
+  const slotBtn = document.createElement('button');
+  slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
+    (displayName ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
+  if (color && displayName) slotBtn.style.backgroundColor = color.hex;
+
+  slotBtn.innerHTML = displayName
+    ? `<div class="truncate font-semibold text-xs">${displayName}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+    : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
+  slotBtn.setAttribute('aria-label', displayName ? `${displayName} · ${place} · ${slot.label}` : `Assegna turno · ${place} · ${slot.label}`);
+
+  if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+  return slotBtn;
+}
+
+function renderCalendar() {
+  if (state.calendarView === 'weekly') {
+    renderCalendarWeek();
+  } else {
+    renderCalendarMonth();
+  }
+}
+
+function renderCalendarWeek() {
+  const weekStart = state.calendarWeekStart;
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 4);
+  const container = document.getElementById('calendar-grid');
+  if (!container) return;
+  container.className = 'grid grid-cols-5 gap-2';
+  container.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const dateKey = toDateKey(d);
+    const isHoliday = isItalianHoliday(d);
+    const cell = document.createElement('div');
+    cell.className = `rounded-xl border border-slate-200 p-2 ${isHoliday ? 'holiday-cell' : 'bg-white'}`;
+    const dayName = DAY_NAMES[i];
+    const dayNum = d.getDate();
+    cell.innerHTML = `<div class="text-xs font-bold text-slate-500 mb-1 pb-1 border-b border-slate-100 flex items-center justify-between">
+      <span>${dayName} ${dayNum}</span>
+      ${isHoliday ? '<span class="text-[10px] text-red-500 font-bold">FESTIVO</span>' : ''}
+    </div>`;
+    PLACES.forEach(place => {
+      const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
+      const placeDiv = document.createElement('div');
+      placeDiv.className = 'mb-1';
+      placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[10px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[10px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
+      SLOTS.forEach(slot => {
+        placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
+      });
+      cell.appendChild(placeDiv);
+    });
+    container.appendChild(cell);
+  }
+}
+
+function renderCalendarMonth() {
+  const year = state.calYear;
+  const month = state.calMonth;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  const container = document.getElementById('calendar-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  container.className = 'grid grid-cols-5 gap-1';
+  const totalCells = Math.ceil((lastDay + startOffset) / 5) * 5;
+  for (let cellIdx = 0; cellIdx < totalCells; cellIdx++) {
+    const day = cellIdx - startOffset + 1;
+    const cell = document.createElement('div');
+    const inMonth = day >= 1 && day <= lastDay;
+    cell.className = `rounded-lg border ${!inMonth ? 'border-transparent bg-transparent' : 'border-slate-200 bg-white'} p-1.5 min-h-[60px]`;
+    if (inMonth) {
+      const d = new Date(year, month, day);
+      const dateKey = toDateKey(d);
+      const isHoliday = isItalianHoliday(d);
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      if (isHoliday || isWeekend) cell.classList.add('holiday-cell');
+      cell.innerHTML = `<div class="text-[10px] font-bold text-slate-400 mb-0.5 pb-0.5 border-b border-slate-100 flex items-center justify-between">
+        <span>${day}</span>
+        ${isHoliday ? '<span class="text-[8px] text-red-500 font-bold">FESTIVO</span>' : ''}
+      </div>`;
+      PLACES.forEach(place => {
+        const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
+        const placeDiv = document.createElement('div');
+        placeDiv.className = 'mb-0.5';
+        placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[8px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[8px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
+        SLOTS.forEach(slot => {
+          placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
+        });
+        cell.appendChild(placeDiv);
+      });
+    }
+    container.appendChild(cell);
+  }
+}
+
+function renderAll() {
+  renderCalendar();
+  renderSidebar();
+  renderMonthlyStats();
+  updateConflictsHeaderBadge();
+}
+
+function toggleCalendarView() {
+  state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
+  const icon = document.getElementById('calendar-view-icon');
+  const label = document.getElementById('calendar-view-label');
+  if (icon) icon.className = state.calendarView === 'monthly' ? 'fa-solid fa-calendar-week' : 'fa-solid fa-calendar-days';
+  if (label) label.textContent = state.calendarView === 'monthly' ? 'Settimana' : 'Mese';
+  renderAll();
+}
 
 // ====================================================
-// EXCEL IMPORT / EXPORT
+// 8. MODALI
 // ====================================================
+
+// --- Assign dropdown ---
+function positionDropdown(rect) {
+  const dropdown = document.getElementById('assign-dropdown');
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
+  let top;
+  if (spaceBelow >= DROPDOWN_HEIGHT || spaceBelow > spaceAbove) {
+    top = Math.min(rect.bottom + 4, window.innerHeight - DROPDOWN_HEIGHT - 4);
+  } else {
+    top = Math.max(4, rect.top - DROPDOWN_HEIGHT - 4);
+  }
+  top = Math.max(4, top);
+  let left = Math.min(rect.left, window.innerWidth - DROPDOWN_WIDTH - 4);
+  left = Math.max(4, left);
+  dropdown.style.top = `${top}px`;
+  dropdown.style.left = `${left}px`;
+}
+
+function renderAvailableList(slotKey, slot, dateKey) {
+  const list = document.getElementById('assign-available-list');
+  const place = slotKey.split('_').slice(2).join('_');
+  const availDocs = state.doctors.filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key));
+  availDocs.sort((a, b) => {
+    const aPref = a.preferredPlace === place ? 0 : 1;
+    const bPref = b.preferredPlace === place ? 0 : 1;
+    if (aPref !== bPref) return aPref - bPref;
+    return (b.weeklyHours || 0) - (a.weeklyHours || 0);
+  });
+  list.innerHTML = '';
+  availDocs.forEach(doc => {
+    const color = getDoctorColor(doc);
+    const weeklyH = getWeeklyAssignedHours(doc.id, getWeekStart(new Date(dateKey + 'T00:00:00')));
+    const pct = (doc.weeklyHours || 24) > 0 ? Math.round((weeklyH / (doc.weeklyHours || 24)) * 100) : 0;
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
+    btn.innerHTML = `
+      <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
+      <span class="flex-1 font-medium text-xs">${doc.name}</span>
+      <div class="flex flex-col items-end gap-0.5">
+        <span class="text-[10px] text-slate-400">${weeklyH}/${doc.weeklyHours || 24}h</span>
+        <div class="w-12 h-1 bg-slate-100 rounded-full"><div style="width:${Math.min(100, pct)}%; background:${pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e'}" class="h-1 rounded-full"></div></div>
+      </div>`;
+    btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
+    list.appendChild(btn);
+  });
+}
+
+function openAssignDropdown(e, slotKey, slot, dateKey, place) {
+  closeAssignDropdown();
+  state.activeSlotKey = slotKey;
+  const dropdown = document.getElementById('assign-dropdown');
+  const header = document.getElementById('assign-header-text');
+  header.textContent = `${slot.icon} ${slot.label} · ${place} · ${dateKey}`;
+  document.getElementById('assign-remove-wrap').classList.toggle('hidden', !state.assignments[slotKey]);
+  renderAvailableList(slotKey, slot, dateKey);
+  const unavailSection = document.getElementById('assign-unavail-section');
+  const unavailList = document.getElementById('assign-unavail-list');
+  unavailSection.classList.add('hidden');
+  document.getElementById('assign-custom-section').classList.add('hidden');
+  const availIds = new Set(state.doctors.filter(doc =>
+    isDoctorAvailableForSlot(doc, dateKey, slot.key)
+  ).map(d => d.id));
+  const unavailDocs = state.doctors.filter(doc => !availIds.has(doc.id));
+  unavailList.innerHTML = '';
+  unavailDocs.forEach(doc => {
+    const color = getDoctorColor(doc);
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
+    btn.innerHTML = `
+      <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
+      <span class="flex-1 font-medium text-xs">${doc.name}</span>
+      <span class="text-[10px] text-slate-400 italic">eccezione</span>`;
+    btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
+    unavailList.appendChild(btn);
+  });
+  document.getElementById('assign-exception-btn').classList.remove('hidden');
+  document.getElementById('assign-custom-input').value = '';
+  positionDropdown(e.currentTarget.getBoundingClientRect());
+  dropdown.classList.remove('hidden');
+}
+
+function closeAssignDropdown() {
+  document.getElementById('assign-dropdown').classList.add('hidden');
+  document.getElementById('assign-unavail-section').classList.add('hidden');
+  document.getElementById('assign-custom-section').classList.add('hidden');
+  document.getElementById('assign-custom-input').value = '';
+  state.activeSlotKey = null;
+}
+
+// --- Doctor modal ---
+function populatePlaceSelect(selectEl, selected) {
+  selectEl.innerHTML = `<option value="">-- Nessuna preferenza --</option>
+    ${PLACES.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${p}</option>`).join('')}`;
+}
+
+function renderAvailabilityTable(availability) {
+  const tbody = document.getElementById('availability-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = DAY_KEYS.map(dk => `
+    <tr>
+      <td class="px-2 py-1 text-xs font-medium text-slate-600">${DAY_NAMES[DAY_KEYS.indexOf(dk)]}</td>
+      <td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.mat ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="mat"></td>
+      <td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.pom ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="pom"></td>
+    </tr>`).join('');
+}
+
+function renderColorPicker(selectedIndex) {
+  const container = document.getElementById('color-picker');
+  if (!container) return;
+  container.innerHTML = COLOR_PALETTE.map((c, i) =>
+    `<div class="w-6 h-6 rounded-full ${c.bg} cursor-pointer border-2 ${i === selectedIndex ? 'border-slate-800' : 'border-transparent'} color-swatch" data-index="${i}"></div>`
+  ).join('');
+}
+
+function openDoctorModal(doctorId = null) {
+  state.editingDoctorId = doctorId;
+  document.getElementById('doctor-modal').classList.remove('hidden');
+  document.getElementById('modal-doctor-id').value = doctorId || '';
+  if (doctorId) {
+    const doc = getDoctorById(doctorId);
+    document.getElementById('modal-name').value = doc.name;
+    document.getElementById('modal-patients').value = doc.patients || '';
+    document.getElementById('modal-hours').value = doc.weeklyHours || 38;
+    document.getElementById('modal-pool').checked = doc.isPool || false;
+    document.getElementById('modal-budget').value = doc.monthlyBudget || '';
+    document.getElementById('modal-aft').value = doc.aft || '';
+    document.getElementById('modal-seniority').value = doc.seniority || '';
+    renderAvailabilityTable(doc.availability);
+    renderColorPicker(doc.colorIndex || 0);
+    populatePlaceSelect(document.getElementById('modal-preferred-place'), doc.preferredPlace);
+  } else {
+    document.getElementById('modal-name').value = '';
+    document.getElementById('modal-patients').value = '850';
+    document.getElementById('modal-hours').value = '38';
+    document.getElementById('modal-pool').checked = false;
+    document.getElementById('modal-budget').value = '';
+    document.getElementById('modal-aft').value = '';
+    document.getElementById('modal-seniority').value = '';
+    renderAvailabilityTable(null);
+    renderColorPicker(0);
+    populatePlaceSelect(document.getElementById('modal-preferred-place'), null);
+  }
+  const periodsContainer = document.getElementById('unavail-periods');
+  periodsContainer.innerHTML = '';
+  if (doctorId) {
+    const doc = getDoctorById(doctorId);
+    if (doc.unavailPeriods) doc.unavailPeriods.forEach(p => addUnavailPeriodRow(p.from, p.to));
+  }
+}
+
+function closeDoctorModal() {
+  document.getElementById('doctor-modal').classList.add('hidden');
+}
+
+function deleteDoctor(id) {
+  const doc = getDoctorById(id);
+  if (!doc) return;
+  const toastEl = document.createElement('div');
+  toastEl.className = 'toast-item flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
+  toastEl.innerHTML = `
+    <span>Eliminare <strong>${cleanDoctorName(doc.name)}</strong>?</span>
+    <button class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600 confirm-yes">Sì</button>
+    <button class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-300 confirm-no">No</button>`;
+  document.getElementById('toast-container').appendChild(toastEl);
+  toastEl.querySelector('.confirm-yes').addEventListener('click', () => {
+    toastEl.remove();
+    state.doctors = state.doctors.filter(d => d.id !== id);
+    Object.keys(state.assignments).forEach(k => { if (state.assignments[k] === id) delete state.assignments[k]; });
+    saveToStorage();
+    pushHistory();
+    closeDoctorModal();
+    renderAll();
+    toast('Medico eliminato', 'success');
+  });
+  toastEl.querySelector('.confirm-no').addEventListener('click', () => toastEl.remove());
+}
+
+function resetAssignments() {
+  const toastEl = document.createElement('div');
+  toastEl.className = 'toast-item flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
+  toastEl.innerHTML = `
+    <span>Eliminare <strong>tutte le assegnazioni</strong>?</span>
+    <button class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600 confirm-yes">Sì</button>
+    <button class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-300 confirm-no">No</button>`;
+  document.getElementById('toast-container').appendChild(toastEl);
+  toastEl.querySelector('.confirm-yes').addEventListener('click', () => {
+    toastEl.remove();
+    pushHistory();
+    state.assignments = {};
+    saveToStorage();
+    renderAll();
+    toast('Tutte le assegnazioni cancellate', 'success');
+  });
+  toastEl.querySelector('.confirm-no').addEventListener('click', () => toastEl.remove());
+}
+
+function addUnavailPeriodRow(from = '', to = '') {
+  const container = document.getElementById('unavail-periods');
+  if (!container) return;
+  const periodEl = document.createElement('div');
+  periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2 unavail-period-row';
+  periodEl.innerHTML = `
+    <input type="date" value="${from}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-from" placeholder="Da">
+    <span class="text-slate-400">—</span>
+    <input type="date" value="${to}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-to" placeholder="A">
+    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-xs">
+      <i class="fa-solid fa-trash-can"></i>
+    </button>`;
+  container.appendChild(periodEl);
+}
+
+// --- Conflicts ---
+function getConflicts() {
+  const conflictsMap = {};
+  for (const [key, docId] of Object.entries(state.assignments)) {
+    const parts = key.split('_');
+    const dateKey = parts[0];
+    const slotKey = parts[1];
+    const doc = getDoctorById(docId);
+    const isUnavailable = doc ? isDoctorUnavailable(doc, dateKey) : false;
+    const conflictKey = `${docId}_${dateKey}_${slotKey}`;
+    const matches = Object.entries(state.assignments).filter(([k, v]) => v === docId && k.startsWith(`${dateKey}_${slotKey}_`));
+    if (matches.length > 1 || isUnavailable) {
+      if (!conflictsMap[conflictKey]) {
+        conflictsMap[conflictKey] = { docId, dateKey, slotKey, keys: matches.map(m => m[0]), isUnavailable };
+      }
+    }
+  }
+  return Object.values(conflictsMap);
+}
+
+function openConflictsModal() {
+  const conflicts = getConflicts();
+  const modal = document.getElementById('conflicts-modal');
+  const list = document.getElementById('conflicts-list');
+  const badge = document.getElementById('conflicts-count-badge');
+  const autoBtn = document.getElementById('btn-auto-resolve-all');
+  badge.textContent = conflicts.length;
+  autoBtn.disabled = conflicts.length === 0;
+  if (conflicts.length === 0) {
+    list.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+        <i class="fa-solid fa-check-circle text-5xl mb-3 text-green-400"></i>
+        <p class="text-lg font-medium text-slate-500">Nessun conflitto trovato</p>
+        <p class="text-sm">Tutti i turni sono assegnati correttamente.</p>
+      </div>`;
+  } else {
+    list.innerHTML = conflicts.map((c, idx) => {
+      const doc = getDoctorById(c.docId);
+      const color = COLOR_PALETTE[doc?.colorIndex ?? 0] || COLOR_PALETTE[0];
+      const slot = SLOTS.find(s => s.key === c.slotKey);
+      const slotLabel = slot ? `${slot.icon} ${slot.label}` : c.slotKey;
+      const [year, month, day] = c.dateKey.split('-');
+      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      const dateFormatted = dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+      const placesHtml = c.keys.map(k => {
+        const parts = k.split('_');
+        const place = parts.slice(2).join('_');
+        return `<div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 mb-1">
+          <span class="text-sm text-slate-700 flex items-center gap-2">
+            <i class="fa-solid fa-location-dot text-slate-400"></i>${place}
+          </span>
+          <button onclick="removeAssignmentFromConflict('${k}')" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
+            <i class="fa-solid fa-xmark mr-1"></i>Rimuovi
+          </button>
+        </div>`;
+      }).join('');
+      return `<div class="border border-slate-200 rounded-xl overflow-hidden">
+        <div class="bg-slate-50 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
+          <div class="w-3 h-3 rounded-full ${color.bg} flex-shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-slate-800 text-sm truncate">${doc?.name || 'Medico sconosciuto'}</p>
+            <p class="text-xs text-slate-500">${dateFormatted} · ${slotLabel}</p>
+          </div>
+          <div class="flex items-center gap-1">
+            ${c.isUnavailable ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">Assente / Ferie</span>' : ''}
+            <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">${c.keys.length} sedi</span>
+          </div>
+        </div>
+        <div class="p-3 bg-white">${placesHtml}</div>
+      </div>`;
+    }).join('');
+  }
+  modal.classList.remove('hidden');
+  updateConflictsHeaderBadge();
+}
+
+function closeConflictModal() {
+  const modal = document.getElementById('conflict-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function closeConflictsModal() {
+  document.getElementById('conflicts-modal').classList.add('hidden');
+}
+
+function removeAssignmentFromConflict(slotKey) {
+  removeAssignment(slotKey);
+  openConflictsModal();
+}
+
+function autoResolveAllConflicts() {
+  const conflicts = getConflicts();
+  if (conflicts.length === 0) return;
+  pushHistory();
+  for (const c of conflicts) {
+    if (c.isUnavailable) {
+      for (const k of c.keys) delete state.assignments[k];
+    } else {
+      const keysToRemove = c.keys.slice(1);
+      for (const k of keysToRemove) delete state.assignments[k];
+    }
+  }
+  saveToStorage();
+  renderAll();
+  openConflictsModal();
+  toast(`Risolti ${conflicts.length} conflitti automaticamente`, 'success');
+}
+
+function updateConflictsHeaderBadge() {
+  const conflicts = getConflicts();
+  const badge = document.getElementById('conflicts-header-badge');
+  if (conflicts.length > 0) {
+    badge.textContent = conflicts.length;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// --- Instructions ---
+function closeInstructions() {
+  const modal = document.getElementById('instructions-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// ====================================================
+// 9. IMPORTA/ESPORTA
+// ====================================================
+
+// --- JSON Export/Import ---
+// (handled by top-level event listeners attached in section 17)
+
+// --- EXCEL Import/Export ---
 function importExcelFromFile(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -442,6 +976,60 @@ function importExcelFromFile(e) {
 }
 
 function importFromRows(rows) {
+  const importMonth = detectMonthFromRows(rows);
+  const importYear = importMonth !== null ? rows.reduce((acc, r) => {
+    if (!r) return acc;
+    const d = excelDateToDate(r[1]);
+    return d ? d.getFullYear() : acc;
+  }, null) : null;
+
+  const parsed = parseAssignmentSections(rows, importMonth, importYear);
+
+  if (importMonth !== null && importYear !== null) {
+    for (const key of Object.keys(state.assignments)) {
+      const parts = key.split('_');
+      const dateParts = parts[0].split('-');
+      if (dateParts.length === 3) {
+        const y = parseInt(dateParts[0]);
+        const m = parseInt(dateParts[1]) - 1;
+        if (y === importYear && m === importMonth) {
+          delete state.assignments[key];
+        }
+      }
+    }
+  }
+
+  let assigned = 0;
+  for (const [key, excelName] of Object.entries(parsed.assignments)) {
+    const doc = matchDoctorBySurname(excelName);
+    if (doc) { state.assignments[key] = doc.id; assigned++; }
+  }
+
+  let debtCount = 0;
+  for (const [excelName, hours] of Object.entries(parsed.debtDoctors)) {
+    const doc = matchDoctorBySurname(excelName);
+    if (doc) { doc.monthlyBudget = hours; debtCount++; }
+  }
+  for (const [excelName, hours] of Object.entries(parsed.poolDoctors)) {
+    const doc = matchDoctorBySurname(excelName);
+    if (doc) { doc.monthlyBudget = hours; doc.isPool = true; debtCount++; }
+  }
+
+  saveToStorage();
+  renderAll();
+  toast(`Importate ${assigned} assegnazioni, aggiornati ${debtCount} medici`, 'success');
+}
+
+function detectMonthFromRows(rows) {
+  for (const row of rows) {
+    if (!row) continue;
+    const parsedDate = excelDateToDate(row[1]);
+    if (parsedDate) return parsedDate.getMonth();
+  }
+  return null;
+}
+
+function parseAssignmentSections(rows, importMonth, importYear) {
   let currentPlace = null;
   let inDebtSection = false;
   let inPoolSection = false;
@@ -449,34 +1037,15 @@ function importFromRows(rows) {
   const debtDoctors = {};
   const poolDoctors = {};
 
-  // Trova il mese e l'anno di riferimento del file Excel importato
-  let importMonth = null;
-  let importYear = null;
-  for (const row of rows) {
-    if (!row) continue;
-    const c1 = row[1];
-    if (c1) {
-      const parsedDate = excelDateToDate(c1);
-      if (parsedDate) {
-        importMonth = parsedDate.getMonth();
-        importYear = parsedDate.getFullYear();
-        break;
-      }
-    }
-  }
-
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
-    if (!row) continue; // Salva la stabilità in caso di righe vuote
-
+    if (!row) continue;
     const c0 = row[0] !== undefined ? String(row[0]).trim() : '';
     const c1 = row[1];
     const c3 = row[3] !== undefined ? String(row[3]).trim() : '';
     const c4 = row[4] !== undefined ? String(row[4]).trim() : '';
 
-    // Rileva il titolo della sezione → estrae la sede
     if (c0 === 'Struttura') {
-      // Cerca il nome sede nella riga precedente o in quella stessa
       const titleRow = rows[r - 1] || [];
       const t = titleRow[1] ? String(titleRow[1]) : String(row[0] || '');
       currentPlace = PLACES.find(p => {
@@ -491,12 +1060,9 @@ function importFromRows(rows) {
       continue;
     }
 
-    // Sezione Debito (colonna A)
     if (c0.includes('debito orario')) { inDebtSection = true; inPoolSection = false; continue; }
-    // Sezione Pool (colonna D)
     if (c3.includes('disponibilità') || c3.includes('disponibili')) { inDebtSection = false; inPoolSection = true; continue; }
 
-    // Analizza righe dei turni: "CdC ..." + data
     if (c0.startsWith('CdC') && c1) {
       const parsedDate = excelDateToDate(c1);
       if (parsedDate) {
@@ -510,72 +1076,27 @@ function importFromRows(rows) {
       }
     }
 
-    // Tabella Debito: col A = nome, col B = ore
     if (inDebtSection && c0 && c0 !== 'Medico' && !isNaN(parseFloat(row[1]))) {
       debtDoctors[c0] = parseFloat(row[1]);
     }
-    // Tabella Pool: col D = nome, col E = ore
     if (inPoolSection && c3 && c3 !== 'Medico ' && row[4] !== undefined && !isNaN(parseFloat(row[4]))) {
       poolDoctors[c3] = parseFloat(row[4]);
     }
   }
 
-  // Associa i nomi dei medici nel file Excel con quelli esistenti
-  function matchDoctor(excelName) {
-    if (!excelName) return null;
-    const cleanExcel = excelName.replace('Dott. ', '').trim().toLowerCase();
-    
-    // 1. Cerca corrispondenza esatta per nome pulito
-    let found = state.doctors.find(d => cleanDoctorName(d.name).toLowerCase() === cleanExcel);
-    if (found) return found;
+  return { assignments: newAssignments, debtDoctors, poolDoctors };
+}
 
-    // 2. Cerca corrispondenza per cognome (ultimo termine)
-    const excelLast = cleanExcel.split(' ').slice(-1)[0];
-    return state.doctors.find(d => {
-      const docLast = cleanDoctorName(d.name).split(' ').slice(-1)[0].toLowerCase();
-      return docLast === excelLast;
-    });
-  }
-
-  // Cancella le assegnazioni esistenti per il mese/anno importati, per riflettere lo stato dell'Excel
-  if (importMonth !== null && importYear !== null) {
-    for (const key of Object.keys(state.assignments)) {
-      const parts = key.split('_');
-      const dateParts = parts[0].split('-');
-      if (dateParts.length === 3) {
-        const y = parseInt(dateParts[0]);
-        const m = parseInt(dateParts[1]) - 1; // 0-indexed
-        if (y === importYear && m === importMonth) {
-          delete state.assignments[key];
-        }
-      }
-    }
-  }
-
-  // Applica le nuove assegnazioni dall'Excel
-  let assigned = 0;
-  for (const [key, excelName] of Object.entries(newAssignments)) {
-    const doc = matchDoctor(excelName);
-    if (doc) {
-      state.assignments[key] = doc.id;
-      assigned++;
-    }
-  }
-
-  // Sovrascrivi il budget mensile
-  let debtCount = 0;
-  for (const [excelName, hours] of Object.entries(debtDoctors)) {
-    const doc = matchDoctor(excelName);
-    if (doc) { doc.monthlyBudget = hours; debtCount++; }
-  }
-  for (const [excelName, hours] of Object.entries(poolDoctors)) {
-    const doc = matchDoctor(excelName);
-    if (doc) { doc.monthlyBudget = hours; doc.isPool = true; debtCount++; }
-  }
-
-  saveToStorage();
-  renderAll();
-  toast(`Importate ${assigned} assegnazioni, aggiornati ${debtCount} medici`, 'success');
+function matchDoctorBySurname(excelName) {
+  if (!excelName) return null;
+  const cleanExcel = excelName.replace('Dott. ', '').trim().toLowerCase();
+  let found = state.doctors.find(d => cleanDoctorName(d.name).toLowerCase() === cleanExcel);
+  if (found) return found;
+  const excelLast = cleanExcel.split(' ').slice(-1)[0];
+  return state.doctors.find(d => {
+    const docLast = cleanDoctorName(d.name).split(' ').slice(-1)[0].toLowerCase();
+    return docLast === excelLast;
+  });
 }
 
 function exportExcel() {
@@ -593,7 +1114,7 @@ function exportExcel() {
   function getDocName(dateKey, slotKey, place) {
     const id = state.assignments[`${dateKey}_${slotKey}_${place}`];
     if (!id) return '';
-    if (typeof id === 'string' && id.startsWith('__ext__::')) return id.replace('__ext__::', '');
+    if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) return id.replace(EXTERNAL_PREFIX, '');
     const doc = getDoctorById(id);
     return doc ? cleanDoctorName(doc.name) : '';
   }
@@ -633,625 +1154,141 @@ function exportExcel() {
   toast('Excel scaricato', 'success');
 }
 
-// ====================================================
-// RENDERING UI
-// ====================================================
-function renderSidebar() {
-  const weekEnd = new Date(state.sidebarWeekStart);
-  weekEnd.setDate(weekEnd.getDate() + 4);
-  document.getElementById('sidebar-week-label').textContent = `${formatDateShort(state.sidebarWeekStart)} – ${formatDateShort(weekEnd)}`;
-  
-  const container = document.getElementById('sidebar-doctors');
-  container.innerHTML = '';
-  
-  const filteredDocs = filterDoctors();
-  
-  if (filteredDocs.length === 0) {
-    container.innerHTML = `<div class="text-center text-slate-400 py-6 text-sm">${searchQuery || filterAFT ? 'Nessun medico trovato' : 'Nessun medico registrato'}</div>`;
-    return;
-  }
-
-  const docCardsSection = document.createElement('div');
-  docCardsSection.className = 'space-y-3';
-
-  filteredDocs.forEach(doc => {
-    const color = getDoctorColor(doc);
-    const assigned = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart);
-    const debt = doc.weeklyHours || 38;
-    const { pct, barColor } = getProgressBarData(assigned, debt);
-    
-    const card = document.createElement('div');
-    card.className = `doctor-card rounded-xl border p-3 border-slate-200 bg-slate-50 cursor-pointer`;
-    card.onclick = () => openDoctorModal(doc.id);
-    card.innerHTML = `
-      <div class="flex items-start justify-between mb-2">
-        <div class="flex items-center gap-2 min-w-0 flex-1">
-          <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
-          <span class="font-semibold text-sm text-slate-800 truncate">${doc.name}</span>
-          ${doc.preferredPlace ? '<span class="text-amber-500 text-xs ml-1">⭐</span>' : ''}
-        </div>
-        <div class="flex items-center gap-1">
-          <button class="text-slate-400 hover:text-brand-600 text-xs" onclick="event.stopPropagation(); openDoctorModal('${doc.id}')" aria-label="Modifica ${doc.name}"><i class="fa-solid fa-pen-to-square"></i></button>
-          <button class="text-slate-400 hover:text-red-500 text-xs ml-1" onclick="event.stopPropagation(); deleteDoctor('${doc.id}')" aria-label="Elimina ${doc.name}"><i class="fa-solid fa-trash-can"></i></button>
-        </div>
-      </div>
-      <div class="flex items-baseline justify-between mb-1.5">
-        <span class="text-xs text-slate-500">${doc.patients ? doc.patients + ' paz.' : ''} ${doc.aft ? '• AFT ' + doc.aft : ''}</span>
-        <span class="text-xs font-bold text-slate-700">${assigned}h / ${debt}h</span>
-      </div>
-      <div class="w-full bg-slate-200 rounded-full h-2">
-        <div class="h-2 rounded-full transition-all" style="width: ${pct}%; background:${barColor}"></div>
-      </div>
-    `;
-    docCardsSection.appendChild(card);
-  });
-  container.appendChild(docCardsSection);
-}
-
-// ====================================================
-// DROPDOWN & MODALS
-// ====================================================
-function openAssignDropdown(e, slotKey, slot, dateKey, place) {
-  e.stopPropagation();
-  state.activeSlotKey = slotKey;
-  const dropdown = document.getElementById('assign-dropdown');
-  const list = document.getElementById('assign-list');
-  const removeWrap = document.getElementById('assign-remove-wrap');
-  
-  const date = new Date(dateKey + 'T00:00:00');
-  document.getElementById('assign-slot-label').textContent = `${place} — ${date.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})} ${slot.label}`;
-
-  const availDocs = state.doctors
-    .filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key))
-    .filter(doc => {
-      if (state.assignments[slotKey] === doc.id) return true;
-      const prefix = `${dateKey}_${slot.key}_`;
-      return !Object.entries(state.assignments)
-        .some(([k, v]) => v === doc.id && k.startsWith(prefix));
-    })
-    .sort((a, b) => {
-      const aP = a.preferredPlace === place ? 0 : 1;
-      const bP = b.preferredPlace === place ? 0 : 1;
-      return aP - bP;
-    });
-  list.innerHTML = '';
-  if (availDocs.length === 0) {
-    list.innerHTML = '<p class="text-xs text-slate-400 italic py-2 px-1">Nessun medico disponibile</p>';
-  } else {
-    availDocs.forEach(doc => {
-      const color = getDoctorColor(doc);
-      const isPref = doc.preferredPlace === place;
-      const weeklyH = getWeeklyAssignedHours(doc.id, getWeekStart(new Date(dateKey + 'T00:00:00')));
-      const { pct, barColor } = getProgressBarData(weeklyH, doc.weeklyHours || 24);
-      const btn = document.createElement('button');
-      btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-start gap-2 transition';
-      btn.innerHTML = `
-        <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between">
-            <span class="font-medium text-sm">${doc.name}</span>
-            ${isPref ? '<span class="text-amber-500 text-xs">⭐</span>' : ''}
-          </div>
-          <div class="flex items-center gap-1 mt-0.5">
-            <div class="flex-1 h-1.5 bg-slate-100 rounded-full"><div style="width:${pct}%; background:${barColor}" class="h-1.5 rounded-full transition-all"></div></div>
-            <span class="text-[10px] text-slate-400 flex-shrink-0">${weeklyH}/${doc.weeklyHours || 24}h</span>
-          </div>
-        </div>
-      `;
-      btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll();  });
-      list.appendChild(btn);
-    });
-  }
-  // Popola sezione eccezioni (tutti i medici non nella lista disponibili)
-  const unavailSection = document.getElementById('assign-unavail-section');
-  const customSection = document.getElementById('assign-custom-section');
-  const exceptionBtn = document.getElementById('assign-exception-btn');
-  const unavailList = document.getElementById('assign-unavail-list');
-  unavailSection.classList.add('hidden');
-  customSection.classList.add('hidden');
-  const availIds = new Set(availDocs.map(d => d.id));
-  const unavailDocs = state.doctors.filter(doc => !availIds.has(doc.id));
-  unavailList.innerHTML = '';
-  unavailDocs.forEach(doc => {
-    const color = getDoctorColor(doc);
-    const btn = document.createElement('button');
-    btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
-    btn.innerHTML = `
-      <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
-      <span class="flex-1 font-medium text-xs">${doc.name}</span>
-      <span class="text-[10px] text-slate-400 italic">eccezione</span>
-    `;
-    btn.addEventListener('click', () => { pushHistory(); state.assignments[slotKey] = doc.id; saveToStorage(); closeAssignDropdown(); renderAll();  });
-    unavailList.appendChild(btn);
-  });
-  exceptionBtn.classList.remove('hidden');
-  document.getElementById('assign-custom-input').value = '';
-  removeWrap.classList.toggle('hidden', !state.assignments[slotKey]);
-  const rect = e.currentTarget.getBoundingClientRect();
-  const spaceBelow = window.innerHeight - rect.bottom;
-  const spaceAbove = rect.top;
-  let top;
-  if (spaceBelow >= DROPDOWN_HEIGHT || spaceBelow > spaceAbove) {
-    top = Math.min(rect.bottom + 4, window.innerHeight - DROPDOWN_HEIGHT - 4);
-  } else {
-    top = Math.max(4, rect.top - DROPDOWN_HEIGHT - 4);
-  }
-  top = Math.max(4, top);
-  let left = Math.min(rect.left, window.innerWidth - DROPDOWN_WIDTH - 4);
-  left = Math.max(4, left);
-  dropdown.style.top = `${top}px`;
-  dropdown.style.left = `${left}px`;
-  dropdown.classList.remove('hidden');
-}
-
-document.getElementById('assign-remove').addEventListener('click', () => {
-  if (state.activeSlotKey) { pushHistory(); delete state.assignments[state.activeSlotKey]; saveToStorage(); closeAssignDropdown(); renderAll();  }
-});
-
-function closeAssignDropdown() {
-  document.getElementById('assign-dropdown').classList.add('hidden');
-  document.getElementById('assign-unavail-section').classList.add('hidden');
-  document.getElementById('assign-custom-section').classList.add('hidden');
-  document.getElementById('assign-custom-input').value = '';
-  state.activeSlotKey = null;
-}
-document.addEventListener('click', (e) => { if (!document.getElementById('assign-dropdown').contains(e.target)) closeAssignDropdown(); });
-document.getElementById('assign-close').addEventListener('click', closeAssignDropdown);
-
-// Apri/chiudi sezione eccezioni
-document.getElementById('assign-exception-btn').addEventListener('click', () => {
-  const section = document.getElementById('assign-unavail-section');
-  const custom = document.getElementById('assign-custom-section');
-  const isHidden = section.classList.contains('hidden');
-  section.classList.toggle('hidden');
-  custom.classList.toggle('hidden');
-});
-
-// Assegna nome personalizzato (eccezione)
-document.getElementById('assign-custom-add').addEventListener('click', () => {
-  const input = document.getElementById('assign-custom-input');
-  const name = input.value.trim();
-  if (!name || !state.activeSlotKey) return;
-  pushHistory();
-  state.assignments[state.activeSlotKey] = '__ext__::' + name;
-  saveToStorage();
-  closeAssignDropdown();
-  renderAll();
-  
-});
-document.getElementById('assign-custom-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('assign-custom-add').click();
-});
-
-// Modale Medico Logic (Simplified for brevity but fully functional)
-function openDoctorModal(doctorId = null) {
-  state.editingDoctorId = doctorId;
-  document.getElementById('doctor-modal').classList.remove('hidden');
-  document.getElementById('modal-doctor-id').value = doctorId || '';
-  if (doctorId) {
-    const doc = getDoctorById(doctorId);
-    document.getElementById('modal-name').value = doc.name;
-    document.getElementById('modal-patients').value = doc.patients || '';
-    document.getElementById('modal-hours').value = calculateDebtByPatients(doc.patients || 0);
-    renderColorPicker(doc.colorIndex ?? 0);
-    
-    const ppSelect = document.getElementById('modal-preferred-place');
-    if (ppSelect) {
-      ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
-      PLACES.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        if (doc.preferredPlace === p) opt.selected = true;
-        ppSelect.appendChild(opt);
-      });
-    }
-    
-    document.getElementById('modal-monthly-budget').value = doc.monthlyBudget || '';
-    document.getElementById('modal-is-pool').checked = doc.isPool || false;
-    document.getElementById('modal-aft').value = doc.aft || '';
-    document.getElementById('modal-seniority').value = doc.seniority || '';
-    
-    renderAvailabilityTable(doc.availability);
-
-    // Popola i periodi di indisponibilità esistenti
-    const container = document.getElementById('unavail-periods');
-    if (container) {
-      container.innerHTML = '';
-      if (doc.unavailPeriods && doc.unavailPeriods.length > 0) {
-        doc.unavailPeriods.forEach(p => {
-          addUnavailPeriodRow(p.from, p.to);
-        });
-      }
-    }
-  } else {
-    document.getElementById('modal-name').value = '';
-    document.getElementById('modal-patients').value = '';
-    document.getElementById('modal-hours').value = '38';
-    renderColorPicker(0);
-    
-    const ppSelect = document.getElementById('modal-preferred-place');
-    if (ppSelect) {
-      ppSelect.innerHTML = '<option value="">-- Nessuna preferenza --</option>';
-      PLACES.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        ppSelect.appendChild(opt);
-      });
-    }
-    
-    document.getElementById('modal-monthly-budget').value = '';
-    document.getElementById('modal-is-pool').checked = false;
-    document.getElementById('modal-aft').value = '';
-    document.getElementById('modal-seniority').value = '';
-    
-    renderAvailabilityTable(null);
-
-    // Pulisce i periodi di indisponibilità per un nuovo medico
-    const container = document.getElementById('unavail-periods');
-    if (container) {
-      container.innerHTML = '';
-    }
-  }
-}
-
-function renderAvailabilityTable(availability) {
-  const tbody = document.getElementById('avail-table');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  
-  const dayLabels = { lun: 'Lunedì', mar: 'Martedì', mer: 'Mercoledì', gio: 'Giovedì', ven: 'Venerdì' };
-  
-  DAY_KEYS.forEach(dayKey => {
-    const dayAvail = availability?.[dayKey] || { mat: true, pom: true };
-    const tr = document.createElement('tr');
-    tr.className = 'border-b border-slate-100';
-    tr.innerHTML = `
-      <td class="px-3 py-2 font-medium text-slate-700">${dayLabels[dayKey]}</td>
-      <td class="px-3 py-2 text-center">
-        <input type="checkbox" class="w-5 h-5 rounded text-brand-600" id="avail-${dayKey}-mat" ${dayAvail.mat ? 'checked' : ''}>
-      </td>
-      <td class="px-3 py-2 text-center">
-        <input type="checkbox" class="w-5 h-5 rounded text-brand-600" id="avail-${dayKey}-pom" ${dayAvail.pom ? 'checked' : ''}>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-function renderColorPicker(selectedIndex) {
-  const container = document.getElementById('color-picker');
-  container.innerHTML = '';
-  COLOR_PALETTE.forEach((c, i) => {
-    const btn = document.createElement('button'); btn.type = 'button';
-    btn.className = `w-8 h-8 rounded-full border-2 ${i === selectedIndex ? 'border-slate-800' : 'border-transparent'}`;
-    btn.style.backgroundColor = c.hex; btn.dataset.colorIndex = i;
-    btn.addEventListener('click', () => {
-      container.querySelectorAll('button').forEach(b => b.classList.add('border-transparent'));
-      btn.classList.add('border-slate-800'); btn.classList.remove('border-transparent');
-    });
-    container.appendChild(btn);
-  });
-}
-function closeDoctorModal() { document.getElementById('doctor-modal').classList.add('hidden'); }
-document.getElementById('btn-add-doctor').addEventListener('click', () => openDoctorModal());
-document.getElementById('modal-close').addEventListener('click', closeDoctorModal);
-document.getElementById('modal-cancel').addEventListener('click', closeDoctorModal);
-document.getElementById('modal-save').addEventListener('click', () => {
-  const name = document.getElementById('modal-name').value.trim();
-  if (!name) { toast('Inserisci il nome del medico', 'warning'); return; }
-  const duplicate = state.doctors.find(d => d.name.toLowerCase() === name.toLowerCase() && d.id !== state.editingDoctorId);
-  if (duplicate) { toast('Esiste già un medico con questo nome', 'warning'); return; }
-  const patients = parseInt(document.getElementById('modal-patients').value) || 0;
-  const weeklyHours = calculateDebtByPatients(patients);
-  const colorBtn = document.querySelector('#color-picker button.border-slate-800');
-  const colorIndex = colorBtn ? parseInt(colorBtn.dataset.colorIndex) : 0;
-  
-  const availability = {};
-  DAY_KEYS.forEach(dk => {
-    availability[dk] = {
-      mat: document.getElementById(`avail-${dk}-mat`)?.checked ?? true,
-      pom: document.getElementById(`avail-${dk}-pom`)?.checked ?? true
-    };
-  });
-
-  const preferredPlace = document.getElementById('modal-preferred-place')?.value || null;
-  const monthlyBudgetVal = document.getElementById('modal-monthly-budget')?.value;
-  const monthlyBudget = monthlyBudgetVal ? parseInt(monthlyBudgetVal) : undefined;
-  const isPool = document.getElementById('modal-is-pool')?.checked || false;
-  const aft = document.getElementById('modal-aft')?.value || '';
-  const seniority = parseInt(document.getElementById('modal-seniority')?.value) || 0;
-
-  const unavailPeriods = [];
-  document.querySelectorAll('#unavail-periods .unavail-period-row').forEach(row => {
-    const fromVal = row.querySelector('.unavail-from').value;
-    const toVal = row.querySelector('.unavail-to').value;
-    if (fromVal && toVal) {
-      unavailPeriods.push({ from: fromVal, to: toVal });
-    }
-  });
-
-  if (state.editingDoctorId) {
-    const doc = getDoctorById(state.editingDoctorId);
-    Object.assign(doc, { name, patients, weeklyHours, colorIndex, availability, preferredPlace, monthlyBudget, isPool, aft, seniority, unavailPeriods });
-  } else {
-    state.doctors.push({ id: generateId(), name, patients, weeklyHours, colorIndex, preferredPlace, monthlyBudget, isPool, aft, seniority, availability, unavailPeriods });
-  }
-  pushHistory();
-  saveToStorage(); closeDoctorModal(); renderAll();
-  toast('Medico salvato', 'success');
-});
-function deleteDoctor(id) {
-  const doc = getDoctorById(id);
-  if (!doc) return;
-  // Use a small inline confirm toast
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = 'toast-item pointer-events-auto bg-white border border-red-200 rounded-xl shadow-lg px-4 py-3 text-sm flex items-center gap-3';
-  el.innerHTML = `
-    <span class="text-slate-700 flex-1">Eliminare <strong>${doc.name}</strong>?</span>
-    <button class="bg-red-600 hover:bg-red-500 text-white rounded-lg px-3 py-1 text-xs font-bold" id="confirm-delete-${id}">Sì, elimina</button>
-    <button class="text-slate-400 hover:text-slate-600 text-xs font-bold" id="cancel-delete-${id}">Annulla</button>
-  `;
-  container.appendChild(el);
-  document.getElementById(`confirm-delete-${id}`).onclick = () => {
-    pushHistory();
-    state.doctors = state.doctors.filter(d => d.id !== id);
-    Object.keys(state.assignments).forEach(k => { if (state.assignments[k] === id) delete state.assignments[k]; });
-    saveToStorage(); renderAll(); el.remove();
-    toast(`${doc.name} rimosso`, 'info');
-  };
-  document.getElementById(`cancel-delete-${id}`).onclick = () => el.remove();
-}
-
-function resetAssignments() {
-  if (isProcessing) return;
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = 'toast-item pointer-events-auto bg-white border border-orange-200 rounded-xl shadow-lg px-4 py-3 text-sm flex items-center gap-3';
-  el.innerHTML = `
-    <span class="text-slate-700 flex-1">Sei sicuro di voler resettare <strong>tutti i turni</strong>? I medici e le preferenze rimarranno.</span>
-    <button class="bg-orange-600 hover:bg-orange-500 text-white rounded-lg px-3 py-1 text-xs font-bold" id="confirm-reset-all">Sì, resetta</button>
-    <button class="text-slate-400 hover:text-slate-600 text-xs font-bold" id="cancel-reset-all">Annulla</button>
-  `;
-  container.appendChild(el);
-  document.getElementById('confirm-reset-all').onclick = () => {
-    pushHistory();
-    state.assignments = {};
-    saveToStorage(); renderAll(); el.remove(); updateConflictsHeaderBadge();
-    toast('Tutti i turni resettati', 'success');
-  };
-  document.getElementById('cancel-reset-all').onclick = () => el.remove();
-}
-
-// Navigazione
-document.getElementById('cal-prev').addEventListener('click', () => {
-  if (state.calendarView === 'weekly') {
-    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() - 7);
-    state.sidebarWeekStart = new Date(state.calendarWeekStart);
-  } else {
-    state.calMonth--;
-    if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
-  }
-  renderAll();
-});
-document.getElementById('cal-next').addEventListener('click', () => {
-  if (state.calendarView === 'weekly') {
-    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() + 7);
-    state.sidebarWeekStart = new Date(state.calendarWeekStart);
-  } else {
-    state.calMonth++;
-    if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
-  }
-  renderAll();
-});
-document.getElementById('sidebar-week-prev').addEventListener('click', () => { 
-  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() - 7); 
-  state.calendarWeekStart = new Date(state.sidebarWeekStart);
-  renderSidebar(); 
-  if (state.calendarView === 'weekly') renderCalendar();
-});
-document.getElementById('sidebar-week-next').addEventListener('click', () => { 
-  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() + 7); 
-  state.calendarWeekStart = new Date(state.sidebarWeekStart);
-  renderSidebar(); 
-  if (state.calendarView === 'weekly') renderCalendar();
-});
-
-function renderAll() {
-  updateGeneraButtonLabel();
-  renderCalendar();
-  renderSidebar();
-  renderMonthlyStats();
-  updateConflictsHeaderBadge();
-}
-
-function toggleCalendarView() {
-  state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
-  const icon = document.getElementById('view-toggle-icon');
-  const label = document.getElementById('view-toggle-label');
-  if (state.calendarView === 'weekly') {
-    icon.className = 'fa-solid fa-calendar-day';
-    label.textContent = 'Settimanale';
-  } else {
-    icon.className = 'fa-solid fa-calendar-week';
-    label.textContent = 'Mensile';
-  }
-  renderCalendar();
-}
-
-function getCoverageBadge(dateKey, place) {
-  const matKey = `${dateKey}_mat_${place}`;
-  const pomKey = `${dateKey}_pom_${place}`;
-  const matAssigned = !!state.assignments[matKey];
-  const pomAssigned = !!state.assignments[pomKey];
-  const bothAssigned = matAssigned && pomAssigned;
-  return {
-    coverageClass: bothAssigned ? 'bg-green-100 text-green-700' : (matAssigned || pomAssigned) ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700',
-    coverageIcon: bothAssigned ? '✓' : (matAssigned || pomAssigned) ? '◐' : '○',
-  };
-}
-
-function createSlotButton(dateKey, place, slot, inMonth) {
-  const slotKey = `${dateKey}_${slot.key}_${place}`;
-  const assignedId = state.assignments[slotKey];
-  const isExt = assignedId && typeof assignedId === 'string' && assignedId.startsWith('__ext__::');
-  const assignedDoc = !isExt && assignedId ? getDoctorById(assignedId) : null;
-  const extName = isExt ? assignedId.replace('__ext__::', '') : null;
-  const color = assignedDoc ? getDoctorColor(assignedDoc) : (extName ? { hex: '#d97706' } : null);
-  const displayName = assignedDoc ? cleanDoctorName(assignedDoc.name) : extName;
-
-  const slotBtn = document.createElement('button');
-  slotBtn.className = 'slot-btn w-full text-left rounded-lg px-2 py-1.5 mb-1 text-xs font-medium border transition-all ' +
-    (displayName ? 'border-transparent text-white shadow-sm' : inMonth ? 'border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-brand-400 hover:bg-blue-50 hover:text-brand-700' : 'border-transparent bg-transparent cursor-default');
-  if (color && displayName) slotBtn.style.backgroundColor = color.hex;
-
-  slotBtn.innerHTML = displayName
-    ? `<div class="truncate font-semibold text-xs">${displayName}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
-    : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
-  slotBtn.setAttribute('aria-label', displayName ? `${displayName} · ${place} · ${slot.label}` : `Assegna turno · ${place} · ${slot.label}`);
-
-  if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
-  return slotBtn;
-}
-
-function renderCalendar() {
-  if (state.calendarView === 'weekly') {
-    renderCalendarWeek();
-  } else {
-    renderCalendarMonth();
-  }
-}
-
-function renderCalendarWeek() {
-  const weekStart = state.calendarWeekStart;
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 4);
-  
-  document.getElementById('cal-title').textContent = `${formatDateShort(weekStart)} – ${formatDateShort(weekEnd)}`;
-  document.getElementById('cal-grid').innerHTML = '';
-  
-  const weekRow = document.createElement('div');
-  weekRow.className = 'grid grid-cols-5 gap-2';
-  
-  for (let i = 0; i < 5; i++) {
-    const cellDate = new Date(weekStart);
-    cellDate.setDate(cellDate.getDate() + i);
-    const dateKey = toDateKey(cellDate);
-    const isToday = toDateKey(new Date()) === dateKey;
-    const isHoliday = isItalianHoliday(cellDate);
-    
-    const cell = document.createElement('div');
-    if (isHoliday) {
-      cell.className = 'rounded-xl p-3 min-h-48 holiday-cell border border-slate-200 flex flex-col justify-between';
-      cell.innerHTML = `
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-          <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase tracking-wider">Festivo</span>
-        </div>
-        <div class="flex-1 flex items-center justify-center py-12 text-xs font-bold text-red-500 uppercase tracking-widest">
-          Chiuso
-        </div>
-      `;
-    } else {
-      cell.className = 'rounded-xl p-3 min-h-48 bg-white shadow-sm border border-slate-200';
-      cell.innerHTML = `
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-          <span class="text-xs text-slate-400">${cellDate.toLocaleDateString('it-IT', { weekday: 'short' })}</span>
-        </div>
-      `;
-      
-      PLACES.forEach(place => {
-        const placeSection = document.createElement('div');
-        placeSection.className = 'mb-2 pb-2 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-        const badge = getCoverageBadge(dateKey, place);
-        placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${place}</div>
-          <button onclick="copyDay('${dateKey}')" class="text-[10px] text-brand-500 hover:text-brand-700 font-bold ml-1" title="Copia giorno"><i class="fa-solid fa-copy"></i></button>
-          <span class="text-[10px] font-bold ${badge.coverageClass} px-1.5 py-0.5 rounded-full">${badge.coverageIcon}</span>
-        </div>`;
-        SLOTS.forEach(slot => placeSection.appendChild(createSlotButton(dateKey, place, slot, true)));
-        cell.appendChild(placeSection);
-      });
-    }
-    weekRow.appendChild(cell);
-  }
-  
-  document.getElementById('cal-grid').appendChild(weekRow);
-}
-
-function renderCalendarMonth() {
+// --- PDF ---
+function buildPdfContent() {
+  const container = document.getElementById('pdf-content');
+  const table = document.getElementById('pdf-table');
+  if (!container || !table) return;
   const year = state.calYear;
   const month = state.calMonth;
-  document.getElementById('cal-title').textContent = `${MONTHS_IT[month]} ${year}`;
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '';
+  const monthName = MONTHS_IT[month];
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const DAY_SHORT = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  let html = '';
 
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startDate = getWeekStart(firstDay);
+  PLACES.forEach(place => {
+    html += `<h3 style="font-size:14px;font-weight:bold;margin:10px 0 4px;color:#1e3a5f">${place}</h3>`;
+    html += `<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px">
+      <thead><tr style="background:#1e3a5f;color:white">
+        <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Data</th>
+        <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Giorno</th>`;
+    SLOTS.forEach(s => { html += `<th style="padding:4px 6px;border:1px solid #ccc;text-align:left">${s.label}</th>`; });
+    html += `</tr></thead><tbody>`;
 
-  let currentWeekStart = new Date(startDate);
-  const weeks = [];
-  while (true) {
-    if (currentWeekStart > lastDay) break;
-    weeks.push(new Date(currentWeekStart));
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  }
-
-  weeks.forEach(weekStart => {
-    const weekRow = document.createElement('div');
-    weekRow.className = 'grid grid-cols-5 gap-2';
-    for (let i = 0; i < 5; i++) {
-      const cellDate = new Date(weekStart);
-      cellDate.setDate(cellDate.getDate() + i);
-      const dateKey = toDateKey(cellDate);
-      const inMonth = cellDate.getMonth() === month;
-      const isToday = toDateKey(new Date()) === dateKey;
-      const isHoliday = isItalianHoliday(cellDate);
-
-      const cell = document.createElement('div');
-      if (isHoliday) {
-        cell.className = `rounded-xl p-2 min-h-24 holiday-cell border border-slate-100 flex flex-col justify-between ${inMonth ? '' : 'opacity-40'}`;
-        cell.innerHTML = `
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-            <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase tracking-wider">Festivo</span>
-          </div>
-          <div class="flex-1 flex items-center justify-center py-4 text-[11px] font-bold text-red-500 uppercase tracking-widest">
-            Chiuso
-          </div>
-        `;
-      } else {
-        cell.className = `rounded-xl p-2 min-h-24 ${inMonth ? 'bg-white shadow-sm border border-slate-100' : 'bg-slate-50 opacity-40 border border-dashed border-slate-200'}`;
-        cell.innerHTML = `
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
-          </div>
-        `;
-
-        PLACES.forEach(place => {
-          const placeSection = document.createElement('div');
-          placeSection.className = 'mb-1.5 pb-1.5 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
-          const badge = getCoverageBadge(dateKey, place);
-          placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${place}</div>
-            <span class="text-[10px] font-bold ${badge.coverageClass} px-1.5 py-0.5 rounded-full">${badge.coverageIcon}</span>
-          </div>`;
-          SLOTS.forEach(slot => placeSection.appendChild(createSlotButton(dateKey, place, slot, inMonth)));
-          cell.appendChild(placeSection);
-        });
-      }
-      weekRow.appendChild(cell);
+    for (let day = 1; day <= lastDay; day++) {
+      const d = new Date(year, month, day);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      const dk = toDateKey(d);
+      html += `<tr>
+        <td style="padding:3px 6px;border:1px solid #ddd">${day}/${month + 1}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${DAY_SHORT[d.getDay()]}</td>`;
+      SLOTS.forEach(slot => {
+        const id = state.assignments[`${dk}_${slot.key}_${place}`];
+        let name = '';
+        if (id) {
+          if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
+            name = id.replace(EXTERNAL_PREFIX, '');
+          } else {
+            const doc = getDoctorById(id);
+            if (doc) name = cleanDoctorName(doc.name);
+          }
+        }
+        html += `<td style="padding:3px 6px;border:1px solid #ddd;${name ? 'background:#f0f9ff' : ''}">${name || ''}</td>`;
+      });
+      html += `</tr>`;
     }
-    grid.appendChild(weekRow);
+    html += `</tbody></table>`;
   });
+
+  table.innerHTML = html;
+}
+
+async function exportPDF() {
+  if (typeof html2canvas === 'undefined') {
+    toast('Libreria html2canvas non caricata — impossibile generare PDF', 'error');
+    return;
+  }
+  if (typeof window.jspdf === 'undefined') {
+    toast('Libreria jsPDF non caricata — impossibile generare PDF', 'error');
+    return;
+  }
+  buildPdfContent();
+  const el = document.getElementById('pdf-content');
+  el.classList.remove('hidden');
+  try {
+    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const maxW = pageW - 2 * margin;
+    const maxH = pageH - 2 * margin;
+    const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, canvas.width * ratio, canvas.height * ratio);
+    pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
+    toast('PDF scaricato', 'success');
+  } catch (err) {
+    toast('Errore PDF: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    el.classList.add('hidden');
+  }
 }
 
 // ====================================================
-// AUTO-ASSIGN LOCALE (no API required)
+// 10. AUTO-ASSIGN & GENERATION
 // ====================================================
+function enumerateEmptySlots(year, month) {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const slots = [];
+  for (let day = 1; day <= lastDay; day++) {
+    const cellDate = new Date(year, month, day);
+    if (cellDate.getDay() === 0 || cellDate.getDay() === 6 || isItalianHoliday(cellDate)) continue;
+    const dateKey = toDateKey(cellDate);
+    SLOTS.forEach(slot => {
+      PLACES.forEach(place => {
+        const slotKey = `${dateKey}_${slot.key}_${place}`;
+        if (!state.assignments[slotKey]) slots.push({ dateKey, slotKey, cellDate });
+      });
+    });
+  }
+  return slots;
+}
+
+function pickDoctorForSlot(slotToFill, primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining) {
+  const notBusy = (doc) => {
+    const prefix = `${dateKey}_${slotKeyOnly}_`;
+    return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
+  };
+
+  const filterAvailable = (docs) => docs.filter(doc =>
+    isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
+    && notBusy(doc)
+    && getEffectiveRemaining(doc) > 0
+  );
+
+  const availablePrimary = filterAvailable(primaryDocs);
+  const availablePool = filterAvailable(poolDocs);
+
+  const priorityGroups = [
+    availablePrimary.filter(d => d.preferredPlace === place),
+    availablePrimary.filter(d => !d.preferredPlace),
+    availablePrimary.filter(d => d.preferredPlace && d.preferredPlace !== place),
+    availablePool.filter(d => d.preferredPlace === place),
+    availablePool.filter(d => !d.preferredPlace),
+    availablePool.filter(d => d.preferredPlace && d.preferredPlace !== place),
+  ];
+
+  for (const group of priorityGroups) {
+    if (group.length > 0) {
+      group.sort((a, b) => getEffectiveRemaining(b) - getEffectiveRemaining(a));
+      return group[0];
+    }
+  }
+  return null;
+}
+
 function runAutoAssignForMonth(year, month) {
   if (isProcessing) return;
   if (state.doctors.length === 0) {
@@ -1262,21 +1299,7 @@ function runAutoAssignForMonth(year, month) {
   isProcessing = true;
   pushHistory();
   const monthName = MONTHS_IT[month];
-  const lastDay = new Date(year, month + 1, 0).getDate();
-
-  const slotsToProcess = [];
-  for (let day = 1; day <= lastDay; day++) {
-    const cellDate = new Date(year, month, day);
-    // Salta fine settimana e festività nazionali
-    if (cellDate.getDay() === 0 || cellDate.getDay() === 6 || isItalianHoliday(cellDate)) continue;
-    const dateKey = toDateKey(cellDate);
-    SLOTS.forEach(slot => {
-      PLACES.forEach(place => {
-        const slotKey = `${dateKey}_${slot.key}_${place}`;
-        if (!state.assignments[slotKey]) slotsToProcess.push({ dateKey, slotKey, cellDate });
-      });
-    });
-  }
+  const slotsToProcess = enumerateEmptySlots(year, month);
 
   if (slotsToProcess.length === 0) {
     isProcessing = false;
@@ -1284,11 +1307,8 @@ function runAutoAssignForMonth(year, month) {
     return;
   }
 
-  // Track hours assigned in target month per doctor
   const assignedInTarget = {};
-  state.doctors.forEach(d => {
-    assignedInTarget[d.id] = getAssignedHoursInMonth(d.id, month, year);
-  });
+  state.doctors.forEach(d => { assignedInTarget[d.id] = getAssignedHoursInMonth(d.id, month, year); });
   function getEffectiveRemaining(doc) {
     return Math.max(0, getMonthlyBudget(doc) - (assignedInTarget[doc.id] || 0));
   }
@@ -1300,7 +1320,6 @@ function runAutoAssignForMonth(year, month) {
   const progressLabel = document.getElementById('autoassign-progress-label');
   const loadingEl = document.getElementById('autoassign-loading');
   const loadingText = document.getElementById('autoassign-loading-text');
-
   loadingEl.classList.remove('hidden');
   loadingText.textContent = `Generazione turni ${monthName}...`;
   let count = 0;
@@ -1318,51 +1337,7 @@ function runAutoAssignForMonth(year, month) {
       const slotHours = slotDef ? slotDef.hours : 6;
       const place = parts.slice(2).join('_');
 
-      // Constraint: not already assigned to same date+slot at another place
-      const notBusy = (doc) => {
-        const prefix = `${dateKey}_${slotKeyOnly}_`;
-        return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
-      };
-
-      // Available = not busy, available for slot, has remaining hours
-      const availablePrimary = primaryDocs.filter(doc =>
-        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
-        && notBusy(doc)
-        && getEffectiveRemaining(doc) > 0
-      );
-      const availablePool = poolDocs.filter(doc =>
-        isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
-        && notBusy(doc)
-        && getEffectiveRemaining(doc) > 0
-      );
-
-      // Tier 1: preferred place (among primary)
-      const prefPrimary = availablePrimary.filter(d => d.preferredPlace === place);
-      // Tier 2: no preference (among primary)
-      const neutralPrimary = availablePrimary.filter(d => !d.preferredPlace);
-      // Tier 3: non-preferred place (among primary)
-      const nonPrefPrimary = availablePrimary.filter(d => d.preferredPlace && d.preferredPlace !== place);
-
-      // Tier 4-6: same for pool
-      const prefPool = availablePool.filter(d => d.preferredPlace === place);
-      const neutralPool = availablePool.filter(d => !d.preferredPlace);
-      const nonPrefPool = availablePool.filter(d => d.preferredPlace && d.preferredPlace !== place);
-
-      // Build priority cascade
-      const priorityGroups = [
-        prefPrimary, neutralPrimary, nonPrefPrimary,
-        prefPool, neutralPool, nonPrefPool,
-      ];
-
-      let chosen = null;
-      for (const group of priorityGroups) {
-        if (group.length > 0) {
-          group.sort((a, b) => getEffectiveRemaining(b) - getEffectiveRemaining(a));
-          chosen = group[0];
-          break;
-        }
-      }
-
+      const chosen = pickDoctorForSlot(slotKey, primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining);
       if (!chosen) continue;
 
       state.assignments[slotKey] = chosen.id;
@@ -1397,402 +1372,28 @@ function runAutoAssignForMonth(year, month) {
 }
 
 function autoAssign() {
-  if (isProcessing) return;
   runAutoAssignForMonth(state.calYear, state.calMonth);
 }
 
-// ====================================================
-// GENERA MESE SUCCESSIVO
-// ====================================================
 function generateNextMonth() {
-  if (isProcessing) return;
-  const nextMonth = state.calMonth === 11 ? 0 : state.calMonth + 1;
-  const nextYear = state.calMonth === 11 ? state.calYear + 1 : state.calYear;
-  runAutoAssignForMonth(nextYear, nextMonth);
+  const nextMonth = state.calMonth + 1;
+  const year = nextMonth > 11 ? state.calYear + 1 : state.calYear;
+  runAutoAssignForMonth(year, nextMonth % 12);
 }
 
 function updateGeneraButtonLabel() {
-  const btn = document.getElementById('btn-genera-label');
-  if (!btn) return;
-  const nextMonth = state.calMonth === 11 ? 0 : state.calMonth + 1;
-  btn.textContent = 'Genera ' + MONTHS_IT[nextMonth];
-}
-
-function buildPdfContent() {
-  const year = state.calYear;
-  const month = state.calMonth;
-  const monthName = MONTHS_IT[month];
-  const doctorMap = Object.fromEntries(state.doctors.map(d => [d.id, d]));
-  const dayNames = ['Luned\u00EC', 'Marted\u00EC', 'Mercoled\u00EC', 'Gioved\u00EC', 'Venerd\u00EC'];
-
-  document.getElementById('pdf-subtitle').textContent = `${monthName} ${year} \u2014 Sedi: ${PLACES.join(', ')}`;
-  document.getElementById('pdf-footer').textContent = `Generato il ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })} \u2014 RUAP Attivit\u00E0 Diurne`;
-
-  const container = document.getElementById('pdf-table');
-  container.innerHTML = '';
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startDate = getWeekStart(firstDay);
-
-  const table = document.createElement('table');
-  table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed;';
-
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  dayNames.forEach(name => {
-    const th = document.createElement('th');
-    th.style.cssText = 'padding: 5px 6px; background: #1e40af; color: white; font-weight: bold; text-align: center; font-size: 10px;';
-    th.textContent = name;
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
-  let currentWeekStart = new Date(startDate);
-
-  while (true) {
-    if (currentWeekStart > lastDay) break;
-
-    const tr = document.createElement('tr');
-
-    for (let i = 0; i < 5; i++) {
-      const cellDate = new Date(currentWeekStart);
-      cellDate.setDate(cellDate.getDate() + i);
-      const dateKey = toDateKey(cellDate);
-      const inMonth = cellDate.getMonth() === month;
-      const isHoliday = isItalianHoliday(cellDate);
-
-      const td = document.createElement('td');
-      let bg = inMonth ? '#ffffff' : '#f8fafc';
-      if (isHoliday) bg = '#fef2f2';
-      td.style.cssText = `padding: 4px 5px; border: 1px solid #e2e8f0; vertical-align: top; background: ${bg};${inMonth ? '' : ' color: #cbd5e1;'}`;
-
-      if (inMonth) {
-        const dayDiv = document.createElement('div');
-        dayDiv.style.cssText = 'font-weight: bold; font-size: 11px; color: #1e40af; margin-bottom: 3px;';
-        dayDiv.textContent = cellDate.getDate();
-        td.appendChild(dayDiv);
-
-        if (isHoliday) {
-          const holDiv = document.createElement('div');
-          holDiv.style.cssText = 'font-size: 8px; color: #dc2626; font-weight: bold; text-transform: uppercase;';
-          holDiv.textContent = 'CHIUSO';
-          td.appendChild(holDiv);
-        } else {
-          PLACES.forEach((place, pi) => {
-            const placeDiv = document.createElement('div');
-            placeDiv.style.cssText = `margin-bottom: 2px;${pi > 0 ? ' margin-top: 3px; padding-top: 3px; border-top: 1px dashed #e2e8f0;' : ''}`;
-
-            const pName = document.createElement('div');
-            pName.style.cssText = 'font-weight: bold; color: #64748b; font-size: 7px; text-transform: uppercase; margin-bottom: 1px;';
-            pName.textContent = place;
-            placeDiv.appendChild(pName);
-
-            SLOTS.forEach(slot => {
-              const key = `${dateKey}_${slot.key}_${place}`;
-              const docId = state.assignments[key];
-              const doc = docId ? doctorMap[docId] : null;
-              const sDiv = document.createElement('div');
-              sDiv.style.cssText = 'padding: 1px 3px; border-radius: 2px; font-size: 8px; margin-bottom: 1px;';
-
-              if (doc) {
-                const color = getDoctorColor(doc);
-                sDiv.style.cssText += `background: ${color.hex}; color: white; font-weight: bold;`;
-                sDiv.textContent = `${slot.key === 'mat' ? 'M' : 'P'}: ${cleanDoctorName(doc.name)}`;
-              } else {
-                sDiv.style.cssText += 'color: #cbd5e1;';
-                sDiv.textContent = `${slot.key === 'mat' ? 'M' : 'P'}: \u2014`;
-              }
-              placeDiv.appendChild(sDiv);
-            });
-            td.appendChild(placeDiv);
-          });
-        }
-      }
-      tr.appendChild(td);
-    }
-
-    tbody.appendChild(tr);
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  }
-
-  table.appendChild(tbody);
-  container.appendChild(table);
-}
-
-async function exportPDF() {
-  buildPdfContent();
-  const el = document.getElementById('pdf-content');
-  el.classList.remove('hidden');
-
-  try {
-    const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const margin = 8;
-    const maxW = pageW - 2 * margin;
-    const maxH = pageH - 2 * margin;
-    const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, canvas.width * ratio, canvas.height * ratio);
-    pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
-    toast('PDF scaricato', 'success');
-  } catch (err) {
-    toast('Errore PDF: ' + err.message, 'error');
-    console.error(err);
-  } finally {
-    el.classList.add('hidden');
+  const label = document.getElementById('btn-genera-label');
+  if (label) {
+    const nextMonth = (state.calMonth + 1) % 12;
+    label.textContent = MONTHS_IT[nextMonth];
   }
 }
 
-// Event listeners (defensive checks for optional buttons)
-const btnAutoAssign = document.getElementById('btn-auto-assign');
-if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
-const btnGeneraMese = document.getElementById('btn-genera-mese');
-if (btnGeneraMese) btnGeneraMese.addEventListener('click', generateNextMonth);
-const btnPdf = document.getElementById('btn-pdf');
-if (btnPdf) btnPdf.addEventListener('click', exportPDF);
-const btnDarkMode = document.getElementById('btn-darkmode');
-if (btnDarkMode) btnDarkMode.addEventListener('click', toggleDarkMode);
-const btnInstructions = document.getElementById('btn-instructions');
-if (btnInstructions) {
-  btnInstructions.addEventListener('click', () => {
-    document.getElementById('instructions-modal').classList.remove('hidden');
-  });
-}
-document.getElementById('instructions-modal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'instructions-modal') {
-    e.target.classList.add('hidden');
-  }
-});
-document.getElementById('close-instructions')?.addEventListener('click', closeInstructions);
-document.getElementById('close-instructions-bottom')?.addEventListener('click', closeInstructions);
-const btnResetAssignments = document.getElementById('btn-reset-assignments');
-if (btnResetAssignments) {
-  btnResetAssignments.addEventListener('click', resetAssignments);
-}
-const btnConflicts = document.getElementById('btn-conflicts');
-if (btnConflicts) {
-  btnConflicts.addEventListener('click', openConflictsModal);
-}
-document.getElementById('conflicts-modal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'conflicts-modal') closeConflictsModal();
-});
-const btnRestartWizard = document.getElementById('btn-restart-wizard');
-if (btnRestartWizard) {
-  btnRestartWizard.addEventListener('click', restartWizard);
-}
-
-// Undo/Redo buttons
-const btnUndo = document.getElementById('btn-undo');
-if (btnUndo) btnUndo.addEventListener('click', undo);
-const btnRedo = document.getElementById('btn-redo');
-if (btnRedo) btnRedo.addEventListener('click', redo);
-
-// Oggi button - go to current date
-const btnOggi = document.getElementById('btn-oggi');
-if (btnOggi) {
-  btnOggi.addEventListener('click', () => {
-    const now = new Date();
-    state.calYear = now.getFullYear();
-    state.calMonth = now.getMonth();
-    state.sidebarWeekStart = getWeekStart(now);
-    state.calendarWeekStart = getWeekStart(now);
-    if (state.calendarView === 'weekly') toggleCalendarView();
-    renderAll();
-    toast('Tornato a oggi', 'info');
-  });
-}
-
-// Close instructions modal function
-function closeInstructions() {
-  const modal = document.getElementById('instructions-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-// Close conflict modal function
-function closeConflictModal() {
-  const modal = document.getElementById('conflict-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
 // ====================================================
-// CONFLICTS RESOLUTION CENTER
+// 11. MONTHLY STATS
 // ====================================================
-function openConflictsModal() {
-  const conflicts = getConflicts();
-  const modal = document.getElementById('conflicts-modal');
-  const list = document.getElementById('conflicts-list');
-  const badge = document.getElementById('conflicts-count-badge');
-  const autoBtn = document.getElementById('btn-auto-resolve-all');
+let hideZeroDocs = false;
 
-  badge.textContent = conflicts.length;
-  autoBtn.disabled = conflicts.length === 0;
-
-  if (conflicts.length === 0) {
-    list.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-12 text-slate-400">
-        <i class="fa-solid fa-check-circle text-5xl mb-3 text-green-400"></i>
-        <p class="text-lg font-medium text-slate-500">Nessun conflitto trovato</p>
-        <p class="text-sm">Tutti i turni sono assegnati correttamente.</p>
-      </div>`;
-  } else {
-    list.innerHTML = conflicts.map((c, idx) => {
-      const doc = getDoctorById(c.docId);
-      const color = COLOR_PALETTE[doc?.colorIndex ?? 0] || COLOR_PALETTE[0];
-      const slot = SLOTS.find(s => s.key === c.slotKey);
-      const slotLabel = slot ? `${slot.icon} ${slot.label}` : c.slotKey;
-      const [year, month, day] = c.dateKey.split('-');
-      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      const dateFormatted = dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-
-      const placesHtml = c.keys.map(k => {
-        const parts = k.split('_');
-        const place = parts.slice(2).join('_');
-        return `<div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 mb-1">
-          <span class="text-sm text-slate-700 flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-slate-400"></i>${place}
-          </span>
-          <button onclick="removeAssignmentFromConflict('${k}')" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
-            <i class="fa-solid fa-xmark mr-1"></i>Rimuovi
-          </button>
-        </div>`;
-      }).join('');
-
-      return `<div class="border border-slate-200 rounded-xl overflow-hidden">
-        <div class="bg-slate-50 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
-          <div class="w-3 h-3 rounded-full ${color.bg} flex-shrink-0"></div>
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold text-slate-800 text-sm truncate">${doc?.name || 'Medico sconosciuto'}</p>
-            <p class="text-xs text-slate-500">${dateFormatted} · ${slotLabel}</p>
-          </div>
-          <div class="flex items-center gap-1">
-            ${c.isUnavailable ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">Assente / Ferie</span>' : ''}
-            <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">${c.keys.length} sedi</span>
-          </div>
-        </div>
-        <div class="p-3 bg-white">${placesHtml}</div>
-      </div>`;
-    }).join('');
-  }
-
-  modal.classList.remove('hidden');
-  updateConflictsHeaderBadge();
-}
-
-function closeConflictsModal() {
-  document.getElementById('conflicts-modal').classList.add('hidden');
-}
-
-function removeAssignmentFromConflict(slotKey) {
-  pushHistory();
-  delete state.assignments[slotKey];
-  saveToStorage();
-  renderAll();
-  
-  openConflictsModal();
-}
-
-function autoResolveAllConflicts() {
-  const conflicts = getConflicts();
-  if (conflicts.length === 0) return;
-  pushHistory();
-  for (const c of conflicts) {
-    if (c.isUnavailable) {
-      // For unavailability, remove all conflicting assignments
-      for (const k of c.keys) {
-        delete state.assignments[k];
-      }
-    } else {
-      // For double-booking, keep the first assignment, remove duplicates
-      const keysToRemove = c.keys.slice(1);
-      for (const k of keysToRemove) {
-        delete state.assignments[k];
-      }
-    }
-  }
-  saveToStorage();
-  renderAll();
-  
-  openConflictsModal();
-  toast(`Risolti ${conflicts.length} conflitti automaticamente`, 'success');
-}
-
-function updateConflictsHeaderBadge() {
-  const conflicts = getConflicts();
-  const badge = document.getElementById('conflicts-header-badge');
-  if (conflicts.length > 0) {
-    badge.textContent = conflicts.length;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
-}
-
-// Auto-update weekly hours when patients change
-document.getElementById('modal-patients')?.addEventListener('input', (e) => {
-  const patients = parseInt(e.target.value) || 0;
-  const hours = calculateDebtByPatients(patients);
-  document.getElementById('modal-hours').value = hours;
-});
-
-// Unavailability periods functionality
-function addUnavailPeriodRow(from = '', to = '') {
-  const container = document.getElementById('unavail-periods');
-  if (!container) return;
-  const periodEl = document.createElement('div');
-  periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2 unavail-period-row';
-  periodEl.innerHTML = `
-    <input type="date" value="${from}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-from" placeholder="Da">
-    <span class="text-slate-400">—</span>
-    <input type="date" value="${to}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-to" placeholder="A">
-    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-xs">
-      <i class="fa-solid fa-trash-can"></i>
-    </button>
-  `;
-  container.appendChild(periodEl);
-}
-
-document.getElementById('btn-add-period')?.addEventListener('click', () => {
-  addUnavailPeriodRow('', '');
-});
-
-// ====================================================
-// KEYBOARD SHORTCUTS
-// ====================================================
-document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
-  if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); }
-  if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); }
-  if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); closeInstructions(); }
-});
-
-// ====================================================
-// KONAMI CODE EASTER EGG
-// ====================================================
-const konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-let konamiIndex = 0;
-document.addEventListener('keydown', (e) => {
-  if (e.key === konamiCode[konamiIndex]) {
-    konamiIndex++;
-    if (konamiIndex === konamiCode.length) {
-      toast('🎉 Sei un vero utente RUAP!', 'success');
-      document.body.style.animation = 'rainbow 2s';
-      setTimeout(() => { document.body.style.animation = ''; }, 2000);
-      konamiIndex = 0;
-    }
-  } else {
-    konamiIndex = 0;
-  }
-});
-
-// ====================================================
-// STATISTICHE E STATO COPERTURA
-// ====================================================
 function getMonthlyStats() {
   const year = state.calYear;
   const month = state.calMonth;
@@ -1819,9 +1420,6 @@ function getMonthlyStats() {
   }
   return { totalSlots, filledSlots, emptySlots: totalSlots - filledSlots, coverage: totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0, doctorHours };
 }
-
-// ─── Monthly stats panel + coverage badge ────────────────
-let hideZeroDocs = false;
 
 function toggleHideZeroDocs() {
   hideZeroDocs = !hideZeroDocs;
@@ -1879,9 +1477,8 @@ function renderMonthlyStats() {
 
   const printGrid = document.getElementById('print-bilancio-grid');
   if (printGrid) {
-    const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
     const titleEl = document.getElementById('print-bilancio-title');
-    if (titleEl) titleEl.textContent = `${months[state.calMonth]} ${state.calYear}`;
+    if (titleEl) titleEl.textContent = `${MONTHS_IT[state.calMonth]} ${state.calYear}`;
     printGrid.innerHTML = visible.map(doc => {
       const budget = getMonthlyBudget(doc);
       const used = stats.doctorHours[doc.id] || 0;
@@ -1907,39 +1504,13 @@ function toggleMonthlyStats() {
 }
 
 // ====================================================
-// RICERCA E FILTRO MEDICI
+// 12. RICERCA E FILTRO MEDICI
 // ====================================================
 let searchQuery = '';
 let filterAFT = '';
 
-function filterDoctors() {
-  let filtered = state.doctors;
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.preferredPlace && d.preferredPlace.toLowerCase().includes(q)));
-  }
-  if (filterAFT) {
-    if (filterAFT === 'none') {
-      filtered = filtered.filter(d => !d.aft || d.aft === '');
-    } else {
-      filtered = filtered.filter(d => d.aft === filterAFT);
-    }
-  }
-  return filtered;
-}
-
-document.getElementById('doctor-search')?.addEventListener('input', (e) => {
-  searchQuery = e.target.value;
-  renderSidebar();
-});
-
-document.getElementById('filter-aft')?.addEventListener('change', (e) => {
-  filterAFT = e.target.value;
-  renderSidebar();
-});
-
 // ====================================================
-// COPIA SETTIMANA
+// 13. COPIA SETTIMANA
 // ====================================================
 let copyWeekSource = null;
 
@@ -1993,7 +1564,7 @@ function pasteWeek(weekStart) {
     return;
   }
   pushHistory();
-  const offset = Math.floor((weekStart - copyWeekSource.weekStart) / (7 * 24 * 60 * 60 * 1000));
+  const offset = Math.floor((weekStart - copyWeekSource.weekStart) / (7 * MS_PER_DAY));
   let count = 0;
   for (const [key, docId] of Object.entries(copyWeekSource.assignments)) {
     const parts = key.split('_');
@@ -2011,43 +1582,11 @@ function pasteWeek(weekStart) {
   }
   saveToStorage();
   renderAll();
-  
   toast(`${count} turni incollati`, 'success');
 }
 
 // ====================================================
-// CONFLICT DETECTION
-// ====================================================
-function getConflicts() {
-  const conflictsMap = {};
-  for (const [key, docId] of Object.entries(state.assignments)) {
-    const parts = key.split('_');
-    const dateKey = parts[0];
-    const slotKey = parts[1];
-    
-    const doc = getDoctorById(docId);
-    const isUnavailable = doc ? isDoctorUnavailable(doc, dateKey) : false;
-    
-    const conflictKey = `${docId}_${dateKey}_${slotKey}`;
-    const matches = Object.entries(state.assignments).filter(([k, v]) => v === docId && k.startsWith(`${dateKey}_${slotKey}_`));
-    
-    if (matches.length > 1 || isUnavailable) {
-      if (!conflictsMap[conflictKey]) {
-        conflictsMap[conflictKey] = {
-          docId,
-          dateKey,
-          slotKey,
-          keys: matches.map(m => m[0]),
-          isUnavailable
-        };
-      }
-    }
-  }
-  return Object.values(conflictsMap);
-}
-
-// ====================================================
-// WIZARD SETUP
+// 14. WIZARD
 // ====================================================
 let wizardStep = 1;
 const WIZARD_TOTAL = 4;
@@ -2056,10 +1595,10 @@ let wSlots = [];
 let wDoctors = [];
 
 function startWizard() {
-  wPlaces = [...PLACES];
+  wizardStep = 1;
+  wPlaces = [];
   wSlots = [{ key: 'mat', label: '08:00–14:00', hours: 6, icon: '🌅' }, { key: 'pom', label: '14:00–20:00', hours: 6, icon: '🌆' }];
   wDoctors = [];
-  wizardStep = 1;
   document.getElementById('ruap-wizard').classList.remove('hidden');
   renderWizardStep();
 }
@@ -2070,9 +1609,12 @@ function restartWizard() {
   localStorage.removeItem(STORAGE_ASSIGNMENTS);
   localStorage.removeItem(STORAGE_HISTORY);
   localStorage.removeItem(STORAGE_PLACES);
+  localStorage.removeItem(STORAGE_SLOTS);
+  localStorage.removeItem(STORAGE_VERSION_KEY);
   state.doctors = [];
   state.assignments = {};
   state.places = [];
+  state.slots = [];
   historyStack = [];
   historyIndex = -1;
   document.getElementById('demo-banner').classList.add('hidden');
@@ -2093,30 +1635,16 @@ function renderWizardProgressDots() {
 
 function renderWizardStep() {
   renderWizardProgressDots();
-  
-  ['wizard-back', 'wizard-next'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const clone = el.cloneNode(true);
-    el.parentNode.replaceChild(clone, el);
-  });
-
   const backBtn = document.getElementById('wizard-back');
   const nextBtn = document.getElementById('wizard-next');
-
   backBtn.classList.toggle('hidden', wizardStep === 1);
   nextBtn.classList.toggle('hidden', wizardStep === 1 || wizardStep === 4);
 
   const stepFns = [null, renderWizardStep1, renderWizardStep2, renderWizardStep3, renderWizardStep4];
   stepFns[wizardStep]();
 
-  backBtn.addEventListener('click', () => { wizardStep--; renderWizardStep(); });
-
   if (wizardStep === 2 || wizardStep === 3) {
     updateWizardNextState();
-    nextBtn.addEventListener('click', () => {
-      if (wizardAdvance()) { wizardStep++; renderWizardStep(); }
-    });
   }
 }
 
@@ -2165,12 +1693,8 @@ function renderWizardStep1() {
       <button id="w-start" class="wizard-big-btn primary" style="text-align:center">
         <span style="font-size:1.5rem; margin-right:0.5rem">👉</span> Iniziamo!
       </button>
-    </div>
-  `;
-  document.getElementById('w-start').addEventListener('click', () => {
-    wizardStep = 2;
-    renderWizardStep();
-  });
+    </div>`;
+  document.getElementById('w-start').addEventListener('click', () => { wizardStep = 2; renderWizardStep(); });
 }
 
 function renderWizardStep2() {
@@ -2178,8 +1702,7 @@ function renderWizardStep2() {
     <span class="wizard-chip" style="background:#dbeafe; color:#1e40af">
       ${p}
       <button class="chip-remove w-remove-place" data-place="${p}">×</button>
-    </span>
-  `).join('');
+    </span>`).join('');
 
   document.getElementById('wizard-step-content').innerHTML = `
     <h1>Dove si lavora?</h1>
@@ -2193,25 +1716,18 @@ function renderWizardStep2() {
     </div>
     <div class="mt-4 p-3 bg-slate-50 rounded-lg">
       <p class="text-sm text-slate-500">💡 <strong>Suggerimento:</strong> Puoi usare le sedi del tuo territorio USL</p>
-    </div>
-  `;
+    </div>`;
 
   document.getElementById('w-place-add').addEventListener('click', () => {
     const input = document.getElementById('w-place-input');
     const val = input.value.trim();
-    if (val && !wPlaces.includes(val)) {
-      wPlaces.push(val);
-      renderWizardStep2();
-    }
+    if (val && !wPlaces.includes(val)) { wPlaces.push(val); renderWizardStep2(); }
   });
   document.getElementById('w-place-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('w-place-add').click();
   });
   document.querySelectorAll('.w-remove-place').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wPlaces = wPlaces.filter(p => p !== btn.dataset.place);
-      renderWizardStep2();
-    });
+    btn.addEventListener('click', () => { wPlaces = wPlaces.filter(p => p !== btn.dataset.place); renderWizardStep2(); });
   });
   updateWizardNextState();
 }
@@ -2221,8 +1737,7 @@ function renderWizardStep3() {
     <span class="wizard-chip" style="background:#fef3c7; color:#92400e">
       ${s.icon} ${s.label} (${s.hours}h)
       <button class="chip-remove w-remove-slot" data-key="${s.key}">×</button>
-    </span>
-  `).join('');
+    </span>`).join('');
 
   document.getElementById('wizard-step-content').innerHTML = `
     <h1>Quali turni?</h1>
@@ -2250,8 +1765,7 @@ function renderWizardStep3() {
       </div>
     </div>
     <button id="w-slot-add" class="wizard-big-btn outline w-full" style="padding:0.75rem; font-size:1rem">+ Aggiungi turno</button>
-    <p class="text-xs text-slate-400 mt-2">Usa standard 08:00-14:00 (Mattina) e 14:00-20:00 (Pomeriggio)</p>
-  `;
+    <p class="text-xs text-slate-400 mt-2">Usa standard 08:00-14:00 (Mattina) e 14:00-20:00 (Pomeriggio)</p>`;
 
   let selectedIcon = '🌅';
   document.querySelectorAll('.w-slot-icon').forEach(btn => {
@@ -2278,10 +1792,7 @@ function renderWizardStep3() {
     }
   });
   document.querySelectorAll('.w-remove-slot').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wSlots = wSlots.filter(s => s.key !== btn.dataset.key);
-      renderWizardStep3();
-    });
+    btn.addEventListener('click', () => { wSlots = wSlots.filter(s => s.key !== btn.dataset.key); renderWizardStep3(); });
   });
   updateWizardNextState();
 }
@@ -2318,37 +1829,244 @@ function renderWizardStep4() {
         <span class="wizard-chip" style="background:${COLOR_PALETTE[i % COLOR_PALETTE.length].hex}; color:white">
           ${d.name}
           <button class="chip-remove w-remove-doctor" data-index="${i}">×</button>
-        </span>
-      `).join('')}
+        </span>`).join('')}
       ${wDoctors.length === 0 ? '<span class="text-slate-400 text-sm">Nessun medico aggiunto</span>' : ''}
     </div>
     <button id="w-finish" class="wizard-big-btn success w-full" style="text-align:center; margin-top:1rem; ${wDoctors.length < 1 ? 'opacity:0.4; pointer-events:none' : ''}">
       ✅ Configura e inizia
-    </button>
-  `;
+    </button>`;
 
   document.getElementById('w-doctor-add').addEventListener('click', () => {
     const name = document.getElementById('w-doctor-name').value.trim();
     const patients = parseInt(document.getElementById('w-doctor-patients').value) || 850;
     const preferredPlace = document.getElementById('w-doctor-place').value || null;
     if (name) {
-      wDoctors.push({ name: name.startsWith('Dott. ') ? name : 'Dott. ' + name, patients, weeklyHours: calculateDebtByPatients(patients), colorIndex: wDoctors.length % 8, preferredPlace, availability: Object.fromEntries(['lun','mar','mer','gio','ven'].map(k => [k, { mat: true, pom: true }])), unavailPeriods: [] });
+      wDoctors.push({ name: name.startsWith('Dott. ') ? name : 'Dott. ' + name, patients, weeklyHours: calculateDebtByPatients(patients), colorIndex: wDoctors.length % 8, preferredPlace, availability: Object.fromEntries(DAY_KEYS.map(k => [k, { mat: true, pom: true }])), unavailPeriods: [] });
       document.getElementById('w-doctor-name').value = '';
       document.getElementById('w-doctor-patients').value = '';
       renderWizardStep4();
     }
   });
   document.querySelectorAll('.w-remove-doctor').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wDoctors.splice(parseInt(btn.dataset.index), 1);
-      renderWizardStep4();
-    });
+    btn.addEventListener('click', () => { wDoctors.splice(parseInt(btn.dataset.index), 1); renderWizardStep4(); });
   });
   document.getElementById('w-finish').addEventListener('click', finishWizard);
 }
 
 // ====================================================
-// INIT
+// 15. KEYBOARD SHORTCUTS
+// ====================================================
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+  if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); }
+  if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); }
+  if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); closeInstructions(); }
+});
+
+// ====================================================
+// 16. KONAMI CODE EASTER EGG
+// ====================================================
+const konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIndex = 0;
+document.addEventListener('keydown', (e) => {
+  if (e.key === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      toast('🎉 Sei un vero utente RUAP!', 'success');
+      document.body.style.animation = 'rainbow 2s';
+      setTimeout(() => { document.body.style.animation = ''; }, 2000);
+      konamiIndex = 0;
+    }
+  } else {
+    konamiIndex = 0;
+  }
+});
+
+// ====================================================
+// 17. WIZARD NAV LISTENERS (attached once, event delegation)
+// ====================================================
+document.getElementById('wizard-back')?.addEventListener('click', () => { if (wizardStep > 1) { wizardStep--; renderWizardStep(); } });
+document.getElementById('wizard-next')?.addEventListener('click', () => {
+  if (wizardAdvance() && wizardStep < 4) { wizardStep++; renderWizardStep(); }
+});
+
+// ====================================================
+// 18. TOP-LEVEL EVENT LISTENERS
+// ====================================================
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = { version: 1, exportDate: new Date().toISOString(), doctors: state.doctors, assignments: state.assignments };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `turni-${toDateKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-export-excel').addEventListener('click', exportExcel);
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
+      state.doctors = data.doctors; state.assignments = data.assignments;
+      saveToStorage(); renderAll(); renderMonthlyStats(); toast('Importazione completata!', 'success');
+    } catch (err) { toast('Errore importazione: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file); e.target.value = '';
+});
+document.getElementById('import-excel-file').addEventListener('change', importExcelFromFile);
+
+// Assign dropdown
+document.getElementById('assign-remove').addEventListener('click', () => {
+  if (state.activeSlotKey) removeAssignment(state.activeSlotKey);
+});
+document.addEventListener('click', (e) => { if (!document.getElementById('assign-dropdown').contains(e.target)) closeAssignDropdown(); });
+document.getElementById('assign-close').addEventListener('click', closeAssignDropdown);
+document.getElementById('assign-exception-btn').addEventListener('click', () => {
+  document.getElementById('assign-unavail-section').classList.toggle('hidden');
+  document.getElementById('assign-custom-section').classList.toggle('hidden');
+});
+document.getElementById('assign-custom-add').addEventListener('click', () => {
+  const input = document.getElementById('assign-custom-input');
+  const name = input.value.trim();
+  if (!name || !state.activeSlotKey) return;
+  assignDoctor(state.activeSlotKey, EXTERNAL_PREFIX + name);
+});
+document.getElementById('assign-custom-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('assign-custom-add').click();
+});
+
+// Doctor modal save/cancel
+document.getElementById('modal-cancel').addEventListener('click', closeDoctorModal);
+document.getElementById('modal-save').addEventListener('click', () => {
+  const doctorId = document.getElementById('modal-doctor-id').value || generateId();
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name) { toast('Inserisci un nome', 'warning'); return; }
+  const patients = parseInt(document.getElementById('modal-patients').value) || 0;
+  const weeklyHours = parseInt(document.getElementById('modal-hours').value) || 38;
+  const isPool = document.getElementById('modal-pool').checked;
+  const budget = document.getElementById('modal-budget').value ? parseFloat(document.getElementById('modal-budget').value) : undefined;
+  const aft = document.getElementById('modal-aft').value || '';
+  const seniority = parseInt(document.getElementById('modal-seniority').value) || 0;
+  const preferredPlace = document.getElementById('modal-preferred-place').value || null;
+  const selectedSwatch = document.querySelector('.color-swatch.border-slate-800');
+  const colorIndex = selectedSwatch ? parseInt(selectedSwatch.dataset.index) : 0;
+  const availability = {};
+  document.querySelectorAll('.avail-check').forEach(cb => {
+    const day = cb.dataset.day;
+    const slot = cb.dataset.slot;
+    if (!availability[day]) availability[day] = { mat: false, pom: false };
+    availability[day][slot] = cb.checked;
+  });
+  const unavailPeriods = [];
+  document.querySelectorAll('.unavail-period-row').forEach(row => {
+    const from = row.querySelector('.unavail-from').value;
+    const to = row.querySelector('.unavail-to').value;
+    if (from && to) unavailPeriods.push({ from, to });
+  });
+
+  if (state.editingDoctorId) {
+    const doc = getDoctorById(state.editingDoctorId);
+    if (doc) {
+      if (doc.name !== name) doc.name = name;
+      doc.patients = patients;
+      doc.weeklyHours = weeklyHours;
+      doc.isPool = isPool;
+      if (budget !== undefined) doc.monthlyBudget = budget; else delete doc.monthlyBudget;
+      doc.aft = aft;
+      doc.seniority = seniority;
+      doc.preferredPlace = preferredPlace;
+      doc.colorIndex = colorIndex;
+      doc.availability = availability;
+      doc.unavailPeriods = unavailPeriods;
+    }
+  } else {
+    state.doctors.push({
+      id: generateId(), name, patients, weeklyHours, isPool, monthlyBudget: budget,
+      colorIndex, preferredPlace, availability, unavailPeriods, aft, seniority
+    });
+  }
+  saveToStorage();
+  pushHistory();
+  closeDoctorModal();
+  renderAll();
+  toast(state.editingDoctorId ? 'Medico aggiornato' : 'Medico aggiunto', 'success');
+});
+document.getElementById('modal-patients')?.addEventListener('input', (e) => {
+  const patients = parseInt(e.target.value) || 0;
+  const hours = calculateDebtByPatients(patients);
+  document.getElementById('modal-hours').value = hours;
+});
+document.getElementById('btn-add-period')?.addEventListener('click', () => { addUnavailPeriodRow('', ''); });
+
+// Color swatch selection
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('color-swatch')) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('border-slate-800'));
+    e.target.classList.add('border-slate-800');
+  }
+});
+
+// Header and toolbar buttons
+const btnAutoAssign = document.getElementById('btn-auto-assign');
+if (btnAutoAssign) btnAutoAssign.addEventListener('click', autoAssign);
+const btnGeneraMese = document.getElementById('btn-genera-mese');
+if (btnGeneraMese) btnGeneraMese.addEventListener('click', generateNextMonth);
+const btnPdf = document.getElementById('btn-pdf');
+if (btnPdf) btnPdf.addEventListener('click', exportPDF);
+const btnDarkMode = document.getElementById('btn-darkmode');
+if (btnDarkMode) btnDarkMode.addEventListener('click', toggleDarkMode);
+const btnInstructions = document.getElementById('btn-instructions');
+if (btnInstructions) {
+  btnInstructions.addEventListener('click', () => {
+    document.getElementById('instructions-modal').classList.remove('hidden');
+  });
+}
+document.getElementById('instructions-modal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'instructions-modal') e.target.classList.add('hidden');
+});
+document.getElementById('close-instructions')?.addEventListener('click', closeInstructions);
+document.getElementById('close-instructions-bottom')?.addEventListener('click', closeInstructions);
+const btnResetAssignments = document.getElementById('btn-reset-assignments');
+if (btnResetAssignments) btnResetAssignments.addEventListener('click', resetAssignments);
+const btnConflicts = document.getElementById('btn-conflicts');
+if (btnConflicts) btnConflicts.addEventListener('click', openConflictsModal);
+document.getElementById('conflicts-modal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'conflicts-modal') closeConflictsModal();
+});
+const btnRestartWizard = document.getElementById('btn-restart-wizard');
+if (btnRestartWizard) btnRestartWizard.addEventListener('click', restartWizard);
+const btnUndo = document.getElementById('btn-undo');
+if (btnUndo) btnUndo.addEventListener('click', undo);
+const btnRedo = document.getElementById('btn-redo');
+if (btnRedo) btnRedo.addEventListener('click', redo);
+const btnOggi = document.getElementById('btn-oggi');
+if (btnOggi) {
+  btnOggi.addEventListener('click', () => {
+    const now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
+    state.sidebarWeekStart = getWeekStart(now);
+    state.calendarWeekStart = getWeekStart(now);
+    if (state.calendarView === 'weekly') toggleCalendarView();
+    renderAll();
+    toast('Tornato a oggi', 'info');
+  });
+}
+document.getElementById('doctor-search')?.addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  renderSidebar();
+});
+document.getElementById('filter-aft')?.addEventListener('change', (e) => {
+  filterAFT = e.target.value;
+  renderSidebar();
+});
+
+// ====================================================
+// 19. INIT
 // ====================================================
 function init() {
   initDarkMode();
@@ -2383,41 +2101,10 @@ function init() {
   }
   updateGeneraButtonLabel();
   renderAll();
-  
   renderMonthlyStats();
   updateUndoRedoButtons();
   updateConflictsHeaderBadge();
   updateHeaderSubtitle();
-}
-
-function loadHistory() {
-  try {
-    const saved = localStorage.getItem(STORAGE_HISTORY);
-    if (saved) {
-      const data = JSON.parse(saved);
-      historyStack = data.stack || [];
-      historyIndex = data.index || -1;
-    }
-  } catch (e) { console.error(e); }
-}
-
-function saveHistory() {
-  localStorage.setItem(STORAGE_HISTORY, JSON.stringify({ stack: historyStack, index: historyIndex }));
-}
-
-function pushHistory() {
-  const snapshot = JSON.stringify({ assignments: state.assignments });
-  if (historyIndex < historyStack.length - 1) {
-    historyStack = historyStack.slice(0, historyIndex + 1);
-  }
-  historyStack.push(snapshot);
-  if (historyStack.length > HISTORY_MAX) {
-    historyStack.shift();
-  } else {
-    historyIndex++;
-  }
-  saveHistory();
-  updateUndoRedoButtons();
 }
 
 init();
