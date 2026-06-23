@@ -532,24 +532,33 @@ function renderCalendarWeek() {
     d.setDate(d.getDate() + i);
     const dateKey = toDateKey(d);
     const isHoliday = isItalianHoliday(d);
+    const isToday = toDateKey(new Date()) === dateKey;
     const cell = document.createElement('div');
-    cell.className = `rounded-xl border border-slate-200 p-2 ${isHoliday ? 'holiday-cell' : 'bg-white'}`;
+    cell.className = `rounded-xl p-2 border ${isHoliday ? 'holiday-cell border-slate-100' : 'bg-white shadow-sm border-slate-200'} ${isToday ? 'ring-2 ring-brand-400' : ''}`;
     const dayName = DAY_NAMES[i];
     const dayNum = d.getDate();
-    cell.innerHTML = `<div class="text-xs font-bold text-slate-500 mb-1 pb-1 border-b border-slate-100 flex items-center justify-between">
-      <span>${dayName} ${dayNum}</span>
-      ${isHoliday ? '<span class="text-[10px] text-red-500 font-bold">FESTIVO</span>' : ''}
-    </div>`;
-    PLACES.forEach(place => {
-      const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
-      const placeDiv = document.createElement('div');
-      placeDiv.className = 'mb-1';
-      placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[10px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[10px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
-      SLOTS.forEach(slot => {
-        placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
+
+    if (isHoliday) {
+      cell.innerHTML = `<div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-bold text-slate-500">${dayName} ${dayNum}</span>
+        <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase">Festivo</span>
+      </div>
+      <div class="flex items-center justify-center py-3 text-[10px] font-bold text-red-500 uppercase tracking-widest">Chiuso</div>`;
+    } else {
+      cell.innerHTML = `<div class="text-xs font-bold text-slate-500 mb-1 pb-1 border-b border-slate-100 flex items-center justify-between">
+        <span>${dayName} ${dayNum}</span>
+      </div>`;
+      PLACES.forEach(place => {
+        const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
+        const placeDiv = document.createElement('div');
+        placeDiv.className = 'mb-1';
+        placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[10px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[10px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
+        SLOTS.forEach(slot => {
+          placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
+        });
+        cell.appendChild(placeDiv);
       });
-      cell.appendChild(placeDiv);
-    });
+    }
     container.appendChild(cell);
   }
 }
@@ -559,41 +568,57 @@ function renderCalendarMonth() {
   const month = state.calMonth;
   const header = document.getElementById('cal-title');
   if (header) header.textContent = `${MONTHS_IT[month]} ${year}`;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   const container = document.getElementById('cal-grid');
   if (!container) return;
   container.innerHTML = '';
-  container.className = 'grid grid-cols-5 gap-1';
-  const totalCells = Math.ceil((lastDay + startOffset) / 5) * 5;
-  for (let cellIdx = 0; cellIdx < totalCells; cellIdx++) {
-    const day = cellIdx - startOffset + 1;
-    const cell = document.createElement('div');
-    const inMonth = day >= 1 && day <= lastDay;
-    cell.className = `rounded-lg border ${!inMonth ? 'border-transparent bg-transparent' : 'border-slate-200 bg-white'} p-1.5 min-h-[60px]`;
-    if (inMonth) {
-      const d = new Date(year, month, day);
-      const dateKey = toDateKey(d);
-      const isHoliday = isItalianHoliday(d);
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-      if (isHoliday || isWeekend) cell.classList.add('holiday-cell');
-      cell.innerHTML = `<div class="text-[10px] font-bold text-slate-400 mb-0.5 pb-0.5 border-b border-slate-100 flex items-center justify-between">
-        <span>${day}</span>
-        ${isHoliday ? '<span class="text-[8px] text-red-500 font-bold">FESTIVO</span>' : ''}
-      </div>`;
-      PLACES.forEach(place => {
-        const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
-        const placeDiv = document.createElement('div');
-        placeDiv.className = 'mb-0.5';
-        placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[8px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[8px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
-        SLOTS.forEach(slot => {
-          placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = getWeekStart(firstDay);
+
+  let currentWeekStart = new Date(startDate);
+  while (currentWeekStart <= lastDay) {
+    const weekRow = document.createElement('div');
+    weekRow.className = 'grid grid-cols-5 gap-2 mb-2';
+    for (let i = 0; i < 5; i++) {
+      const cellDate = new Date(currentWeekStart);
+      cellDate.setDate(cellDate.getDate() + i);
+      const dateKey = toDateKey(cellDate);
+      const inMonth = cellDate.getMonth() === month;
+      const isToday = toDateKey(new Date()) === dateKey;
+      const isHoliday = isItalianHoliday(cellDate) || cellDate.getDay() === 0 || cellDate.getDay() === 6;
+
+      const cell = document.createElement('div');
+      cell.className = `rounded-xl p-2 border ${isHoliday && inMonth ? 'holiday-cell border-slate-100' : inMonth ? 'bg-white shadow-sm border-slate-100' : 'bg-transparent border-transparent'} ${isToday && inMonth ? 'ring-2 ring-brand-400' : ''}`;
+
+      if (isHoliday && inMonth) {
+        cell.innerHTML = `<div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold text-slate-500">${cellDate.getDate()}</span>
+          <span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded uppercase">Festivo</span>
+        </div>
+        <div class="flex items-center justify-center py-3 text-[10px] font-bold text-red-500 uppercase tracking-widest">Chiuso</div>`;
+      } else if (inMonth) {
+        cell.innerHTML = `<div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold ${isToday ? 'bg-brand-700 text-white rounded-full w-5 h-5 flex items-center justify-center' : 'text-slate-500'}">${cellDate.getDate()}</span>
+        </div>`;
+        PLACES.forEach(place => {
+          const placeSection = document.createElement('div');
+          placeSection.className = 'mb-1 pb-1 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
+          const badge = getCoverageBadge(dateKey, place);
+          placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
+            <span class="text-[9px] font-bold text-slate-400 uppercase">${place}</span>
+            <span class="text-[9px] font-bold ${badge.coverageClass} px-1 rounded">${badge.coverageIcon}</span>
+          </div>`;
+          SLOTS.forEach(slot => {
+            placeSection.appendChild(createSlotButton(dateKey, place, slot, true));
+          });
+          cell.appendChild(placeSection);
         });
-        cell.appendChild(placeDiv);
-      });
+      }
+      weekRow.appendChild(cell);
     }
-    container.appendChild(cell);
+    container.appendChild(weekRow);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
   }
 }
 

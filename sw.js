@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v183: fix cal-grid ID mismatch, restore cal-title and sidebar-week-label updates (RUAP/app.js)
-const CACHE_NAME = 'savianu-v183';
+// Cache version bumped to v184: fix month view renders weekends showing empty slots (RUAP/app.js)
+const CACHE_NAME = 'savianu-v184';
 const urlsToCache = [
   '/',
   '/index.html',
