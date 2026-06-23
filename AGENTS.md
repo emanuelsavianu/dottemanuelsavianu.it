@@ -4,7 +4,9 @@
 - **Static HTML/CSS/JS** on GitHub Pages (`dottemanuelsavianu.it`). Push `main` → auto-deploy. No build step, no test suite.
 - **Separate patient portal** at `savianu.it` is a different repo (`emanuelsavianu.github.io`). Don't mix changes.
 - Serve locally: `npx serve .`
-- `config.js` edits absences, schedule, and banner. It's the single source for those.
+- **Two `config.js` files exist** with different purposes:
+  - Root `/config.js` — `CONFIG.ASSENZE`, `CONFIG.SCHEDULE`, `CONFIG.getActiveAbsence()` for absences/banner/hours
+  - `RUAP/config.js` — `CONFIG.doctors`, `CONFIG.places`, `CONFIG.slots`, `CONFIG.assignments` for shift data
 
 ## Must-know gotchas
 
@@ -35,7 +37,15 @@ For manual overrides: use **raw hex** (`#f3efe6`, `#0d1e33`) — CSS variables i
 
 ### Large files
 - `visite-private.html` (~1250 lines) — read with `offset`/`limit`
-- `RUAP/app.js` (~2380 lines) — prefer Grep over Read for targeted edits
+- `RUAP/app.js` (~2180 lines, refactored) — has section banners (`// === 7. RENDERING ===`) for navigation. Prefer Grep over Read for targeted edits.
+
+### RUAP-specific DOM gotchas
+- Calendar grid ID is **`cal-grid`**, NOT `calendar-grid`.
+- Calendar title is **`cal-title`** (set in `renderCalendarWeek`/`renderCalendarMonth`).
+- Month/week navigation buttons `cal-prev` / `cal-next` need JS-attached listeners that handle both monthly and weekly views (not inline `onclick` in HTML).
+- Sidebar week scroll buttons `sidebar-week-prev` / `sidebar-week-next` also need JS-attached listeners.
+- `renderAll()` must call `updateGeneraButtonLabel()` or the "Genera mese" button shows a stale month name.
+- Month view only iterates **Mon–Fri** (5 cells per week). Holidays show "Chiuso". Never render Sat/Sun cells.
 
 ### CDN dependencies
 - jsPDF, html2canvas, XLSX (SheetJS) loaded from CDN in `RUAP/index.html` and `gestoreturni/gestoreturni.html`. Not vendored. If CDN fails, features show a toast error.
@@ -68,7 +78,7 @@ Every new page needs: hide `.topbar, footer, nav`, reset `.page-hero` background
 |-----|-----|-------|-------|
 | Main site | `/` | styles.css + app.js | PWA (sw.js + manifest.json + offline.html), config.js NOT on root index |
 | Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*`; read `CLAUDE.md` for migration patterns |
-| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese; read `CLAUDE.md` for budget schema |
+| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese; app.js has section banners (`// === 7. RENDERING ===`) for navigation; read `CLAUDE.md` for budget schema |
 
 ## Other instruction files
 - **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting (258 lines, tracked in git)
