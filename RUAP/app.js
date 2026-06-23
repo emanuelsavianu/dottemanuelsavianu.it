@@ -590,6 +590,7 @@ function renderCalendarMonth() {
 }
 
 function renderAll() {
+  updateGeneraButtonLabel();
   renderCalendar();
   renderSidebar();
   renderMonthlyStats();
@@ -2056,6 +2057,40 @@ if (btnOggi) {
     toast('Tornato a oggi', 'info');
   });
 }
+// Calendar navigation
+document.getElementById('cal-prev').addEventListener('click', () => {
+  if (state.calendarView === 'weekly') {
+    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() - 7);
+    state.sidebarWeekStart = new Date(state.calendarWeekStart);
+  } else {
+    state.calMonth--;
+    if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+  }
+  renderAll();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  if (state.calendarView === 'weekly') {
+    state.calendarWeekStart.setDate(state.calendarWeekStart.getDate() + 7);
+    state.sidebarWeekStart = new Date(state.calendarWeekStart);
+  } else {
+    state.calMonth++;
+    if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+  }
+  renderAll();
+});
+document.getElementById('sidebar-week-prev').addEventListener('click', () => {
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() - 7);
+  state.calendarWeekStart = new Date(state.sidebarWeekStart);
+  renderSidebar();
+  if (state.calendarView === 'weekly') renderCalendar();
+});
+document.getElementById('sidebar-week-next').addEventListener('click', () => {
+  state.sidebarWeekStart.setDate(state.sidebarWeekStart.getDate() + 7);
+  state.calendarWeekStart = new Date(state.sidebarWeekStart);
+  renderSidebar();
+  if (state.calendarView === 'weekly') renderCalendar();
+});
+
 document.getElementById('doctor-search')?.addEventListener('input', (e) => {
   searchQuery = e.target.value;
   renderSidebar();
