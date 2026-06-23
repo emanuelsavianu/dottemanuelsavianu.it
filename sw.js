@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v185: PDF export colors (JPEG→PNG + doctor colors in cells)
-const CACHE_NAME = 'savianu-v185';
+// Cache version bumped to v186: added missing layout CSS to certificato-invalidita-civile.html
+const CACHE_NAME = 'savianu-v186';
 const urlsToCache = [
   '/',
   '/index.html',

@@ -113,7 +113,222 @@
     </script>
 
     <style>
-        /* ── Comparison Table Styling ──────────────────────────── */
+        /* ── Layout ────────────────────────────────────────────── */
+        .page-wrapper {
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top bar ── */
+        .page-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-brand span {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+        body.dark-mode .topbar-brand span { color: var(--accent); }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            min-height: 44px;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            background: transparent;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+        body.dark-mode .btn-back { color: #f3efe6; }
+        body.dark-mode .btn-back:hover { color: var(--accent); border-color: var(--accent); }
+
+        .btn-dark-toggle {
+            background: rgba(220, 171, 96, 0.18);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: var(--accent);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-dark-toggle:hover {
+            background: rgba(220, 171, 96, 0.35);
+            transform: scale(1.15) rotate(180deg);
+            box-shadow: 0 4px 16px rgba(220, 171, 96, 0.45);
+        }
+        .btn-dark-toggle:active { transform: scale(0.92); }
+        body.dark-mode .btn-dark-toggle {
+            background: rgba(224, 185, 118, 0.2);
+            color: #e0b976;
+            border-color: #e0b976;
+        }
+        body.dark-mode .btn-dark-toggle:hover {
+            background: rgba(224, 185, 118, 0.4);
+            box-shadow: 0 4px 16px rgba(224, 185, 118, 0.5);
+        }
+
+        /* ── Hero section ── */
+        .page-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 56px 28px 52px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            background: rgba(194, 155, 87, 0.08);
+            pointer-events: none;
+        }
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 14px;
+        }
+        .hero-eyebrow i { font-size: 0.75rem; }
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            color: #ffffff;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+        .hero-desc {
+            font-size: clamp(0.85rem, 2vw, 0.95rem);
+            color: rgba(255,255,255,0.82);
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+        .btn-cta-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent);
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 14px 30px;
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s;
+            box-shadow: 0 6px 20px rgba(194, 155, 87, 0.4);
+        }
+        .btn-cta-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(194, 155, 87, 0.5);
+            background: #d4ac62;
+            opacity: 1;
+        }
+        .btn-cta-hero i { font-size: 0.85rem; }
+
+        /* ── Booking section ── */
+        .booking-section {
+            flex: 1;
+            padding: 48px 20px 56px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .booking-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 14px;
+        }
+        .booking-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+        .booking-title {
+            font-family: var(--font-sans);
+            font-size: clamp(1.1rem, 3vw, 1.3rem);
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+        body.dark-mode .booking-title { color: #f3efe6; }
+
+        .calendar-frame {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            background: var(--white);
+            position: relative;
+            width: 100%;
+        }
+        .calendar-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+        @media (max-width: 600px) {
+            .calendar-frame { height: 750px; }
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .hero-eyebrow { animation: fadeSlideUp 0.5s ease 0.05s both; }
+        .hero-title   { animation: fadeSlideUp 0.5s ease 0.12s both; }
+        .hero-desc    { animation: fadeSlideUp 0.5s ease 0.20s both; }
+        .btn-cta-hero { animation: fadeSlideUp 0.5s ease 0.28s both; }
+
+        /* ── Comparison Table ──────────────────────────────────── */
         .comparison-table {
             width: 100%;
             border-collapse: collapse;
@@ -212,6 +427,25 @@
             font-size: 0.8rem;
             color: var(--text-medium);
             line-height: 1.6;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            .page-topbar { padding: 14px 16px; }
+            .topbar-brand span { display: none; }
+            .page-hero { padding: 40px 16px 36px; }
+            .booking-section { padding: 32px 16px 40px; }
+        }
+
+        /* ── Print ── */
+        @media print {
+            .page-topbar { display: none; }
+            .page-hero { background: none !important; color: #000; }
+            .page-hero h1 { color: #000; }
+            .btn-cta-hero { display: none; }
+            .page-hero p { color: #333; }
+            .calendar-frame { display: none; }
+            .booking-section { display: none; }
         }
     </style>
 </head>
