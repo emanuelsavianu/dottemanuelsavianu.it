@@ -1219,15 +1219,25 @@ function buildPdfContent() {
       SLOTS.forEach(slot => {
         const id = state.assignments[`${dk}_${slot.key}_${place}`];
         let name = '';
+        let bgColor = '';
+        let textColor = '';
         if (id) {
           if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
             name = id.replace(EXTERNAL_PREFIX, '');
+            bgColor = '#d97706';
+            textColor = 'white';
           } else {
             const doc = getDoctorById(id);
-            if (doc) name = cleanDoctorName(doc.name);
+            if (doc) {
+              name = cleanDoctorName(doc.name);
+              const color = getDoctorColor(doc);
+              bgColor = color.hex;
+              textColor = '#ffffff';
+            }
           }
         }
-        html += `<td style="padding:5px 6px;border:1px solid #ddd;${name ? 'background:#f0f9ff' : ''}">${name || ''}</td>`;
+        const cellStyle = `padding:5px 6px;border:1px solid #ddd${bgColor ? `;background:${bgColor};color:${textColor};font-weight:600` : ''}`;
+        html += `<td style="${cellStyle}">${name || ''}</td>`;
       });
       html += `</tr>`;
     }
@@ -1249,6 +1259,7 @@ async function exportPDF() {
   buildPdfContent();
   const el = document.getElementById('pdf-content');
   el.classList.remove('hidden');
+  await new Promise(r => setTimeout(r, 100));
   try {
     const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
     const { jsPDF } = window.jspdf;
@@ -1259,7 +1270,7 @@ async function exportPDF() {
     const maxW = pageW - 2 * margin;
     const maxH = pageH - 2 * margin;
     const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, canvas.width * ratio, canvas.height * ratio);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, canvas.width * ratio, canvas.height * ratio);
     pdf.save(`turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.pdf`);
     toast('PDF scaricato', 'success');
   } catch (err) {

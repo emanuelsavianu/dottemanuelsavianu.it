@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v184: fix month view renders weekends showing empty slots (RUAP/app.js)
-const CACHE_NAME = 'savianu-v184';
+// Cache version bumped to v185: PDF export colors (JPEG→PNG + doctor colors in cells)
+const CACHE_NAME = 'savianu-v185';
 const urlsToCache = [
   '/',
   '/index.html',
