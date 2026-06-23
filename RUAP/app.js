@@ -428,6 +428,10 @@ function toast(message, type = 'info', duration = 3000) {
 function renderSidebar() {
   const container = document.getElementById('sidebar-doctors');
   if (!container) return;
+  const weekEnd = new Date(state.sidebarWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 4);
+  const label = document.getElementById('sidebar-week-label');
+  if (label) label.textContent = `${formatDateShort(state.sidebarWeekStart)} – ${formatDateShort(weekEnd)}`;
   const filtered = filterDoctors();
   container.innerHTML = filtered.map(doc => {
     const color = getDoctorColor(doc);
@@ -517,7 +521,9 @@ function renderCalendarWeek() {
   const weekStart = state.calendarWeekStart;
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 4);
-  const container = document.getElementById('calendar-grid');
+  const header = document.getElementById('cal-title');
+  if (header) header.textContent = `${formatDateShort(weekStart)} – ${formatDateShort(weekEnd)}`;
+  const container = document.getElementById('cal-grid');
   if (!container) return;
   container.className = 'grid grid-cols-5 gap-2';
   container.innerHTML = '';
@@ -551,10 +557,12 @@ function renderCalendarWeek() {
 function renderCalendarMonth() {
   const year = state.calYear;
   const month = state.calMonth;
+  const header = document.getElementById('cal-title');
+  if (header) header.textContent = `${MONTHS_IT[month]} ${year}`;
   const lastDay = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  const container = document.getElementById('calendar-grid');
+  const container = document.getElementById('cal-grid');
   if (!container) return;
   container.innerHTML = '';
   container.className = 'grid grid-cols-5 gap-1';
