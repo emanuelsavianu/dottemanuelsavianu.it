@@ -632,8 +632,8 @@ function renderAll() {
 
 function toggleCalendarView() {
   state.calendarView = state.calendarView === 'monthly' ? 'weekly' : 'monthly';
-  const icon = document.getElementById('calendar-view-icon');
-  const label = document.getElementById('calendar-view-label');
+  const icon = document.getElementById('view-toggle-icon');
+  const label = document.getElementById('view-toggle-label');
   if (icon) icon.className = state.calendarView === 'monthly' ? 'fa-solid fa-calendar-week' : 'fa-solid fa-calendar-days';
   if (label) label.textContent = state.calendarView === 'monthly' ? 'Settimana' : 'Mese';
   renderAll();
@@ -662,7 +662,7 @@ function positionDropdown(rect) {
 }
 
 function renderAvailableList(slotKey, slot, dateKey) {
-  const list = document.getElementById('assign-available-list');
+  const list = document.getElementById('assign-list');
   const place = slotKey.split('_').slice(2).join('_');
   const availDocs = state.doctors.filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key));
   availDocs.sort((a, b) => {
@@ -694,7 +694,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   closeAssignDropdown();
   state.activeSlotKey = slotKey;
   const dropdown = document.getElementById('assign-dropdown');
-  const header = document.getElementById('assign-header-text');
+  const header = document.getElementById('assign-slot-label');
   header.textContent = `${slot.icon} ${slot.label} · ${place} · ${dateKey}`;
   document.getElementById('assign-remove-wrap').classList.toggle('hidden', !state.assignments[slotKey]);
   renderAvailableList(slotKey, slot, dateKey);
@@ -739,7 +739,7 @@ function populatePlaceSelect(selectEl, selected) {
 }
 
 function renderAvailabilityTable(availability) {
-  const tbody = document.getElementById('availability-tbody');
+  const tbody = document.getElementById('avail-table');
   if (!tbody) return;
   tbody.innerHTML = DAY_KEYS.map(dk => `
     <tr>
@@ -766,8 +766,8 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-name').value = doc.name;
     document.getElementById('modal-patients').value = doc.patients || '';
     document.getElementById('modal-hours').value = doc.weeklyHours || 38;
-    document.getElementById('modal-pool').checked = doc.isPool || false;
-    document.getElementById('modal-budget').value = doc.monthlyBudget || '';
+    document.getElementById('modal-is-pool').checked = doc.isPool || false;
+    document.getElementById('modal-monthly-budget').value = doc.monthlyBudget || '';
     document.getElementById('modal-aft').value = doc.aft || '';
     document.getElementById('modal-seniority').value = doc.seniority || '';
     renderAvailabilityTable(doc.availability);
@@ -777,8 +777,8 @@ function openDoctorModal(doctorId = null) {
     document.getElementById('modal-name').value = '';
     document.getElementById('modal-patients').value = '850';
     document.getElementById('modal-hours').value = '38';
-    document.getElementById('modal-pool').checked = false;
-    document.getElementById('modal-budget').value = '';
+    document.getElementById('modal-is-pool').checked = false;
+    document.getElementById('modal-monthly-budget').value = '';
     document.getElementById('modal-aft').value = '';
     document.getElementById('modal-seniority').value = '';
     renderAvailabilityTable(null);
@@ -809,10 +809,10 @@ function deleteDoctor(id) {
   document.getElementById('toast-container').appendChild(toastEl);
   toastEl.querySelector('.confirm-yes').addEventListener('click', () => {
     toastEl.remove();
+    pushHistory();
     state.doctors = state.doctors.filter(d => d.id !== id);
     Object.keys(state.assignments).forEach(k => { if (state.assignments[k] === id) delete state.assignments[k]; });
     saveToStorage();
-    pushHistory();
     closeDoctorModal();
     renderAll();
     toast('Medico eliminato', 'success');
@@ -1886,7 +1886,7 @@ function renderWizardStep4() {
     const patients = parseInt(document.getElementById('w-doctor-patients').value) || 850;
     const preferredPlace = document.getElementById('w-doctor-place').value || null;
     if (name) {
-      wDoctors.push({ name: name.startsWith('Dott. ') ? name : 'Dott. ' + name, patients, weeklyHours: calculateDebtByPatients(patients), colorIndex: wDoctors.length % 8, preferredPlace, availability: Object.fromEntries(DAY_KEYS.map(k => [k, { mat: true, pom: true }])), unavailPeriods: [] });
+      wDoctors.push({ name: name.startsWith('Dott. ') ? name : 'Dott. ' + name, patients, weeklyHours: calculateDebtByPatients(patients), colorIndex: wDoctors.length % COLOR_PALETTE.length, preferredPlace, availability: Object.fromEntries(DAY_KEYS.map(k => [k, { mat: true, pom: true }])), unavailPeriods: [] });
       document.getElementById('w-doctor-name').value = '';
       document.getElementById('w-doctor-patients').value = '';
       renderWizardStep4();
@@ -1992,8 +1992,8 @@ document.getElementById('modal-save').addEventListener('click', () => {
   if (!name) { toast('Inserisci un nome', 'warning'); return; }
   const patients = parseInt(document.getElementById('modal-patients').value) || 0;
   const weeklyHours = parseInt(document.getElementById('modal-hours').value) || 38;
-  const isPool = document.getElementById('modal-pool').checked;
-  const budget = document.getElementById('modal-budget').value ? parseFloat(document.getElementById('modal-budget').value) : undefined;
+  const isPool = document.getElementById('modal-is-pool').checked;
+  const budget = document.getElementById('modal-monthly-budget').value ? parseFloat(document.getElementById('modal-monthly-budget').value) : undefined;
   const aft = document.getElementById('modal-aft').value || '';
   const seniority = parseInt(document.getElementById('modal-seniority').value) || 0;
   const preferredPlace = document.getElementById('modal-preferred-place').value || null;

@@ -782,14 +782,6 @@ body.dark-mode .search-input {
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 
 /* --- CHECKLIST --- */
-/* Reset <button> browser defaults without breaking existing .btn-cal-service layout */
-.btn-cal-service {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    /* padding and width already set by the existing .btn-cal-service rule — do not override here */
-}
 .btn-cal-service.selected {
     outline: 3px solid var(--accent);
     border-radius: var(--radius-lg);

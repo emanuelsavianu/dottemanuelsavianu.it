@@ -227,10 +227,13 @@ function getWeeklyAssignedHours(staffId, weekStart) {
     d.setDate(d.getDate() + i);
     const dateKey = toDateKey(d);
     state.config.activities.forEach(activity => {
-      state.config.shifts.forEach((shift, shiftIdx) => {
-        const key = `${dateKey}_${shift.id}_${activity.id}_${shiftIdx}`;
-        if (state.assignments[key] === staffId) {
-          hours += shift.hours;
+      const count = activity.requirements[0]?.count || 1;
+      state.config.shifts.forEach(shift => {
+        for (let slot = 0; slot < count; slot++) {
+          const key = `${dateKey}_${shift.id}_${activity.id}_${slot}`;
+          if (state.assignments[key] === staffId) {
+            hours += shift.hours;
+          }
         }
       });
     });
@@ -245,10 +248,13 @@ function getMonthlyAssignedHours(staffId, year, month) {
     const d = new Date(year, month, day);
     const dateKey = toDateKey(d);
     state.config.activities.forEach(activity => {
-      state.config.shifts.forEach((shift, shiftIdx) => {
-        const key = `${dateKey}_${shift.id}_${activity.id}_${shiftIdx}`;
-        if (state.assignments[key] === staffId) {
-          hours += shift.hours;
+      const count = activity.requirements[0]?.count || 1;
+      state.config.shifts.forEach(shift => {
+        for (let slot = 0; slot < count; slot++) {
+          const key = `${dateKey}_${shift.id}_${activity.id}_${slot}`;
+          if (state.assignments[key] === staffId) {
+            hours += shift.hours;
+          }
         }
       });
     });
@@ -332,7 +338,7 @@ function renderCalendar() {
 
     const headerRow = document.createElement('div');
     headerRow.className = 'grid gap-0 bg-slate-100 border-b';
-    headerRow.style.gridTemplateColumns = `repeat(${state.config.activities.length}, 1fr)`;
+    headerRow.style.gridTemplateColumns = `repeat(${state.config.activities.length + 1}, 1fr)`;
 
     state.config.activities.forEach((activity, ai) => {
       if (ai === 0) {
@@ -356,7 +362,7 @@ function renderCalendar() {
 
       const dayContent = document.createElement('div');
       dayContent.className = 'grid gap-0 border-t border-slate-200';
-      dayContent.style.gridTemplateColumns = `repeat(${state.config.activities.length}, 1fr)`;
+      dayContent.style.gridTemplateColumns = `repeat(${state.config.activities.length + 1}, 1fr)`;
 
       const dayLabel = document.createElement('div');
       dayLabel.className = `text-xs font-bold p-2 text-center bg-slate-50 border-r border-slate-200 ${isToday ? 'bg-blue-100 text-blue-700' : inMonth ? 'text-slate-700' : 'text-slate-400'}`;
@@ -391,7 +397,7 @@ function renderCalendar() {
             }
 
             if (inMonth) {
-              btn.addEventListener('click', () => openAssignDropdown(key, shift, activity, dateKey, shiftIdx, slot));
+              btn.addEventListener('click', (e) => openAssignDropdown(e, key, shift, activity, dateKey, shiftIdx, slot));
             }
 
             shiftsContainer.appendChild(btn);
@@ -413,23 +419,23 @@ function renderCalendar() {
 document.getElementById('cal-prev').addEventListener('click', () => {
   state.calMonth--;
   if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
-  renderCalendar();
+  renderAll();
 });
 
 document.getElementById('cal-next').addEventListener('click', () => {
   state.calMonth++;
   if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
-  renderCalendar();
+  renderAll();
 });
 
 document.getElementById('cal-today').addEventListener('click', () => {
   const today = new Date();
   state.calYear = today.getFullYear();
   state.calMonth = today.getMonth();
-  renderCalendar();
+  renderAll();
 });
 
-function openAssignDropdown(key, shift, activity, dateKey, shiftIdx, slot) {
+function openAssignDropdown(event, key, shift, activity, dateKey, shiftIdx, slot) {
   state.activeSlotKey = key;
 
   const dropdown = document.getElementById('assign-dropdown');
@@ -441,7 +447,7 @@ function openAssignDropdown(key, shift, activity, dateKey, shiftIdx, slot) {
   document.getElementById('assign-slot-label').textContent = `${activity.name} — ${dateDisplay} ${shift.label}`;
 
   const reqs = activity.requirements.filter(r => r.count > slot);
-  const requiredRoleId = reqs.length > 0 ? reqs[slot]?.roleId : null;
+  const requiredRoleId = reqs.length > 0 ? reqs[0]?.roleId : null;
 
   const availStaff = state.staff.filter(s => {
     if (!isStaffAvailable(s.id, dateKey)) return false;
@@ -588,12 +594,19 @@ function autoAssign() {
 
           if (candidates.length === 0) continue;
 
+          // Filtra chi non supererebbe maxWeeklyHours
+          const canTake = candidates.filter(s => {
+            const assigned = getWeeklyAssignedHours(s.id, weekStart);
+            return assigned + shift.hours <= s.maxWeeklyHours;
+          });
+          const pool = canTake.length > 0 ? canTake : candidates;
+
           // Scegli chi ha meno ore settimanali assegnate
-          candidates.sort((a, b) =>
+          pool.sort((a, b) =>
             getWeeklyAssignedHours(a.id, weekStart) - getWeeklyAssignedHours(b.id, weekStart)
           );
 
-          state.assignments[slotKey] = candidates[0].id;
+          state.assignments[slotKey] = pool[0].id;
           count++;
         }
       });
@@ -1073,8 +1086,12 @@ function editRole(roleId) {
 }
 
 function deleteRole(roleId) {
-  if (!confirm('Eliminare il ruolo? Verificare che non sia usato nelle attività.')) return;
+  if (!confirm('Eliminare il ruolo? I membri e le attività collegate verranno aggiornati.')) return;
   state.config.roles = state.config.roles.filter(r => r.id !== roleId);
+  state.staff.forEach(s => { if (s.roleId === roleId) s.roleId = null; });
+  state.config.activities.forEach(a => {
+    a.requirements = a.requirements.filter(r => r.roleId !== roleId);
+  });
   saveToStorage();
   renderRolesList();
 }
@@ -1391,7 +1408,10 @@ function editStaff(staffId) {
 }
 
 function deleteStaff(staffId) {
-  if (!confirm('Eliminare il membro del personale? Gli turni assegnati verranno mantenuti.')) return;
+  if (!confirm('Eliminare il membro del personale? I turni assegnati verranno rimossi.')) return;
+  Object.keys(state.assignments).forEach(k => {
+    if (state.assignments[k] === staffId) delete state.assignments[k];
+  });
   state.staff = state.staff.filter(s => s.id !== staffId);
   saveToStorage();
   renderStaffList();

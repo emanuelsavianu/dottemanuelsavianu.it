@@ -25,12 +25,13 @@ const CONFIG = {
 };
 
 CONFIG.getActiveAbsence = function() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
     return CONFIG.ASSENZE.find(function(a) {
-        const from = new Date(a.from + 'T00:00:00');
-        const to = new Date(a.to + 'T00:00:00');
-        to.setHours(23, 59, 59, 999);
-        return today >= from && today <= to;
+        const partsFrom = a.from.split('-').map(Number);
+        const partsTo = a.to.split('-').map(Number);
+        const fromUTC = Date.UTC(partsFrom[0], partsFrom[1] - 1, partsFrom[2]);
+        const toUTC = Date.UTC(partsTo[0], partsTo[1] - 1, partsTo[2], 23, 59, 59, 999);
+        return todayUTC >= fromUTC && todayUTC <= toUTC;
     }) || null;
 };

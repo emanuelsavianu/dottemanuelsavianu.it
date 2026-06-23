@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v186: added missing layout CSS to certificato-invalidita-civile.html
-const CACHE_NAME = 'savianu-v186';
+// Cache version bumped to v187: fixed 7 DOM ID mismatches in RUAP/app.js, key+grid+event bugs in gestoreturni/app.js, styles.css btn-cal-service override, config.js timezone parsing
+const CACHE_NAME = 'savianu-v187';
 const urlsToCache = [
   '/',
   '/index.html',
