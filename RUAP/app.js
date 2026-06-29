@@ -81,6 +81,15 @@ function cleanDoctorName(name) {
   return name.replace(/^Dott\.\s*/i, '');
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function excelDateToDate(excelDate) {
   if (typeof excelDate === 'number') {
     const utcDays = excelDate - EXCEL_EPOCH_OFFSET;
@@ -112,7 +121,7 @@ function getEasterDate(year) {
 
 function getEasterMondayDate(year) {
   const easter = getEasterDate(year);
-  return new Date(easter.getTime() + MS_PER_DAY);
+  return new Date(easter.getFullYear(), easter.getMonth(), easter.getDate() + 1);
 }
 
 function isItalianHoliday(date) {
@@ -328,7 +337,7 @@ function loadHistory() {
     if (saved) {
       const data = JSON.parse(saved);
       historyStack = data.stack || [];
-      historyIndex = data.index || -1;
+      historyIndex = data.index ?? -1;
     }
   } catch (e) { console.error(e); }
 }
@@ -340,7 +349,7 @@ function saveHistory() {
 }
 
 function pushHistory() {
-  const snapshot = JSON.stringify({ assignments: state.assignments });
+  const snapshot = JSON.stringify({ doctors: state.doctors, assignments: state.assignments });
   if (historyIndex < historyStack.length - 1) {
     historyStack = historyStack.slice(0, historyIndex + 1);
   }
@@ -376,8 +385,11 @@ function removeAssignment(slotKey) {
 function undo() {
   if (historyIndex <= 0) return;
   historyIndex--;
-  state.assignments = JSON.parse(historyStack[historyIndex]);
+  const snap = JSON.parse(historyStack[historyIndex]);
+  state.assignments = snap.assignments;
+  if (Array.isArray(snap.doctors)) state.doctors = snap.doctors;
   saveToStorage();
+  saveHistory();
   renderAll();
   updateUndoRedoButtons();
 }
@@ -385,8 +397,11 @@ function undo() {
 function redo() {
   if (historyIndex >= historyStack.length - 1) return;
   historyIndex++;
-  state.assignments = JSON.parse(historyStack[historyIndex]);
+  const snap = JSON.parse(historyStack[historyIndex]);
+  state.assignments = snap.assignments;
+  if (Array.isArray(snap.doctors)) state.doctors = snap.doctors;
   saveToStorage();
+  saveHistory();
   renderAll();
   updateUndoRedoButtons();
 }
@@ -444,7 +459,7 @@ function renderSidebar() {
       <div class="doctor-card bg-white rounded-xl shadow-sm border border-slate-200 p-3 cursor-pointer hover:shadow-md transition-shadow" onclick="openDoctorModal('${doc.id}')" title="Click per modificare">
         <div class="flex items-center gap-2 mb-1.5">
           <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
-          <span class="font-semibold text-sm text-slate-800 truncate">${cleanDoctorName(doc.name)}</span>
+          <span class="font-semibold text-sm text-slate-800 truncate">${escapeHtml(cleanDoctorName(doc.name))}</span>
           <span class="text-[10px] text-slate-400 ml-auto">${remH}h residue</span>
         </div>
         <div class="flex items-center gap-1">
@@ -501,7 +516,7 @@ function createSlotButton(dateKey, place, slot, inMonth) {
   if (color && displayName) slotBtn.style.backgroundColor = color.hex;
 
   slotBtn.innerHTML = displayName
-    ? `<div class="truncate font-semibold text-xs">${displayName}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
+    ? `<div class="truncate font-semibold text-xs">${escapeHtml(displayName)}</div><div class="text-[10px] opacity-80">${slot.icon} ${slot.label}</div>`
     : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
   slotBtn.setAttribute('aria-label', displayName ? `${displayName} · ${place} · ${slot.label}` : `Assegna turno · ${place} · ${slot.label}`);
 
@@ -552,7 +567,7 @@ function renderCalendarWeek() {
         const { coverageClass, coverageIcon } = getCoverageBadge(dateKey, place);
         const placeDiv = document.createElement('div');
         placeDiv.className = 'mb-1';
-        placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[10px] font-semibold text-slate-500 flex-1 truncate">${place}</span><span class="text-[10px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
+        placeDiv.innerHTML = `<div class="flex items-center gap-1 mb-0.5"><span class="text-[10px] font-semibold text-slate-500 flex-1 truncate">${escapeHtml(place)}</span><span class="text-[10px] font-bold px-1 rounded ${coverageClass}">${coverageIcon}</span></div>`;
         SLOTS.forEach(slot => {
           placeDiv.appendChild(createSlotButton(dateKey, place, slot, true));
         });
@@ -606,7 +621,7 @@ function renderCalendarMonth() {
           placeSection.className = 'mb-1 pb-1 border-b border-slate-100 last:border-b-0 last:mb-0 last:pb-0';
           const badge = getCoverageBadge(dateKey, place);
           placeSection.innerHTML = `<div class="flex items-center justify-between mb-1">
-            <span class="text-[9px] font-bold text-slate-400 uppercase">${place}</span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase">${escapeHtml(place)}</span>
             <span class="text-[9px] font-bold ${badge.coverageClass} px-1 rounded">${badge.coverageIcon}</span>
           </div>`;
           SLOTS.forEach(slot => {
@@ -680,7 +695,7 @@ function renderAvailableList(slotKey, slot, dateKey) {
     btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
     btn.innerHTML = `
       <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
-      <span class="flex-1 font-medium text-xs">${doc.name}</span>
+      <span class="flex-1 font-medium text-xs">${escapeHtml(doc.name)}</span>
       <div class="flex flex-col items-end gap-0.5">
         <span class="text-[10px] text-slate-400">${weeklyH}/${doc.weeklyHours || 24}h</span>
         <div class="w-12 h-1 bg-slate-100 rounded-full"><div style="width:${Math.min(100, pct)}%; background:${pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e'}" class="h-1 rounded-full"></div></div>
@@ -713,7 +728,7 @@ function openAssignDropdown(e, slotKey, slot, dateKey, place) {
     btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
     btn.innerHTML = `
       <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
-      <span class="flex-1 font-medium text-xs">${doc.name}</span>
+      <span class="flex-1 font-medium text-xs">${escapeHtml(doc.name)}</span>
       <span class="text-[10px] text-slate-400 italic">eccezione</span>`;
     btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
     unavailList.appendChild(btn);
@@ -735,17 +750,23 @@ function closeAssignDropdown() {
 // --- Doctor modal ---
 function populatePlaceSelect(selectEl, selected) {
   selectEl.innerHTML = `<option value="">-- Nessuna preferenza --</option>
-    ${PLACES.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${p}</option>`).join('')}`;
+    ${PLACES.map(p => `<option value="${escapeHtml(p)}"${p === selected ? ' selected' : ''}>${escapeHtml(p)}</option>`).join('')}`;
 }
 
 function renderAvailabilityTable(availability) {
   const tbody = document.getElementById('avail-table');
+  const thead = document.getElementById('avail-thead');
   if (!tbody) return;
+  if (thead) {
+    thead.innerHTML = `<tr class="bg-slate-50">
+      <th class="px-3 py-2 text-left font-semibold text-slate-600 w-28">Giorno</th>
+      ${SLOTS.map(s => `<th class="px-3 py-2 text-center font-semibold text-slate-600">${escapeHtml(s.icon)} ${escapeHtml(s.label)}<br><span class="text-xs font-normal text-slate-400">${s.hours}h</span></th>`).join('')}
+    </tr>`;
+  }
   tbody.innerHTML = DAY_KEYS.map(dk => `
     <tr>
       <td class="px-2 py-1 text-xs font-medium text-slate-600">${DAY_NAMES[DAY_KEYS.indexOf(dk)]}</td>
-      <td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.mat ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="mat"></td>
-      <td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.pom ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="pom"></td>
+      ${SLOTS.map(s => `<td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.[s.key] ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="${s.key}"></td>`).join('')}
     </tr>`).join('');
 }
 
@@ -845,9 +866,9 @@ function addUnavailPeriodRow(from = '', to = '') {
   const periodEl = document.createElement('div');
   periodEl.className = 'flex gap-2 items-center bg-slate-50 rounded-lg p-2 unavail-period-row';
   periodEl.innerHTML = `
-    <input type="date" value="${from}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-from" placeholder="Da">
+    <input type="date" value="${escapeHtml(from)}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-from" placeholder="Da">
     <span class="text-slate-400">—</span>
-    <input type="date" value="${to}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-to" placeholder="A">
+    <input type="date" value="${escapeHtml(to)}" class="border border-slate-300 rounded px-2 py-1 text-xs unavail-to" placeholder="A">
     <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 text-xs">
       <i class="fa-solid fa-trash-can"></i>
     </button>`;
@@ -903,7 +924,7 @@ function openConflictsModal() {
         const place = parts.slice(2).join('_');
         return `<div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 mb-1">
           <span class="text-sm text-slate-700 flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-slate-400"></i>${place}
+            <i class="fa-solid fa-location-dot text-slate-400"></i>${escapeHtml(place)}
           </span>
           <button onclick="removeAssignmentFromConflict('${k}')" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
             <i class="fa-solid fa-xmark mr-1"></i>Rimuovi
@@ -914,7 +935,7 @@ function openConflictsModal() {
         <div class="bg-slate-50 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
           <div class="w-3 h-3 rounded-full ${color.bg} flex-shrink-0"></div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-slate-800 text-sm truncate">${doc?.name || 'Medico sconosciuto'}</p>
+            <p class="font-semibold text-slate-800 text-sm truncate">${escapeHtml(doc?.name || 'Medico sconosciuto')}</p>
             <p class="text-xs text-slate-500">${dateFormatted} · ${slotLabel}</p>
           </div>
           <div class="flex items-center gap-1">
@@ -1010,6 +1031,7 @@ function importExcelFromFile(e) {
 }
 
 function importFromRows(rows) {
+  pushHistory();
   const importMonth = detectMonthFromRows(rows);
   const importYear = importMonth !== null ? rows.reduce((acc, r) => {
     if (!r) return acc;
@@ -1201,7 +1223,7 @@ function buildPdfContent() {
   let html = '';
 
   PLACES.forEach(place => {
-    html += `<h3 style="font-size:14px;font-weight:bold;margin:10px 0 4px;color:#1e3a5f">${place}</h3>`;
+    html += `<h3 style="font-size:14px;font-weight:bold;margin:10px 0 4px;color:#1e3a5f">${escapeHtml(place)}</h3>`;
     html += `<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px">
       <thead><tr style="background:#1e3a5f;color:white">
         <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Data</th>
@@ -1237,7 +1259,7 @@ function buildPdfContent() {
           }
         }
         const cellStyle = `padding:5px 6px;border:1px solid #ddd${bgColor ? `;background:${bgColor};color:${textColor};font-weight:600` : ''}`;
-        html += `<td style="${cellStyle}">${name || ''}</td>`;
+        html += `<td style="${cellStyle}">${name ? escapeHtml(name) : ''}</td>`;
       });
       html += `</tr>`;
     }
@@ -1400,11 +1422,11 @@ function runAutoAssignForMonth(year, month) {
     } else {
       loadingEl.classList.add('hidden');
       progressBar.style.width = '0%';
+      isProcessing = false;
       if (count === 0) {
         toast(`Nessun turno da generare in ${monthName}`, 'info');
         return;
       }
-      isProcessing = false;
       saveToStorage();
       renderAll();
       renderMonthlyStats();
@@ -1458,7 +1480,8 @@ function getMonthlyStats() {
         const key = `${dateKey}_${slot.key}_${place}`;
         if (state.assignments[key]) {
           filledSlots++;
-          doctorHours[state.assignments[key]] += slot.hours;
+          const id = state.assignments[key];
+          if (doctorHours[id] !== undefined) doctorHours[id] += slot.hours;
         }
       });
     });
@@ -1512,7 +1535,7 @@ function renderMonthlyStats() {
     const barColor = rem === 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
     return `<div class="flex items-center gap-2 py-1">
       <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
-      <span class="flex-1 truncate text-slate-700" title="${doc.name}">${cleanDoctorName(doc.name)}${label}</span>
+      <span class="flex-1 truncate text-slate-700" title="${escapeHtml(doc.name)}">${escapeHtml(cleanDoctorName(doc.name))}${label}</span>
       <span class="text-slate-500 flex-shrink-0">${used}h/${budget}h</span>
       <div class="w-16 h-2.5 bg-slate-200 rounded-full flex-shrink-0">
         <div style="width:${Math.min(100, pct)}%; background:${barColor}" class="h-2.5 rounded-full"></div>
@@ -1531,7 +1554,7 @@ function renderMonthlyStats() {
       const barColor = (budget - used) <= 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
       return `<div class="p-row">
         <span class="p-dot" style="background:${getDoctorColor(doc).hex}"></span>
-        <span class="p-name">${doc.name}${doc.isPool ? ' (pool)' : ''}</span>
+        <span class="p-name">${escapeHtml(doc.name)}${doc.isPool ? ' (pool)' : ''}</span>
         <span class="p-hours">${used}h / ${budget}h</span>
         <div class="p-bar"><div class="p-fill" style="width:${Math.min(100, pct)}%;background:${barColor}"></div></div>
       </div>`;
@@ -1609,7 +1632,7 @@ function pasteWeek(weekStart) {
     return;
   }
   pushHistory();
-  const offset = Math.floor((weekStart - copyWeekSource.weekStart) / (7 * MS_PER_DAY));
+  const offset = Math.round((weekStart - copyWeekSource.weekStart) / (7 * MS_PER_DAY));
   let count = 0;
   for (const [key, docId] of Object.entries(copyWeekSource.assignments)) {
     const parts = key.split('_');
@@ -1745,8 +1768,8 @@ function renderWizardStep1() {
 function renderWizardStep2() {
   const chipsHtml = wPlaces.map(p => `
     <span class="wizard-chip" style="background:#dbeafe; color:#1e40af">
-      ${p}
-      <button class="chip-remove w-remove-place" data-place="${p}">×</button>
+      ${escapeHtml(p)}
+      <button class="chip-remove w-remove-place" data-place="${escapeHtml(p)}">×</button>
     </span>`).join('');
 
   document.getElementById('wizard-step-content').innerHTML = `
@@ -1780,8 +1803,8 @@ function renderWizardStep2() {
 function renderWizardStep3() {
   const chipsHtml = wSlots.map(s => `
     <span class="wizard-chip" style="background:#fef3c7; color:#92400e">
-      ${s.icon} ${s.label} (${s.hours}h)
-      <button class="chip-remove w-remove-slot" data-key="${s.key}">×</button>
+      ${escapeHtml(s.icon)} ${escapeHtml(s.label)} (${s.hours}h)
+      <button class="chip-remove w-remove-slot" data-key="${escapeHtml(s.key)}">×</button>
     </span>`).join('');
 
   document.getElementById('wizard-step-content').innerHTML = `
@@ -1843,8 +1866,8 @@ function renderWizardStep3() {
 }
 
 function renderWizardStep4() {
-  const placesHtml = wPlaces.map(p => `<li>📍 <strong>${p}</strong></li>`).join('');
-  const slotsHtml = wSlots.map(s => `<li>${s.icon} <strong>${s.label}</strong> (${s.hours}h)</li>`).join('');
+  const placesHtml = wPlaces.map(p => `<li>📍 <strong>${escapeHtml(p)}</strong></li>`).join('');
+  const slotsHtml = wSlots.map(s => `<li>${escapeHtml(s.icon)} <strong>${escapeHtml(s.label)}</strong> (${s.hours}h)</li>`).join('');
 
   document.getElementById('wizard-step-content').innerHTML = `
     <h1>Quasi pronto!</h1>
@@ -1865,14 +1888,14 @@ function renderWizardStep4() {
       <input type="number" id="w-doctor-patients" placeholder="Numero assistiti (es. 850)" class="mb-2">
       <select id="w-doctor-place" class="w-full border-2 border-slate-200 rounded-lg p-2">
         <option value="">-- Sede preferita --</option>
-        ${wPlaces.map(p => `<option value="${p}">${p}</option>`).join('')}
+        ${wPlaces.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
       </select>
     </div>
     <button id="w-doctor-add" class="wizard-big-btn outline w-full mb-3" style="padding:0.75rem; font-size:1rem">+ Aggiungi medico</button>
     <div id="w-doctor-list" class="flex flex-wrap gap-2 mb-4">
       ${wDoctors.map((d, i) => `
         <span class="wizard-chip" style="background:${COLOR_PALETTE[i % COLOR_PALETTE.length].hex}; color:white">
-          ${d.name}
+          ${escapeHtml(d.name)}
           <button class="chip-remove w-remove-doctor" data-index="${i}">×</button>
         </span>`).join('')}
       ${wDoctors.length === 0 ? '<span class="text-slate-400 text-sm">Nessun medico aggiunto</span>' : ''}
@@ -1902,10 +1925,13 @@ function renderWizardStep4() {
 // 15. KEYBOARD SHORTCUTS
 // ====================================================
 document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
-  if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); }
-  if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); }
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  if (mod && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) { e.preventDefault(); redo(); }
+  if (e.key === 'ArrowLeft' && mod) { e.preventDefault(); state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderAll(); }
+  if (e.key === 'ArrowRight' && mod) { e.preventDefault(); state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderAll(); }
   if (e.key === 'Escape') { closeAssignDropdown(); closeDoctorModal(); closeConflictModal(); closeInstructions(); }
 });
 
@@ -1955,7 +1981,8 @@ document.getElementById('import-file').addEventListener('change', (e) => {
   reader.onload = (ev) => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (!data.doctors || !data.assignments) throw new Error('Formato non valido');
+      if (!Array.isArray(data.doctors) || typeof data.assignments !== 'object' || data.assignments === null) throw new Error('Formato non valido');
+      pushHistory();
       state.doctors = data.doctors; state.assignments = data.assignments;
       saveToStorage(); renderAll(); renderMonthlyStats(); toast('Importazione completata!', 'success');
     } catch (err) { toast('Errore importazione: ' + err.message, 'error'); }
@@ -2003,7 +2030,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
   document.querySelectorAll('.avail-check').forEach(cb => {
     const day = cb.dataset.day;
     const slot = cb.dataset.slot;
-    if (!availability[day]) availability[day] = { mat: false, pom: false };
+    if (!availability[day]) availability[day] = {};
     availability[day][slot] = cb.checked;
   });
   const unavailPeriods = [];

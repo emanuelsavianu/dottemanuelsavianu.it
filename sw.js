@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v187: fixed 7 DOM ID mismatches in RUAP/app.js, key+grid+event bugs in gestoreturni/app.js, styles.css btn-cal-service override, config.js timezone parsing
-const CACHE_NAME = 'savianu-v187';
+// Cache version bumped to v189: RUAP/app.js high-severity fixes (custom-slot availability table, keyboard shortcut guards + Mac metaKey, pushHistory on JSON/Excel import, DST-safe Easter Monday + pasteWeek, NaN guard in monthly stats), RUAP/index.html dynamic avail-thead, sitemap.xml noindex cleanup
+const CACHE_NAME = 'savianu-v189';
 const urlsToCache = [
   '/',
   '/index.html',
