@@ -193,7 +193,7 @@ function getDoctorById(id) {
 }
 
 function calculateDebtByPatients(patients) {
-  if (!patients || patients < 0) return 38;
+  if (patients === undefined || patients === null || patients < 0) return 38;
   if (patients <= 400) return 38;
   if (patients <= 1000) return 24;
   if (patients <= 1200) return 12;
@@ -251,7 +251,7 @@ function sumSlotHours(predicate) {
 
 function getMonthlyBudget(doctor) {
   if (doctor.monthlyBudget != null) return doctor.monthlyBudget;
-  return (doctor.weeklyHours || 38) * MONTHLY_WEEKS;
+  return (doctor.weeklyHours ?? 38) * MONTHLY_WEEKS;
 }
 
 function getRemainingMonthlyHours(doctor, month, year) {
@@ -707,6 +707,7 @@ function renderAvailableList(slotKey, slot, dateKey) {
 
 function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   closeAssignDropdown();
+  e.stopPropagation();
   state.activeSlotKey = slotKey;
   const dropdown = document.getElementById('assign-dropdown');
   const header = document.getElementById('assign-slot-label');
@@ -786,9 +787,9 @@ function openDoctorModal(doctorId = null) {
     const doc = getDoctorById(doctorId);
     document.getElementById('modal-name').value = doc.name;
     document.getElementById('modal-patients').value = doc.patients || '';
-    document.getElementById('modal-hours').value = doc.weeklyHours || 38;
+    document.getElementById('modal-hours').value = doc.weeklyHours ?? 38;
     document.getElementById('modal-is-pool').checked = doc.isPool || false;
-    document.getElementById('modal-monthly-budget').value = doc.monthlyBudget || '';
+    document.getElementById('modal-monthly-budget').value = doc.monthlyBudget ?? '';
     document.getElementById('modal-aft').value = doc.aft || '';
     document.getElementById('modal-seniority').value = doc.seniority || '';
     renderAvailabilityTable(doc.availability);
@@ -2018,7 +2019,8 @@ document.getElementById('modal-save').addEventListener('click', () => {
   const name = document.getElementById('modal-name').value.trim();
   if (!name) { toast('Inserisci un nome', 'warning'); return; }
   const patients = parseInt(document.getElementById('modal-patients').value) || 0;
-  const weeklyHours = parseInt(document.getElementById('modal-hours').value) || 38;
+  const rawHours = parseInt(document.getElementById('modal-hours').value);
+  const weeklyHours = isNaN(rawHours) ? 38 : rawHours;
   const isPool = document.getElementById('modal-is-pool').checked;
   const budget = document.getElementById('modal-monthly-budget').value ? parseFloat(document.getElementById('modal-monthly-budget').value) : undefined;
   const aft = document.getElementById('modal-aft').value || '';

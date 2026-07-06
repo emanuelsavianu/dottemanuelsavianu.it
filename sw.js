@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v189: RUAP/app.js high-severity fixes (custom-slot availability table, keyboard shortcut guards + Mac metaKey, pushHistory on JSON/Excel import, DST-safe Easter Monday + pasteWeek, NaN guard in monthly stats), RUAP/index.html dynamic avail-thead, sitemap.xml noindex cleanup
-const CACHE_NAME = 'savianu-v189';
+// Cache version bumped to v190: RUAP/app.js added stopPropagation in openAssignDropdown to prevent document click handler from immediately closing the assign dropdown
+const CACHE_NAME = 'savianu-v190';
 const urlsToCache = [
   '/',
   '/index.html',
