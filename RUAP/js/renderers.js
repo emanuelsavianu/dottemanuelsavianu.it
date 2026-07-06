@@ -80,7 +80,13 @@ function createSlotButton(dateKey, place, slot, inMonth) {
     : `<div class="text-slate-400 text-xs">${slot.icon} <span class="text-slate-400">Assegna</span></div>`;
   slotBtn.setAttribute('aria-label', displayName ? `${displayName} · ${place} · ${slot.label}` : `Assegna turno · ${place} · ${slot.label}`);
 
-  if (inMonth) slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+  if (inMonth) {
+    slotBtn.dataset.slotKey = slotKey;
+    slotBtn.dataset.dateKey = dateKey;
+    slotBtn.dataset.place = place;
+    slotBtn.dataset.slotType = slot.key;
+    slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+  }
   return slotBtn;
 }
 

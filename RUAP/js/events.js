@@ -3,7 +3,7 @@
 // ====================================================
 
 import {
-  state,
+  state, SLOTS,
   saveToStorage, loadFromStorage, pushHistory, loadHistory,
   reloadPlaces, reloadSlots,
   initDarkMode, toggleDarkMode, undo, redo,
@@ -162,6 +162,20 @@ el('btn-oggi')?.addEventListener('click', () => {
   if (state.calendarView === 'weekly') toggleCalendarView();
   renderAll();
   toast('Tornato a oggi', 'info');
+});
+
+// --- Delegated click handler on cal-grid (fallback per slot-btn) ---
+el('cal-grid')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-slot-key]');
+  if (!btn) return;
+  const slotKey = btn.dataset.slotKey;
+  const dateKey = btn.dataset.dateKey;
+  const place = btn.dataset.place;
+  const slotType = btn.dataset.slotType;
+  if (!slotKey || !dateKey || !place || !slotType) return;
+  const slot = SLOTS.find(s => s.key === slotType);
+  if (!slot) return;
+  openAssignDropdown(e, slotKey, slot, dateKey, place);
 });
 
 // --- Calendar navigation ---

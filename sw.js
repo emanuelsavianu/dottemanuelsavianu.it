@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v190: RUAP/app.js added stopPropagation in openAssignDropdown to prevent document click handler from immediately closing the assign dropdown
-const CACHE_NAME = 'savianu-v190';
+// Cache version bumped to v191: RUAP/js/renderers.js + events.js — delegated click handler on cal-grid as fallback for slot-btn clicks
+const CACHE_NAME = 'savianu-v191';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -27,8 +27,8 @@ const urlsToCache = [
   '/gestoreturni/gestoreturni.html',
   '/gestoreturni/app.js',
   '/RUAP/index.html',
-  '/RUAP/app.js',
   '/RUAP/config.js',
+  '/RUAP/js/events.js',
 ];
 
 // Helper: Check if request is same-origin
