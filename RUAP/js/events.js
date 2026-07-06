@@ -4,7 +4,7 @@
 
 import {
   state,
-  saveToStorage, loadFromStorage, pushHistory,
+  saveToStorage, loadFromStorage, pushHistory, loadHistory,
   reloadPlaces, reloadSlots,
   initDarkMode, toggleDarkMode, undo, redo,
   updateUndoRedoButtons

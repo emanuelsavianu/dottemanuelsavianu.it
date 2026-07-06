@@ -107,7 +107,7 @@ function saveHistory() {
   } catch (e) { console.error(e); }
 }
 
-function loadHistory() {
+export function loadHistory() {
   try {
     const saved = localStorage.getItem(STORAGE_HISTORY);
     if (saved) {
@@ -173,5 +173,4 @@ export function updateUndoRedoButtons() {
   }
 }
 
-// --- Init history from storage ---
-loadHistory();
+// loadHistory is called from events.js init()
