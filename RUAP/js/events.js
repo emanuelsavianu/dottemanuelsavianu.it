@@ -5,7 +5,7 @@
 import {
   state,
   saveToStorage, loadFromStorage, pushHistory,
-  reloadPlaces, reloadSlots, loadHistory,
+  reloadPlaces, reloadSlots,
   initDarkMode, toggleDarkMode, undo, redo,
   updateUndoRedoButtons
 } from './state.js';
