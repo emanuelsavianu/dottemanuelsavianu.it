@@ -13,10 +13,17 @@ cd RUAP && npx serve .
 
 ## Architecture
 
-- **config.js** — 16 doctors (10 primary + 6 pool), 2 places, 2 shift slots. Loaded before app.js.
-- **index.html** — Tailwind CDN, FontAwesome, jsPDF, html2canvas, **xlsx (SheetJS)** for Excel
-- **app.js** (~2110 lines, refactored Jun 2026) — All logic. Read with offset/limit. Refactored: bug fixes, extracted helpers (`assignDoctor`, `removeAssignment`, `sumSlotHours`, `el`), split long functions (importFromRows, runAutoAssignForMonth, buildPdfContent, openAssignDropdown, renderCalendarWeek/Month), 18 section banners, reorganized into 19 logical sections within single file. See section headers for navigation.
-- **localStorage** — keys: `ruap-turni-medici`, `ruap-turni-assegnazioni`, `ruap-turni-history`, `ruap-dark-mode`
+- **config.js** — 16 doctors (10 primary + 6 pool), 2 places, 2 shift slots. Loaded as classic script before modules.
+- **index.html** — Tailwind CDN, FontAwesome, jsPDF, html2canvas, **xlsx (SheetJS)** for Excel. Module entry: `<script type="module" src="js/events.js">`.
+- **js/config.js** (~41 lines) — Constants, COLOR_PALETTE (16 entries), storage keys, day names, month names.
+- **js/holidays.js** (~51 lines) — Italian holiday calculator: Easter, Easter Monday, 11 fixed holidays.
+- **js/core-utils.js** (~180 lines) — Pure helpers with zero `document` references: `generateId`, `escapeHtml`, `calculateDebtByPatients` (AIR Toscana 2026 formula), date utilities, `el()`, `toast()`, domain queries that accept state as parameters (`getDoctorById`, `isDoctorAvailableForSlot`, `getWeeklyAssignedHours`, `getAssignedHoursInMonth`, `matchDoctorBySurname`).
+- **js/state.js** (~156 lines) — State object (`state`), `PLACES`/`SLOTS` globals, undo/redo (50-state stack), localStorage layer (`saveToStorage`, `loadFromStorage`), dark mode toggle, history management.
+- **js/engine.js** (~136 lines) — Pure algorithm: `enumerateEmptySlots`, `pickDoctorForSlot` (3-tier allocation), `runAutoAssignForMonth` (chunked progress), `autoAssign`, `generateNextMonth`. No `document` references except progress bar UI.
+- **js/renderers.js** (~1335 lines) — All DOM rendering, modals (assign dropdown, doctor modal, conflicts), import/export (JSON, XLSX, PDF), copy/paste week, monthly stats, wizard UI.
+- **js/events.js** (~246 lines) — Event wiring, keyboard shortcuts, Konami Easter egg, global function exposure for inline `onclick`, `init()` entrance.
+- **No circular dependencies** — Module dependency DAG: config → holidays → core-utils → state → renderers ← engine ← events.
+- **localStorage** — keys: `ruap-turni-medici`, `ruap-turni-assegnazioni`, `ruap-turni-history`, `ruap-dark-mode`. Also `ruap-places`, `ruap-slots`.
 
 ## Data Schema
 
@@ -87,7 +94,7 @@ Original local algorithm (weekly hours, not monthly). Fills current month with 3
 3. Doctors are pre-populated with 16 entries. Users can edit/remove via modal.
 
 ## Key gotchas
-- **COLOR_PALETTE** has 16 entries (index 0-15). `colorIndex` in config must match. Index >15 wraps to `COLOR_PALETTE[0]`.
+- **COLOR_PALETTE** (in `js/config.js`) has 16 entries (index 0-15). `colorIndex` in config must match. Index >15 wraps to `COLOR_PALETTE[0]`.
 - **`config.js` is the single source of truth** for initial doctor list. Change config → clear localStorage to reload.
 - **weeklyHours override** in config.js: set `weeklyHours: 6` on pool doctors, overriding the patient-count formula.
 - **monthlyBudget** in config is optional. If unset, `weeklyHours × 4` is used. After Excel import, it's overwritten with remaining hours.
@@ -95,3 +102,7 @@ Original local algorithm (weekly hours, not monthly). Fills current month with 3
 - **Generate target = next month** from current calendar view. Generate from June → fills July. Does NOT touch the current month.
 - **No test suite** — manual browser testing.
 - **xlsx CDN** required for import/export. If CDN fails, buttons show toast error.
+- **ES Modules** — All `.js` files in `js/` use `import`/`export`. They cannot be used with `<script>` tags directly; load `events.js` as `type="module"`. `config.js` in root is a classic script (defines global `CONFIG`) and must be loaded before the module script.
+- **Global function exposure** — Functions called from inline `onclick` handlers (e.g., `toggleMonthlyStats()`, `openDoctorModal()`, `toggleCalendarView()`) are assigned to `window` in `events.js` init.
+- **Module-scoped mutable state** — `searchQuery`, `filterAFT`, `hideZeroDocs`, `copyWeekSource`, and wizard state are module-scoped `let` variables in `renderers.js` (not exported from `state.js`). They are read via setter exports (`setSearchQuery`, `setFilterAFT`) or direct local references.
+- **No circular deps** — `engine.js` imports from `renderers.js`. `renderers.js` does NOT import from `engine.js`. If you add a dependency from `renderers.js` to `engine.js`, you'll create a cycle via `events.js`.
