@@ -6,9 +6,15 @@
 - Module DAG: `config → holidays → core-utils → state → renderers ← engine ← events` — no cycles
 
 ## Config
-- `RUAP/config.js` — 10 doctors, 2 places (`M.S.Savino`, `Subbiano`), 2 slots (`mat`/`pom`, 6h each), initial assignments
+- `RUAP/config.js` — doctors, 2 places (`M.S.Savino`, `Subbiano`), 2 slots (`mat`/`pom`, 6h each), initial assignments
 - `CONFIG.doctors` has `preferredPlace: string | null` — null means flexible, can work anywhere
 - No doctors have `isPool: true` currently — pool logic exists but unused
+
+### Monthly config update from JSON export
+When the user provides a RUAP JSON export (e.g. `agosto.json`) to set as defaults:
+1. **Doctors** — merge `unavailPeriods` per doctor ID, add any new doctors (including new IDs like `Olivieri`), update `monthlyBudget` if changed
+2. **Assignments** — replace the entire `assignments` object with the export's assignments
+3. Keep `places`, `slots`, and doctor definitions (name, preferredPlace, availability, weeklyHours, etc.) unchanged unless the export clearly overrides them
 
 ## engine.js — allocation algorithm
 - `pickDoctorForSlot()` has 2 priority tiers: (1) doctors who prefer this place OR have no `preferredPlace` (flexible), (2) doctors who prefer another place
