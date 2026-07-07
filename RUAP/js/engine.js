@@ -47,13 +47,11 @@ function pickDoctorForSlot(slotToFill, primaryDocs, poolDocs, place, dateKey, sl
   const availablePrimary = filterAvailable(primaryDocs);
   const availablePool = filterAvailable(poolDocs);
 
-  // 3-tier allocation: preferred place first, neutral, cross-site
+  // 2-tier allocation: flexible (prefer this place OR no preference) first, cross-site second
   const priorityGroups = [
-    availablePrimary.filter(d => d.preferredPlace === place),
-    availablePrimary.filter(d => !d.preferredPlace),
+    availablePrimary.filter(d => d.preferredPlace === place || !d.preferredPlace),
     availablePrimary.filter(d => d.preferredPlace && d.preferredPlace !== place),
-    availablePool.filter(d => d.preferredPlace === place),
-    availablePool.filter(d => !d.preferredPlace),
+    availablePool.filter(d => d.preferredPlace === place || !d.preferredPlace),
     availablePool.filter(d => d.preferredPlace && d.preferredPlace !== place),
   ];
 

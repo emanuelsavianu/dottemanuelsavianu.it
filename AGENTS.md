@@ -1,7 +1,7 @@
 # AGENTS.md — Portale Medico Dr. Savianu
 
 ## Quick orientation
-- **Static HTML/CSS/JS** on GitHub Pages (`dottemanuelsavianu.it`). Push `main` → auto-deploy. No build step, no test suite.
+- **Static HTML/CSS/JS** on GitHub Pages. Push `main` → auto-deploy. No build step, no test suite.
 - **Separate patient portal** at `savianu.it` is a different repo (`emanuelsavianu.github.io`). Don't mix changes.
 - Serve locally: `npx serve .`
 - **Two `config.js` files exist** with different purposes:
@@ -11,10 +11,10 @@
 ## Must-know gotchas
 
 ### Service worker bump (MANDATORY on every edit)
-- Bump `CACHE_NAME` in `sw.js` (e.g. `'savianu-v178'`). List edited files in the CACHE_NAME comment.
+- Bump `CACHE_NAME` in `sw.js` (e.g. `'savianu-v193'`). List edited files in the CACHE_NAME comment.
 - Add new `.html` files to `urlsToCache` array.
 - Returning visitors see stale content without a bump. GH Pages deploy lag: 45-60s.
-- **`offline.html` exists but is NOT in `urlsToCache`** — the SW falls back to `/` (index.html) when offline, not `offline.html`. To enable the custom offline page, add it to `urlsToCache` and update the `networkFirst` catch handler.
+- **`offline.html` exists but is NOT in `urlsToCache`** — the SW falls back to `/` (index.html) when offline.
 
 ### `config.js` NOT loaded on every page
 - Root `index.html` does **not** include `config.js`. Pages that do: `colleghi.html`, `faq.html`, `impegnative.html`, `cert-malattia.html`, `esenzioni.html`, `RUAP/index.html`.
@@ -37,18 +37,6 @@ For manual overrides: use **raw hex** (`#f3efe6`, `#0d1e33`) — CSS variables i
 
 ### Large files
 - `visite-private.html` (~1250 lines) — read with `offset`/`limit`
-- `RUAP/app.js` (~2180 lines, refactored) — has section banners (`// === 7. RENDERING ===`) for navigation. Prefer Grep over Read for targeted edits.
-
-### RUAP-specific DOM gotchas
-- Calendar grid ID is **`cal-grid`**, NOT `calendar-grid`.
-- Calendar title is **`cal-title`** (set in `renderCalendarWeek`/`renderCalendarMonth`).
-- Month/week navigation buttons `cal-prev` / `cal-next` need JS-attached listeners that handle both monthly and weekly views (not inline `onclick` in HTML).
-- Sidebar week scroll buttons `sidebar-week-prev` / `sidebar-week-next` also need JS-attached listeners.
-- `renderAll()` must call `updateGeneraButtonLabel()` or the "Genera mese" button shows a stale month name.
-- Month view only iterates **Mon–Fri** (5 cells per week). Holidays show "Chiuso". Never render Sat/Sun cells.
-
-### CDN dependencies
-- jsPDF, html2canvas, XLSX (SheetJS) loaded from CDN in `RUAP/index.html` and `gestoreturni/gestoreturni.html`. Not vendored. If CDN fails, features show a toast error.
 
 ## Conventions
 
@@ -60,7 +48,7 @@ For manual overrides: use **raw hex** (`#f3efe6`, `#0d1e33`) — CSS variables i
 ### SEO
 - Title ≤60 chars, meta description ≤155 chars (Google truncates beyond)
 - `og:image`: `bluelogo.png` (physician/general pages) or `bronzelogo.png` (certificates/services)
-- Pages with `<meta name="robots" content="noindex">` must NOT be in `sitemap.xml` (currently violated: `faq.html`, `impegnative.html`, `esenzioni.html`, `cert-malattia.html`, `calcolatore-ferie.html`, `calcolatoreferiegemini.html`, `ferie.html`, `installazione.html`, `protocollo-certificati-inps.html`, `rsa.html`, `xsegretarie.html` are `noindex` but in sitemap)
+- Pages with `<meta name="robots" content="noindex">` must NOT be in `sitemap.xml`
 - Public indexed pages: `index.html`, `visite-private.html`, `faq-riforma.html`, `certificato-invalidita-civile.html`, `malattia.html`, `privacy.html`
 - Update `llms.txt` when adding/removing public-facing pages
 
@@ -77,24 +65,9 @@ Every new page needs: hide `.topbar, footer, nav`, reset `.page-hero` background
 | App | Dir | Stack | Notes |
 |-----|-----|-------|-------|
 | Main site | `/` | styles.css + app.js | PWA (sw.js + manifest.json + offline.html), config.js NOT on root index |
-| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*`; read `CLAUDE.md` for migration patterns |
-| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese; app.js has section banners (`// === 7. RENDERING ===`) for navigation; read `CLAUDE.md` for budget schema |
-
-## RUAP bug-hunting checklist
-When debugging RUAP UI issues (click handlers, dropdowns, missing slots), check these in order:
-
-1. **DOM ID mismatch** — `cal-grid` (not `calendar-grid`), `cal-title`, `cal-prev`/`cal-next`. The old monolithic `app.js` used different IDs; the refactored modules use `el()` which wraps `getElementById`.
-2. **`inMonth` guard** — `createSlotButton()` only attaches click handlers when `inMonth === true`. In month view, cells outside the current month get `inMonth = false` and no handler.
-3. **`stopPropagation` chain** — If a click doesn't reach its handler, check whether an ancestor listener calls `stopPropagation()` first. The `closeAssignDropdown` document listener fires on any click; slot handlers must call `e.stopPropagation()` before the event bubbles.
-4. **Module import/export integrity** — Every function used in `renderers.js` and referenced in `events.js` must be exported from its module and imported in `events.js`. Inline `onclick` handlers (sidebar doctor cards) need `window.*` exposure.
-5. **`hidden` class ordering** — Tailwind's `hidden` sets `display: none`. Always `remove('hidden')` AFTER positioning, never before. `closeAssignDropdown()` adds `hidden`; `openAssignDropdown()` removes it last.
-6. **Re-render wipes direct listeners** — `container.innerHTML = ''` destroys child elements and their listeners. Delegated listeners (on a stable ancestor like `cal-grid`) survive re-renders. Prefer delegation over direct `addEventListener` on recreated children.
-7. **Live binding `SLOTS` / `PLACES`** — These are ES module live bindings exported from `state.js`. After `reloadPlaces()`/`reloadSlots()`, the new values propagate to all importing modules automatically.
-8. **`e.currentTarget` in delegated handlers** — When using `closest('[data-slot-key]')`, read `btn.dataset.*` from the found ancestor, not from `e.currentTarget`.
-9. **HTML→JS button wiring** — Every `<button id>` in `index.html` must have either an `el('id')` listener in `events.js` or an `onclick` referencing a `window.*` exported function. Grep: compare HTML `id="btn-` with `events.js` `el('btn-` to find orphans.
-10. **`pointer-events-none` on toast containers** — `#toast-container` has `pointer-events-none` (Tailwind). Confirmation toasts from `resetAssignments()` and `deleteDoctor()` need `pointer-events-auto` on the toast element itself, otherwise the confirm buttons appear dead.
+| Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*`; read `gestoreturni/CLAUDE.md` |
+| RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 10 doctors, 2 places, 2 slots, monthly budget, ES modules; read `RUAP/AGENTS.md` and `RUAP/CLAUDE.md` |
 
 ## Other instruction files
-- **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting (258 lines, tracked in git)
-- **`RUAP/CLAUDE.md`** — RUAP data schema, budget system, import/export format, generate algorithm (tracked in git)
-- **`gestoreturni/CLAUDE.md`** — Gestore Turni state shape, localStorage keys, migration patterns (tracked in git)
+- **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting
+- **`gestoreturni/CLAUDE.md`** — Gestore Turni state shape, localStorage keys, migration patterns
