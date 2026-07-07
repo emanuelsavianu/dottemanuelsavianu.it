@@ -12,7 +12,7 @@
 
 ## engine.js — allocation algorithm
 - `pickDoctorForSlot()` has 2 priority tiers: (1) doctors who prefer this place OR have no `preferredPlace` (flexible), (2) doctors who prefer another place
-- Within each tier, doctors are sorted by **highest remaining budget first** (`getEffectiveRemaining`)
+- Within each tier, doctors are sorted by **fewest assigned hours first** (`assignedInTarget[doc.id]`) — distributes work equitably regardless of budget size
 - **Doctors with `preferredPlace: null` are flexible** — they share priority with doctors who prefer that sede
 - If `isDoctorAvailableForSlot()` returns false (unavailability period, wrong shift slot, holiday, weekend) or `getEffectiveRemaining(doc) ≤ 0`, the doctor is skipped
 - Pool doctors (`isPool: true`) are only used when no primary doctor is available

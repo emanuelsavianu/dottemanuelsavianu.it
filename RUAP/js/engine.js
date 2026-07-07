@@ -57,7 +57,7 @@ function pickDoctorForSlot(slotToFill, primaryDocs, poolDocs, place, dateKey, sl
 
   for (const group of priorityGroups) {
     if (group.length > 0) {
-      group.sort((a, b) => getEffectiveRemaining(b) - getEffectiveRemaining(a));
+      group.sort((a, b) => (assignedInTarget[a.id] || 0) - (assignedInTarget[b.id] || 0));
       return group[0];
     }
   }
