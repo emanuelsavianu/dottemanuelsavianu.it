@@ -91,6 +91,8 @@ When debugging RUAP UI issues (click handlers, dropdowns, missing slots), check 
 6. **Re-render wipes direct listeners** — `container.innerHTML = ''` destroys child elements and their listeners. Delegated listeners (on a stable ancestor like `cal-grid`) survive re-renders. Prefer delegation over direct `addEventListener` on recreated children.
 7. **Live binding `SLOTS` / `PLACES`** — These are ES module live bindings exported from `state.js`. After `reloadPlaces()`/`reloadSlots()`, the new values propagate to all importing modules automatically.
 8. **`e.currentTarget` in delegated handlers** — When using `closest('[data-slot-key]')`, read `btn.dataset.*` from the found ancestor, not from `e.currentTarget`.
+9. **HTML→JS button wiring** — Every `<button id>` in `index.html` must have either an `el('id')` listener in `events.js` or an `onclick` referencing a `window.*` exported function. Grep: compare HTML `id="btn-` with `events.js` `el('btn-` to find orphans.
+10. **`pointer-events-none` on toast containers** — `#toast-container` has `pointer-events-none` (Tailwind). Confirmation toasts from `resetAssignments()` and `deleteDoctor()` need `pointer-events-auto` on the toast element itself, otherwise the confirm buttons appear dead.
 
 ## Other instruction files
 - **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting (258 lines, tracked in git)
