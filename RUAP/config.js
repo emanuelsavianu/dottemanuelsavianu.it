@@ -1,4 +1,8 @@
 const CONFIG = {
+  // Bump this when you change doctors, assignments, or other config data
+  // so existing users get prompted to update their localStorage
+  configDataVersion: '2026-07-07',
+
   places: ['M.S.Savino', 'Subbiano'],
 
   slots: [

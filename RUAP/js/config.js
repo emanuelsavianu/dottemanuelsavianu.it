@@ -10,6 +10,7 @@ export const STORAGE_PLACES = 'ruap-places';
 export const STORAGE_SLOTS = 'ruap-slots';
 export const STORAGE_DARK_MODE = 'ruap-dark-mode';
 export const STORAGE_VERSION = 2;
+export const CONFIG_DATA_KEY = 'ruap-config-data-version';
 export const HISTORY_MAX = 50;
 
 export const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];

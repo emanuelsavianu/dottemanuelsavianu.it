@@ -191,6 +191,21 @@
   <button onclick="document.getElementById('demo-banner').classList.add('hidden')" class="ml-4 text-amber-600 hover:text-amber-800 font-bold text-lg leading-none">&times;</button>
 </div>
 
+<!-- Update banner — appears when config.js data has changed -->
+<div id="update-banner" class="hidden bg-blue-50 border-b border-blue-200 px-4 py-3 text-sm text-blue-900">
+  <div class="max-w-screen-xl mx-auto flex items-center justify-between flex-wrap gap-2">
+    <span>
+      <i class="fa-solid fa-rotate text-blue-500 mr-2"></i>
+      <strong>Nuovi dati disponibili</strong> — La configurazione dei turni è stata aggiornata.
+    </span>
+    <div class="flex items-center gap-2">
+      <button id="update-banner-accept" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">Aggiorna</button>
+      <button id="update-banner-keep" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 transition">Mantieni i miei dati</button>
+      <button id="update-banner-close" class="text-blue-400 hover:text-blue-600 font-bold text-lg leading-none ml-0.5 transition">&times;</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================================================
      HEADER
      =================================================== -->

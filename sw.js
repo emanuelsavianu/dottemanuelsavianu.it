@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v192: RUAP/js/renderers.js + events.js — fix btn-add-doctor, pointer-events-none on toast, clickable monthly stats
-const CACHE_NAME = 'savianu-v192';
+// Cache version bumped to v193: RUAP/config.js, RUAP/js/config.js, RUAP/index.html, RUAP/js/events.js — update banner on config data version change
+const CACHE_NAME = 'savianu-v193';
 const urlsToCache = [
   '/',
   '/index.html',

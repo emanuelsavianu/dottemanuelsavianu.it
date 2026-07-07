@@ -4,7 +4,7 @@
 
 import {
   state, SLOTS,
-  saveToStorage, loadFromStorage, pushHistory, loadHistory,
+  saveToStorage, loadFromStorage, pushHistory, loadHistory, clearHistory,
   reloadPlaces, reloadSlots,
   initDarkMode, toggleDarkMode, undo, redo,
   updateUndoRedoButtons
@@ -37,6 +37,7 @@ import { autoAssign, generateNextMonth } from './engine.js';
 import {
   STORAGE_DOCTORS, STORAGE_ASSIGNMENTS, STORAGE_HISTORY,
   STORAGE_PLACES, STORAGE_SLOTS, STORAGE_VERSION, STORAGE_VERSION_KEY,
+  CONFIG_DATA_KEY,
   EXTERNAL_PREFIX
 } from './config.js';
 
@@ -239,23 +240,73 @@ window.toggleCalendarView = toggleCalendarView;
 window.toggleHideZeroDocs = toggleHideZeroDocs;
 
 // ====================================================
+// Update banner — shown when config.js data changes
+// ====================================================
+
+function acceptConfigUpdate(version) {
+  state.doctors = getDefaultDoctors();
+  if (typeof CONFIG !== 'undefined' && CONFIG.places) state.places = [...CONFIG.places];
+  if (typeof CONFIG !== 'undefined' && CONFIG.slots) state.slots = CONFIG.slots.map(s => ({...s}));
+  if (typeof CONFIG !== 'undefined' && CONFIG.assignments) {
+    state.assignments = {};
+    Object.entries(CONFIG.assignments).forEach(([key, docId]) => {
+      if (state.doctors.some(d => d.id === docId)) state.assignments[key] = docId;
+    });
+  }
+  saveToStorage();
+  clearHistory();
+  if (version) localStorage.setItem(CONFIG_DATA_KEY, version);
+  el('update-banner')?.classList.add('hidden');
+  window.location.reload();
+}
+
+function dismissConfigUpdate(version) {
+  if (version) localStorage.setItem(CONFIG_DATA_KEY, version);
+  el('update-banner')?.classList.add('hidden');
+}
+
+/**
+ * @param {string} version — the CONFIG.configDataVersion that triggered the banner
+ */
+function showUpdateBanner(version) {
+  const banner = el('update-banner');
+  if (!banner) return;
+  banner.classList.remove('hidden');
+  // Attach one-time handlers (re-attach on each show to avoid stale closures)
+  el('update-banner-accept').onclick = () => acceptConfigUpdate(version);
+  el('update-banner-keep').onclick = () => dismissConfigUpdate(version);
+  el('update-banner-close').onclick = () => el('update-banner')?.classList.add('hidden');
+}
+
+// ====================================================
 // 19. INIT
 // ====================================================
 function init() {
   initDarkMode();
+
+  // Schema version check — clearing on mismatch ensures compatibility
   const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
   const isVersionMismatch = storedVersion !== String(STORAGE_VERSION);
   if (isVersionMismatch) {
     localStorage.removeItem(STORAGE_DOCTORS);
     localStorage.removeItem(STORAGE_ASSIGNMENTS);
     localStorage.removeItem(STORAGE_HISTORY);
+    localStorage.removeItem(CONFIG_DATA_KEY);
     localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_VERSION));
   }
+
+  // Config data version check — detects changes to config.js content
+  const configDataVersion = (typeof CONFIG !== 'undefined' && CONFIG.configDataVersion) || '';
+  const seenConfigVersion = localStorage.getItem(CONFIG_DATA_KEY) || '';
+  const hasConfigUpdate = configDataVersion && configDataVersion !== seenConfigVersion;
+
   loadFromStorage();
   reloadPlaces();
   reloadSlots();
   loadHistory();
+
   const isFirstRun = state.doctors.length === 0;
+
   if (isFirstRun) {
     const now = new Date();
     state.calYear = now.getFullYear();
@@ -268,7 +319,11 @@ function init() {
       });
     }
     saveToStorage();
+    if (configDataVersion) localStorage.setItem(CONFIG_DATA_KEY, configDataVersion);
     el('demo-banner')?.classList.remove('hidden');
+  } else if (hasConfigUpdate) {
+    showUpdateBanner(configDataVersion);
+    pushHistory();
   } else {
     pushHistory();
   }
