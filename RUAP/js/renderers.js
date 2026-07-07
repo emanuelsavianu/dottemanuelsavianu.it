@@ -285,7 +285,13 @@ function positionDropdown(rect) {
 function renderAvailableList(slotKey, slot, dateKey) {
   const list = el('assign-list');
   const place = slotKey.split('_').slice(2).join('_');
-  const availDocs = state.doctors.filter(doc => isDoctorAvailableForSlot(doc, dateKey, slot.key));
+  const availDocs = state.doctors.filter(doc => {
+    if (!isDoctorAvailableForSlot(doc, dateKey, slot.key)) return false;
+    const isBusyElsewhere = PLACES.some(p =>
+      p !== place && state.assignments[`${dateKey}_${slot.key}_${p}`] === doc.id
+    );
+    return !isBusyElsewhere;
+  });
   availDocs.sort((a, b) => {
     const aPref = a.preferredPlace === place ? 0 : 1;
     const bPref = b.preferredPlace === place ? 0 : 1;
@@ -327,7 +333,10 @@ export function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   const availIds = new Set(state.doctors.filter(doc =>
     isDoctorAvailableForSlot(doc, dateKey, slot.key)
   ).map(d => d.id));
-  const unavailDocs = state.doctors.filter(doc => !availIds.has(doc.id));
+  const busyIds = new Set(state.doctors.filter(doc =>
+    PLACES.some(p => p !== place && state.assignments[`${dateKey}_${slot.key}_${p}`] === doc.id)
+  ).map(d => d.id));
+  const unavailDocs = state.doctors.filter(doc => !availIds.has(doc.id) || busyIds.has(doc.id));
   unavailList.innerHTML = '';
   unavailDocs.forEach(doc => {
     const color = getDoctorColor(doc);
@@ -336,7 +345,7 @@ export function openAssignDropdown(e, slotKey, slot, dateKey, place) {
     btn.innerHTML = `
       <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
       <span class="flex-1 font-medium text-xs">${escapeHtml(doc.name)}</span>
-      <span class="text-[10px] text-slate-400 italic">eccezione</span>`;
+      <span class="text-[10px] text-slate-400 italic">${busyIds.has(doc.id) ? 'stessa fascia oraria' : 'eccezione'}</span>`;
     btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
     unavailList.appendChild(btn);
   });
