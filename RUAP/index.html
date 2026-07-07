@@ -257,6 +257,11 @@
       <button id="btn-pdf" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-file-pdf"></i> PDF
       </button>
+      <!-- Export PNG -->
+      <button id="btn-export-png"
+        class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-file-image"></i> PNG
+      </button>
       <!-- Dark mode -->
       <button id="btn-darkmode" class="bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
         <i class="fa-solid fa-moon" id="darkmode-icon"></i>
@@ -688,6 +693,12 @@
   </div>
   <div id="pdf-table"></div>
   <p id="pdf-footer" style="font-size: 11px; color: #94a3b8; margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 8px;"></p>
+</div>
+
+<!-- Hidden PNG-optimized div for image export -->
+<div id="png-content" class="hidden" style="font-family: Arial, sans-serif; padding: 24px; background: white; color: #1e293b; width: 1100px;">
+  <div id="png-calendar"></div>
+  <div id="png-budget"></div>
 </div>
 
 <!-- ===================================================

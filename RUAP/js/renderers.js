@@ -1007,6 +1007,169 @@ export async function exportPDF() {
 }
 
 // ====================================================
+// 10b. EXPORT PNG
+// ====================================================
+
+export function buildPngContent() {
+  const year = state.calYear;
+  const month = state.calMonth;
+  const monthName = MONTHS_IT[month];
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const DAY_SHORT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+  // --- Calendar section ---
+  let calHtml = `
+    <div style="margin-bottom:20px;border-bottom:2px solid #1e3a5f;padding-bottom:10px;">
+      <h1 style="font-size:22px;font-weight:bold;color:#1e40af;margin:0 0 2px;">Turni RUAP Attività Diurne</h1>
+      <p style="font-size:14px;color:#64748b;margin:0;">${monthName} ${year}</p>
+    </div>`;
+
+  PLACES.forEach(place => {
+    calHtml += `<div style="margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="background:#1e40af;color:white;font-size:10px;font-weight:bold;padding:2px 10px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(place)}</span>
+        <span style="font-size:11px;color:#64748b;">Turni mensili</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="background:#1e3a5f;color:white;">
+          <th style="padding:6px 8px;border:1px solid #cbd5e1;text-align:left;">Data</th>
+          <th style="padding:6px 8px;border:1px solid #cbd5e1;text-align:left;">Giorno</th>`;
+    SLOTS.forEach(s => {
+      calHtml += `<th style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;">${s.icon} ${escapeHtml(s.label)}</th>`;
+    });
+    calHtml += `</tr></thead><tbody>`;
+
+    for (let day = 1; day <= lastDay; day++) {
+      const d = new Date(year, month, day);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      const dk = toDateKey(d);
+      const isHoliday = isItalianHoliday(d);
+      const rowBg = isHoliday ? 'background:#fef2f2;' : '';
+      calHtml += `<tr style="${rowBg}">
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;font-weight:600;color:#334155;">${day}/${month + 1}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;color:#475569;">${DAY_SHORT[d.getDay()]}</td>`;
+      SLOTS.forEach(slot => {
+        const id = state.assignments[`${dk}_${slot.key}_${place}`];
+        let display = '', bg = '', textColor = '#94a3b8';
+        if (id) {
+          if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
+            display = id.replace(EXTERNAL_PREFIX, '');
+            bg = '#d97706';
+            textColor = '#ffffff';
+          } else {
+            const doc = getDoctorById(state.doctors, id);
+            if (doc) {
+              display = cleanDoctorName(doc.name);
+              const clr = getDoctorColor(doc);
+              bg = clr.hex;
+              textColor = '#ffffff';
+            }
+          }
+        }
+        if (display) {
+          calHtml += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;background:${bg};color:${textColor};font-weight:600;border-radius:3px;font-size:10px;">${escapeHtml(display)}</td>`;
+        } else if (isHoliday) {
+          calHtml += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;color:#ef4444;font-size:10px;font-weight:bold;">CHIUSO</td>`;
+        } else {
+          calHtml += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;color:#cbd5e1;font-size:10px;">—</td>`;
+        }
+      });
+      calHtml += `</tr>`;
+    }
+    calHtml += `</tbody></table></div>`;
+  });
+
+  el('png-calendar').innerHTML = calHtml;
+
+  // --- Budget section ---
+  const stats = getMonthlyStats();
+  const ordered = [...state.doctors].sort((a, b) => (b.isPool ? 1 : 0) - (a.isPool ? 1 : 0));
+
+  const totalUsed = Object.values(stats.doctorHours).reduce((a, b) => a + b, 0);
+
+  let budgetHtml = `
+    <div style="margin-top:20px;padding-top:14px;border-top:2px solid #1e40af;">
+      <h2 style="font-size:17px;font-weight:bold;color:#1e3a5f;margin:0 0 10px;">📊 Bilancio Mensile</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#1e3a5f;color:white;">
+          <th style="padding:7px 10px;border:1px solid #cbd5e1;text-align:left;">Medico</th>
+          <th style="padding:7px 10px;border:1px solid #cbd5e1;text-align:center;">Assegnate</th>
+          <th style="padding:7px 10px;border:1px solid #cbd5e1;text-align:center;">Budget</th>
+          <th style="padding:7px 10px;border:1px solid #cbd5e1;text-align:center;">%</th>
+          <th style="padding:7px 10px;border:1px solid #cbd5e1;text-align:left;">Progresso</th>
+        </tr></thead><tbody>`;
+
+  ordered.forEach(doc => {
+    const budget = getMonthlyBudget(doc);
+    const used = stats.doctorHours[doc.id] || 0;
+    const rem = Math.max(0, budget - used);
+    const pct = budget > 0 ? Math.round((used / budget) * 100) : 0;
+    const barColor = rem === 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
+    const colorHex = getDoctorColor(doc).hex;
+    const label = doc.isPool ? ' (pool)' : '';
+    budgetHtml += `<tr>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:500;color:#1e293b;">
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colorHex};margin-right:6px;vertical-align:middle;"></span>
+        ${escapeHtml(doc.name)}${label}
+      </td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;color:#334155;">${used}h</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;color:#64748b;">${budget}h</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:600;color:${barColor};">${pct}%</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;">
+        <div style="width:120px;height:12px;background:#e2e8f0;border-radius:6px;">
+          <div style="width:${Math.min(100, pct)}%;height:12px;background:${barColor};border-radius:6px;"></div>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  budgetHtml += `</tbody></table>`;
+
+  // Coverage summary footer
+  budgetHtml += `
+    <div style="margin-top:10px;font-size:12px;color:#64748b;display:flex;gap:20px;padding-top:8px;">
+      <span><strong style="color:#334155;">Copertura:</strong> ${stats.filledSlots}/${stats.totalSlots} turni · <strong style="color:${stats.coverage === 100 ? '#16a34a' : stats.coverage >= 70 ? '#d97706' : '#dc2626'};">${stats.coverage}%</strong></span>
+      <span><strong style="color:#334155;">Ore totali:</strong> ${totalUsed}h</span>
+    </div>`;
+
+  budgetHtml += `</div>`; // close border-top wrapper
+
+  el('png-budget').innerHTML = budgetHtml;
+}
+
+export async function exportPNG() {
+  if (typeof html2canvas === 'undefined') {
+    toast('Libreria html2canvas non caricata — impossibile generare PNG', 'error');
+    return;
+  }
+  const container = el('png-content');
+  if (!container) return;
+  buildPngContent();
+  container.classList.remove('hidden');
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: container.scrollWidth,
+      height: container.scrollHeight,
+    });
+    const link = document.createElement('a');
+    link.download = `turni-ruap-${MONTHS_IT[state.calMonth].toLowerCase()}-${state.calYear}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('PNG scaricato', 'success');
+  } catch (err) {
+    toast('Errore PNG: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    container.classList.add('hidden');
+  }
+}
+
+// ====================================================
 // 11. MONTHLY STATS
 // ====================================================
 
