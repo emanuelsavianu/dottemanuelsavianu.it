@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v191: RUAP/js/renderers.js + events.js — delegated click handler on cal-grid as fallback for slot-btn clicks
-const CACHE_NAME = 'savianu-v191';
+// Cache version bumped to v192: RUAP/js/renderers.js + events.js — fix btn-add-doctor, pointer-events-none on toast, clickable monthly stats
+const CACHE_NAME = 'savianu-v192';
 const urlsToCache = [
   '/',
   '/index.html',

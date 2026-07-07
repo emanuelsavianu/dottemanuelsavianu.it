@@ -115,6 +115,7 @@ el('assign-custom-input')?.addEventListener('keydown', (e) => {
 });
 
 // --- Doctor modal ---
+el('modal-close')?.addEventListener('click', closeDoctorModal);
 el('modal-cancel')?.addEventListener('click', closeDoctorModal);
 el('modal-save')?.addEventListener('click', saveDoctorFromModal);
 el('modal-patients')?.addEventListener('input', (e) => {
@@ -133,6 +134,7 @@ document.addEventListener('click', (e) => {
 });
 
 // --- Header and toolbar buttons ---
+el('btn-add-doctor')?.addEventListener('click', () => openDoctorModal());
 el('btn-auto-assign')?.addEventListener('click', autoAssign);
 el('btn-genera-mese')?.addEventListener('click', generateNextMonth);
 el('btn-pdf')?.addEventListener('click', exportPDF);

@@ -406,6 +406,9 @@ export function openDoctorModal(doctorId = null) {
   state.editingDoctorId = doctorId;
   el('doctor-modal').classList.remove('hidden');
   el('modal-doctor-id').value = doctorId || '';
+  el('modal-title').innerHTML = doctorId
+    ? '<i class="fa-solid fa-user-pen"></i> Modifica Medico'
+    : '<i class="fa-solid fa-user-doctor"></i> Aggiungi Medico';
   if (doctorId) {
     const doc = getDoctorById(state.doctors, doctorId);
     el('modal-name').value = doc.name;
@@ -446,7 +449,7 @@ export function deleteDoctor(id) {
   const doc = getDoctorById(state.doctors, id);
   if (!doc) return;
   const toastEl = document.createElement('div');
-  toastEl.className = 'toast-item flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
+  toastEl.className = 'toast-item pointer-events-auto flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
   toastEl.innerHTML = `
     <span>Eliminare <strong>${cleanDoctorName(doc.name)}</strong>?</span>
     <button class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600 confirm-yes">Sì</button>
@@ -467,7 +470,7 @@ export function deleteDoctor(id) {
 
 export function resetAssignments() {
   const toastEl = document.createElement('div');
-  toastEl.className = 'toast-item flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
+  toastEl.className = 'toast-item pointer-events-auto flex items-center gap-3 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 text-sm';
   toastEl.innerHTML = `
     <span>Eliminare <strong>tutte le assegnazioni</strong>?</span>
     <button class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600 confirm-yes">Sì</button>
@@ -1057,9 +1060,9 @@ export function renderMonthlyStats() {
     const color = getDoctorColor(doc);
     const label = doc.isPool ? ' (pool)' : '';
     const barColor = rem === 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
-    return `<div class="flex items-center gap-2 py-1">
+    return `<div class="flex items-center gap-2 py-1 cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 transition-colors" onclick="window.openDoctorModal('${doc.id}')" title="Clicca per modificare ${escapeHtml(doc.name)}">
       <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${color.hex}"></span>
-      <span class="flex-1 truncate text-slate-700" title="${escapeHtml(doc.name)}">${escapeHtml(cleanDoctorName(doc.name))}${label}</span>
+      <span class="flex-1 truncate text-slate-700">${escapeHtml(cleanDoctorName(doc.name))}${label}</span>
       <span class="text-slate-500 flex-shrink-0">${used}h/${budget}h</span>
       <div class="w-16 h-2.5 bg-slate-200 rounded-full flex-shrink-0">
         <div style="width:${Math.min(100, pct)}%; background:${barColor}" class="h-2.5 rounded-full"></div>
@@ -1076,7 +1079,7 @@ export function renderMonthlyStats() {
       const used = stats.doctorHours[doc.id] || 0;
       const pct = budget > 0 ? Math.round((used / budget) * 100) : 0;
       const barColor = (budget - used) <= 0 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
-      return `<div class="p-row">
+      return `<div class="p-row cursor-pointer hover:bg-slate-50 transition-colors" onclick="window.openDoctorModal('${doc.id}')" title="Clicca per modificare ${escapeHtml(doc.name)}">
         <span class="p-dot" style="background:${getDoctorColor(doc).hex}"></span>
         <span class="p-name">${escapeHtml(doc.name)}${doc.isPool ? ' (pool)' : ''}</span>
         <span class="p-hours">${used}h / ${budget}h</span>
