@@ -38,9 +38,22 @@ function pickDoctorForSlot(slotToFill, primaryDocs, poolDocs, place, dateKey, sl
     return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
   };
 
+  // Prevent mat (08-14) after pom (14-20) on the previous calendar day
+  const hasConsecutiveShiftConflict = (doc) => {
+    if (slotKeyOnly !== 'mat') return false;
+    const parts = dateKey.split('-');
+    const prevDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateKey = toDateKey(prevDate);
+    return Object.entries(state.assignments).some(([k, v]) =>
+      v === doc.id && k.startsWith(prevDateKey + '_pom_')
+    );
+  };
+
   const filterAvailable = (docs) => docs.filter(doc =>
     isDoctorAvailableForSlot(doc, dateKey, slotKeyOnly)
     && notBusy(doc)
+    && !hasConsecutiveShiftConflict(doc)
     && getEffectiveRemaining(doc) > 0
   );
 
