@@ -80,6 +80,18 @@ Every new page needs: hide `.topbar, footer, nav`, reset `.page-hero` background
 | Gestore Turni | `gestoreturni/` | Tailwind CDN, standalone | CRUD shift manager; localStorage keys `ruap-*`; read `CLAUDE.md` for migration patterns |
 | RUAP Attività Diurne | `RUAP/` | Tailwind CDN, config-driven | 16 doctors, monthly budget, Excel import/export, Genera Mese; app.js has section banners (`// === 7. RENDERING ===`) for navigation; read `CLAUDE.md` for budget schema |
 
+## RUAP bug-hunting checklist
+When debugging RUAP UI issues (click handlers, dropdowns, missing slots), check these in order:
+
+1. **DOM ID mismatch** — `cal-grid` (not `calendar-grid`), `cal-title`, `cal-prev`/`cal-next`. The old monolithic `app.js` used different IDs; the refactored modules use `el()` which wraps `getElementById`.
+2. **`inMonth` guard** — `createSlotButton()` only attaches click handlers when `inMonth === true`. In month view, cells outside the current month get `inMonth = false` and no handler.
+3. **`stopPropagation` chain** — If a click doesn't reach its handler, check whether an ancestor listener calls `stopPropagation()` first. The `closeAssignDropdown` document listener fires on any click; slot handlers must call `e.stopPropagation()` before the event bubbles.
+4. **Module import/export integrity** — Every function used in `renderers.js` and referenced in `events.js` must be exported from its module and imported in `events.js`. Inline `onclick` handlers (sidebar doctor cards) need `window.*` exposure.
+5. **`hidden` class ordering** — Tailwind's `hidden` sets `display: none`. Always `remove('hidden')` AFTER positioning, never before. `closeAssignDropdown()` adds `hidden`; `openAssignDropdown()` removes it last.
+6. **Re-render wipes direct listeners** — `container.innerHTML = ''` destroys child elements and their listeners. Delegated listeners (on a stable ancestor like `cal-grid`) survive re-renders. Prefer delegation over direct `addEventListener` on recreated children.
+7. **Live binding `SLOTS` / `PLACES`** — These are ES module live bindings exported from `state.js`. After `reloadPlaces()`/`reloadSlots()`, the new values propagate to all importing modules automatically.
+8. **`e.currentTarget` in delegated handlers** — When using `closest('[data-slot-key]')`, read `btn.dataset.*` from the found ancestor, not from `e.currentTarget`.
+
 ## Other instruction files
 - **`CLAUDE.md`** — Full architecture, dark mode, responsive patterns, schema markup, DNS/hosting (258 lines, tracked in git)
 - **`RUAP/CLAUDE.md`** — RUAP data schema, budget system, import/export format, generate algorithm (tracked in git)
