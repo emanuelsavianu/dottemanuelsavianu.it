@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportDate": "2026-07-07T17:38:11.830Z",
+  "exportDate": "2026-07-09T16:39:33.072Z",
   "doctors": [
     {
       "id": "mqgp5xpec24f6",
@@ -42,8 +42,6 @@
           "to": "2026-07-31"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 152
     },
     {
@@ -82,8 +80,6 @@
           "to": "2026-08-31"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 152
     },
     {
@@ -126,8 +122,6 @@
           "to": "2026-07-21"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 152
     },
     {
@@ -166,8 +160,6 @@
           "to": "2026-07-21"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 96
     },
     {
@@ -201,8 +193,6 @@
         }
       },
       "unavailPeriods": [],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 48
     },
     {
@@ -241,8 +231,6 @@
           "to": "2026-08-13"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 45
     },
     {
@@ -285,8 +273,6 @@
           "to": "2026-08-06"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 152
     },
     {
@@ -329,9 +315,7 @@
           "to": "2026-07-24"
         }
       ],
-      "monthlyBudget": 152,
-      "aft": "",
-      "seniority": 0
+      "monthlyBudget": 152
     },
     {
       "id": "mqgp5xpekiw12",
@@ -364,8 +348,6 @@
         }
       },
       "unavailPeriods": [],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 96
     },
     {
@@ -416,8 +398,6 @@
           "to": "2026-08-28"
         }
       ],
-      "aft": "",
-      "seniority": 0,
       "monthlyBudget": 152
     },
     {
@@ -450,9 +430,7 @@
           "pom": true
         }
       },
-      "unavailPeriods": [],
-      "aft": "",
-      "seniority": 0
+      "unavailPeriods": []
     }
   ],
   "assignments": {
@@ -470,7 +448,7 @@
     "2026-08-05_pom_Subbiano": "mrasudwdk87n",
     "2026-08-06_mat_M.S.Savino": "mqgp5xpeohiai",
     "2026-08-06_mat_Subbiano": "mqgp5xpe6gb6b",
-    "2026-08-06_pom_M.S.Savino": "mqgp5xpekiw12",
+    "2026-08-06_pom_M.S.Savino": "mqgp5xpec24f6",
     "2026-08-06_pom_Subbiano": "mqgp5xpehbrke",
     "2026-08-07_mat_M.S.Savino": "mqgp5xpe8eeqy",
     "2026-08-07_mat_Subbiano": "mqgp5xpec24f6",
@@ -523,18 +501,18 @@
     "2026-08-26_mat_Subbiano": "mqgp5xpec24f6",
     "2026-08-26_pom_M.S.Savino": "mqgp5xpeohiai",
     "2026-08-26_pom_Subbiano": "mrasudwdk87n",
-    "2026-08-27_mat_M.S.Savino": "mrasudwdk87n",
+    "2026-08-27_mat_M.S.Savino": "mqgp5xpeohiai",
     "2026-08-27_mat_Subbiano": "mqgp5xpe6gb6b",
     "2026-08-27_pom_M.S.Savino": "mqgp5xpe79zho",
     "2026-08-27_pom_Subbiano": "mqgp5xpehbrke",
     "2026-08-28_mat_M.S.Savino": "mqgp5xpe8eeqy",
     "2026-08-28_mat_Subbiano": "mqgp5xpec24f6",
     "2026-08-28_pom_M.S.Savino": "mqgp5xpe3wotk",
-    "2026-08-28_pom_Subbiano": "mrasudwdk87n",
+    "2026-08-28_pom_Subbiano": "mqgp5xpe79zho",
     "2026-08-31_mat_M.S.Savino": "mqgp5xpe79zho",
     "2026-08-31_mat_Subbiano": "mqgp5xpe6gb6b",
     "2026-08-31_pom_M.S.Savino": "mqgp5xpekiw12",
     "2026-08-31_pom_Subbiano": "mqgp5xpemfnc0",
-    "2026-08-13_pom_M.S.Savino": "mqgp5xpekiw12"
+    "2026-08-13_pom_M.S.Savino": "mqgp5xpec24f6"
   }
 }
