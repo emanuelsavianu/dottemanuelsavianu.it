@@ -12,7 +12,7 @@ import {
 
 import {
   el, toast, getDefaultDoctors, toDateKey, getWeekStart,
-  calculateDebtByPatients
+  calculateWeeklyHoursByPatients
 } from './core-utils.js';
 
 import {
@@ -103,7 +103,6 @@ document.addEventListener('click', (e) => {
 el('assign-close')?.addEventListener('click', closeAssignDropdown);
 el('assign-exception-btn')?.addEventListener('click', () => {
   el('assign-unavail-section')?.classList.toggle('hidden');
-  el('assign-custom-section')?.classList.toggle('hidden');
 });
 el('assign-custom-add')?.addEventListener('click', () => {
   const input = el('assign-custom-input');
@@ -121,7 +120,7 @@ el('modal-cancel')?.addEventListener('click', closeDoctorModal);
 el('modal-save')?.addEventListener('click', saveDoctorFromModal);
 el('modal-patients')?.addEventListener('input', (e) => {
   const patients = parseInt(e.target.value) || 0;
-  const hours = calculateDebtByPatients(patients);
+  const hours = calculateWeeklyHoursByPatients(patients);
   el('modal-hours').value = hours;
 });
 el('btn-add-period')?.addEventListener('click', () => { addUnavailPeriodRow('', ''); });
@@ -179,7 +178,7 @@ el('cal-grid')?.addEventListener('click', (e) => {
   if (!slotKey || !dateKey || !place || !slotType) return;
   const slot = SLOTS.find(s => s.key === slotType);
   if (!slot) return;
-  openAssignDropdown(e, slotKey, slot, dateKey, place);
+  openAssignDropdown(e, slotKey, slot, dateKey, place, btn.getBoundingClientRect());
 });
 
 // --- Calendar navigation ---

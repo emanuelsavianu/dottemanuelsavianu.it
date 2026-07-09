@@ -158,6 +158,7 @@ export function redo() {
 export function clearHistory() {
   historyStack = [];
   historyIndex = -1;
+  saveHistory();
 }
 
 export function updateUndoRedoButtons() {

@@ -68,7 +68,7 @@ export function formatDateShort(date) {
 
 // --- Business logic helpers (pure, no direct state dependency) ---
 
-export function calculateDebtByPatients(patients) {
+export function calculateWeeklyHoursByPatients(patients) {
   if (patients === undefined || patients === null || patients < 0) return 38;
   if (patients <= 400) return 38;
   if (patients <= 1000) return 24;

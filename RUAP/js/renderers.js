@@ -9,7 +9,7 @@ import {
 } from './state.js';
 import {
   generateId, cleanDoctorName, escapeHtml, excelDateToDate,
-  toDateKey, formatDateShort, getWeekStart, calculateDebtByPatients,
+  toDateKey, formatDateShort, getWeekStart, calculateWeeklyHoursByPatients,
   getDoctorColor, getMonthlyBudget, getProgressBarData,
   el, toast, getDoctorById, isDoctorAvailableForSlot,
   isDoctorUnavailable, getWeeklyAssignedHours, getAssignedHoursInMonth,
@@ -61,10 +61,22 @@ function getCoverageBadge(dateKey, place) {
   };
 }
 
+function resolveShiftCell(id) {
+  if (!id) return { display: '', bg: '', textColor: '' };
+  if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
+    return { display: id.replace(EXTERNAL_PREFIX, ''), bg: '#d97706', textColor: '#ffffff' };
+  }
+  const doc = getDoctorById(state.doctors, id);
+  if (doc) {
+    return { display: cleanDoctorName(doc.name), bg: getDoctorColor(doc).hex, textColor: '#ffffff' };
+  }
+  return { display: '', bg: '', textColor: '' };
+}
+
 function createSlotButton(dateKey, place, slot, inMonth) {
   const slotKey = `${dateKey}_${slot.key}_${place}`;
   const assignedId = state.assignments[slotKey];
-  const isExt = assignedId && typeof assignedId === 'string' && assignedId.startsWith(EXTERNAL_PREFIX);
+  const isExt = assignedId && assignedId.startsWith(EXTERNAL_PREFIX);
   const assignedDoc = !isExt && assignedId ? getDoctorById(state.doctors, assignedId) : null;
   const extName = isExt ? assignedId.replace(EXTERNAL_PREFIX, '') : null;
   const color = assignedDoc ? getDoctorColor(assignedDoc) : (extName ? { hex: '#d97706' } : null);
@@ -85,7 +97,7 @@ function createSlotButton(dateKey, place, slot, inMonth) {
     slotBtn.dataset.dateKey = dateKey;
     slotBtn.dataset.place = place;
     slotBtn.dataset.slotType = slot.key;
-    slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place));
+    slotBtn.addEventListener('click', (e) => openAssignDropdown(e, slotKey, slot, dateKey, place, e.currentTarget.getBoundingClientRect()));
   }
   return slotBtn;
 }
@@ -167,7 +179,7 @@ function renderCalendarMonth() {
       const dateKey = toDateKey(cellDate);
       const inMonth = cellDate.getMonth() === month;
       const isToday = toDateKey(new Date()) === dateKey;
-      const isHoliday = isItalianHoliday(cellDate) || cellDate.getDay() === 0 || cellDate.getDay() === 6;
+      const isHoliday = isItalianHoliday(cellDate);
 
       const cell = document.createElement('div');
       cell.className = `rounded-xl p-2 border ${isHoliday && inMonth ? 'holiday-cell border-slate-100' : inMonth ? 'bg-white shadow-sm border-slate-100' : 'bg-transparent border-transparent'} ${isToday && inMonth ? 'ring-2 ring-brand-400' : ''}`;
@@ -222,7 +234,7 @@ export function renderSidebar() {
   container.innerHTML = filtered.map(doc => {
     const color = getDoctorColor(doc);
     const weeklyH = getWeeklyAssignedHours(doc.id, state.sidebarWeekStart, SLOTS, PLACES, state.assignments);
-    const { pct, barColor } = getProgressBarData(weeklyH, doc.weeklyHours || 24);
+    const { pct, barColor } = getProgressBarData(weeklyH, doc.weeklyHours ?? 38);
     const monthH = getAssignedHoursInMonth(doc.id, state.calMonth, state.calYear, SLOTS, PLACES, state.assignments);
     const budget = getMonthlyBudget(doc);
     const remH = Math.max(0, budget - monthH);
@@ -237,7 +249,7 @@ export function renderSidebar() {
           <div class="flex-1 h-1.5 bg-slate-100 rounded-full">
             <div style="width:${pct}%; background:${barColor}" class="h-1.5 rounded-full transition-all"></div>
           </div>
-          <span class="text-[10px] text-slate-400 flex-shrink-0">${weeklyH}/${doc.weeklyHours || 24}h</span>
+          <span class="text-[10px] text-slate-400 flex-shrink-0">${weeklyH}/${doc.weeklyHours ?? 38}h</span>
         </div>
       </div>`;
   }).join('');
@@ -249,7 +261,6 @@ export function renderAll() {
   renderCalendar();
   renderSidebar();
   renderMonthlyStats();
-  updateConflictsHeaderBadge();
 }
 
 export function toggleCalendarView() {
@@ -302,14 +313,14 @@ function renderAvailableList(slotKey, slot, dateKey) {
   availDocs.forEach(doc => {
     const color = getDoctorColor(doc);
     const weeklyH = getWeeklyAssignedHours(doc.id, getWeekStart(new Date(dateKey + 'T00:00:00')), SLOTS, PLACES, state.assignments);
-    const pct = (doc.weeklyHours || 24) > 0 ? Math.round((weeklyH / (doc.weeklyHours || 24)) * 100) : 0;
+    const pct = (doc.weeklyHours ?? 38) > 0 ? Math.round((weeklyH / (doc.weeklyHours ?? 38)) * 100) : 0;
     const btn = document.createElement('button');
     btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
     btn.innerHTML = `
       <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
       <span class="flex-1 font-medium text-xs">${escapeHtml(doc.name)}</span>
       <div class="flex flex-col items-end gap-0.5">
-        <span class="text-[10px] text-slate-400">${weeklyH}/${doc.weeklyHours || 24}h</span>
+        <span class="text-[10px] text-slate-400">${weeklyH}/${doc.weeklyHours ?? 38}h</span>
         <div class="w-12 h-1 bg-slate-100 rounded-full"><div style="width:${Math.min(100, pct)}%; background:${pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#22c55e'}" class="h-1 rounded-full"></div></div>
       </div>`;
     btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
@@ -317,7 +328,7 @@ function renderAvailableList(slotKey, slot, dateKey) {
   });
 }
 
-export function openAssignDropdown(e, slotKey, slot, dateKey, place) {
+export function openAssignDropdown(e, slotKey, slot, dateKey, place, rect) {
   closeAssignDropdown();
   e.stopPropagation();
   state.activeSlotKey = slotKey;
@@ -351,7 +362,7 @@ export function openAssignDropdown(e, slotKey, slot, dateKey, place) {
   });
   el('assign-exception-btn').classList.remove('hidden');
   el('assign-custom-input').value = '';
-  positionDropdown(e.currentTarget.getBoundingClientRect());
+  positionDropdown(rect || e.currentTarget.getBoundingClientRect());
   dropdown.classList.remove('hidden');
 }
 
@@ -360,6 +371,7 @@ export function closeAssignDropdown() {
   el('assign-unavail-section').classList.add('hidden');
   el('assign-custom-section').classList.add('hidden');
   el('assign-custom-input').value = '';
+  el('assign-exception-btn').classList.add('hidden');
   state.activeSlotKey = null;
 }
 
@@ -908,7 +920,7 @@ export function exportExcel() {
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{ wch: 10 }, { wch: 8 }, ...PLACES.flatMap(() => [{ wch: 24 }, { wch: 24 }])];
+  ws['!cols'] = [{ wch: 10 }, { wch: 8 }, ...PLACES.flatMap(() => SLOTS.map(() => ({ wch: 24 })))];
   XLSX.utils.book_append_sheet(wb, ws, monthName);
   XLSX.writeFile(wb, `turni-ruap-${monthName.toLowerCase()}-${year}.xlsx`);
   toast('Excel scaricato', 'success');
@@ -943,24 +955,7 @@ export function buildPdfContent() {
         <td style="padding:5px 6px;border:1px solid #ddd">${DAY_SHORT[d.getDay()]}</td>`;
       SLOTS.forEach(slot => {
         const id = state.assignments[`${dk}_${slot.key}_${place}`];
-        let name = '';
-        let bgColor = '';
-        let textColor = '';
-        if (id) {
-          if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
-            name = id.replace(EXTERNAL_PREFIX, '');
-            bgColor = '#d97706';
-            textColor = 'white';
-          } else {
-            const doc = getDoctorById(state.doctors, id);
-            if (doc) {
-              name = cleanDoctorName(doc.name);
-              const color = getDoctorColor(doc);
-              bgColor = color.hex;
-              textColor = '#ffffff';
-            }
-          }
-        }
+        const { display: name, bg: bgColor, textColor } = resolveShiftCell(id);
         const cellStyle = `padding:5px 6px;border:1px solid #ddd${bgColor ? `;background:${bgColor};color:${textColor};font-weight:600` : ''}`;
         html += `<td style="${cellStyle}">${name ? escapeHtml(name) : ''}</td>`;
       });
@@ -1050,22 +1045,7 @@ export function buildPngContent() {
         <td style="padding:6px 8px;border:1px solid #e2e8f0;color:#475569;">${DAY_SHORT[d.getDay()]}</td>`;
       SLOTS.forEach(slot => {
         const id = state.assignments[`${dk}_${slot.key}_${place}`];
-        let display = '', bg = '', textColor = '#94a3b8';
-        if (id) {
-          if (typeof id === 'string' && id.startsWith(EXTERNAL_PREFIX)) {
-            display = id.replace(EXTERNAL_PREFIX, '');
-            bg = '#d97706';
-            textColor = '#ffffff';
-          } else {
-            const doc = getDoctorById(state.doctors, id);
-            if (doc) {
-              display = cleanDoctorName(doc.name);
-              const clr = getDoctorColor(doc);
-              bg = clr.hex;
-              textColor = '#ffffff';
-            }
-          }
-        }
+        const { display, bg, textColor } = resolveShiftCell(id);
         if (display) {
           calHtml += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;background:${bg};color:${textColor};font-weight:600;border-radius:3px;font-size:10px;">${escapeHtml(display)}</td>`;
         } else if (isHoliday) {
@@ -1374,12 +1354,6 @@ function updateWizardNextState() {
   nextBtn.disabled = !valid;
 }
 
-function wizardAdvance() {
-  if (wizardStep === 2 && wPlaces.length < 1) return false;
-  if (wizardStep === 3 && wSlots.length < 1) return false;
-  return true;
-}
-
 function finishWizard() {
   state.doctors = [...wDoctors];
   state.assignments = {};
@@ -1559,7 +1533,7 @@ function renderWizardStep4() {
       wDoctors.push({
         name: name.startsWith('Dott. ') ? name : 'Dott. ' + name,
         patients,
-        weeklyHours: calculateDebtByPatients(patients),
+        weeklyHours: calculateWeeklyHoursByPatients(patients),
         colorIndex: wDoctors.length % COLOR_PALETTE.length,
         preferredPlace,
         availability: Object.fromEntries(DAY_KEYS.map(k => [k, { mat: true, pom: true }])),
@@ -1607,7 +1581,9 @@ export function wizardGoBack() {
 }
 
 export function wizardGoNext() {
-  if (wizardAdvance() && wizardStep < 4) { wizardStep++; renderWizardStep(); }
+  if (wizardStep === 2 && wPlaces.length < 1) return;
+  if (wizardStep === 3 && wSlots.length < 1) return;
+  if (wizardStep < 4) { wizardStep++; renderWizardStep(); }
 }
 
 // ====================================================

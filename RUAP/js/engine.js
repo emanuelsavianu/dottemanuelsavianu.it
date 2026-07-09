@@ -32,7 +32,7 @@ export function enumerateEmptySlots(year, month) {
   return slots;
 }
 
-function pickDoctorForSlot(slotToFill, primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining) {
+function pickDoctorForSlot(primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining) {
   const notBusy = (doc) => {
     const prefix = `${dateKey}_${slotKeyOnly}_`;
     return !Object.entries(state.assignments).some(([k, v]) => v === doc.id && k.startsWith(prefix));
@@ -125,7 +125,7 @@ export function runAutoAssignForMonth(year, month) {
       const slotHours = slotDef ? slotDef.hours : 6;
       const place = parts.slice(2).join('_');
 
-      const chosen = pickDoctorForSlot(slotKey, primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining);
+      const chosen = pickDoctorForSlot(primaryDocs, poolDocs, place, dateKey, slotKeyOnly, assignedInTarget, getEffectiveRemaining);
       if (!chosen) continue;
 
       state.assignments[slotKey] = chosen.id;
