@@ -1,6 +1,6 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v193: RUAP/config.js, RUAP/js/config.js, RUAP/index.html, RUAP/js/events.js — update banner on config data version change
-const CACHE_NAME = 'savianu-v193';
+// Cache version bumped to v194: index.html — converted homepage to instant redirect to visite-private.html
+const CACHE_NAME = 'savianu-v194';
 const urlsToCache = [
   '/',
   '/index.html',
