@@ -1,9 +1,10 @@
 // Service Worker for Dr. Savianu Medical Website
-// Cache version bumped to v194: index.html — converted homepage to instant redirect to visite-private.html
-const CACHE_NAME = 'savianu-v194';
+// Cache version bumped to v195: visite-private.html, certificato-invalidita-civile.html, faq-riforma.html, protocollo-certificati-inps.html, index.html — added topbar logo and patient portal CTA; added bluelogo.png to cache
+const CACHE_NAME = 'savianu-v195';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/bluelogo.png',
   '/privacy.html',
   '/styles.css',
   '/app.js',
