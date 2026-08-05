@@ -353,9 +353,11 @@ export function openAssignDropdown(e, slotKey, slot, dateKey, place, rect) {
     const color = getDoctorColor(doc);
     const btn = document.createElement('button');
     btn.className = 'w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 flex items-center gap-2 transition';
+    const isUnavailReason = !busyIds.has(doc.id);
     btn.innerHTML = `
       <span class="w-3 h-3 rounded-full flex-shrink-0 mt-0.5" style="background:${color.hex}"></span>
       <span class="flex-1 font-medium text-xs">${escapeHtml(doc.name)}</span>
+      ${isUnavailReason ? '<i class="fa-solid fa-ban text-red-400 text-xs" title="Non disponibile questo giorno"></i>' : ''}
       <span class="text-[10px] text-slate-400 italic">${busyIds.has(doc.id) ? 'stessa fascia oraria' : 'eccezione'}</span>`;
     btn.addEventListener('click', () => assignDoctor(slotKey, doc.id));
     unavailList.appendChild(btn);
@@ -393,6 +395,83 @@ export function removeAssignment(slotKey) {
 
 // --- Doctor modal ---
 
+let modalUnavail = [];
+let unavailCalView = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+export function renderUnavailCalendar() {
+  const container = el('unavail-calendar');
+  const title = el('unavail-cal-title');
+  if (!container || !title) return;
+  const { year, month } = unavailCalView;
+  title.textContent = `${MONTHS_IT[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = getWeekStart(firstDay);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid grid-cols-5 gap-1';
+
+  const weekStart = new Date(startDate);
+  while (weekStart <= lastDay) {
+    for (let i = 0; i < 5; i++) {
+      const cellDate = new Date(weekStart);
+      cellDate.setDate(cellDate.getDate() + i);
+      if (cellDate > lastDay) break;
+      const dateKey = toDateKey(cellDate);
+      const inMonth = cellDate.getMonth() === month;
+      const isUnavail = modalUnavail.some(p => p && p.from && p.to && dateKey >= p.from && dateKey <= p.to);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = dateKey;
+      btn.className = 'text-xs font-bold rounded-lg py-1.5 transition-all border ' +
+        (isUnavail
+          ? 'bg-red-500 text-white border-red-500'
+          : inMonth
+            ? 'bg-slate-50 text-slate-700 border-slate-200 hover:border-brand-400 hover:bg-blue-50'
+            : 'bg-transparent text-slate-300 border-transparent cursor-default');
+      btn.textContent = cellDate.getDate();
+      if (inMonth) {
+        btn.addEventListener('click', () => toggleModalUnavail(dateKey));
+      } else {
+        btn.disabled = true;
+      }
+      grid.appendChild(btn);
+    }
+    weekStart.setDate(weekStart.getDate() + 7);
+  }
+  container.innerHTML = '';
+  container.appendChild(grid);
+}
+
+function toggleModalUnavail(dateKey) {
+  const existing = modalUnavail.find(p => p.from === dateKey && p.to === dateKey);
+  if (existing) {
+    modalUnavail = modalUnavail.filter(p => p !== existing);
+  } else {
+    modalUnavail.push({ from: dateKey, to: dateKey });
+  }
+  renderUnavailCalendar();
+}
+
+export function unavailCalNav(dir) {
+  unavailCalView.month += dir;
+  if (unavailCalView.month < 0) { unavailCalView.month = 11; unavailCalView.year--; }
+  if (unavailCalView.month > 11) { unavailCalView.month = 0; unavailCalView.year++; }
+  renderUnavailCalendar();
+}
+
+export function unavailCalToday() {
+  const now = new Date();
+  unavailCalView = { year: now.getFullYear(), month: now.getMonth() };
+  const todayKey = toDateKey(now);
+  if (now.getDay() !== 0 && now.getDay() !== 6 && !modalUnavail.some(p => p.from === todayKey && p.to === todayKey)) {
+    modalUnavail.push({ from: todayKey, to: todayKey });
+  }
+  renderUnavailCalendar();
+}
+
 function populatePlaceSelect(selectEl, selected) {
   selectEl.innerHTML = `<option value="">-- Nessuna preferenza --</option>
     ${PLACES.map(p => `<option value="${escapeHtml(p)}"${p === selected ? ' selected' : ''}>${escapeHtml(p)}</option>`).join('')}`;
@@ -411,7 +490,7 @@ function renderAvailabilityTable(availability) {
   tbody.innerHTML = DAY_KEYS.map(dk => `
     <tr>
       <td class="px-2 py-1 text-xs font-medium text-slate-600">${DAY_NAMES[DAY_KEYS.indexOf(dk)]}</td>
-      ${SLOTS.map(s => `<td class="px-2 py-1"><input type="checkbox" ${availability?.[dk]?.[s.key] ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="${s.key}"></td>`).join('')}
+      ${SLOTS.map(s => `<td class="px-2 py-1"><input type="checkbox" ${(availability?.[dk]?.[s.key] ?? true) ? 'checked' : ''} class="avail-check" data-day="${dk}" data-slot="${s.key}"></td>`).join('')}
     </tr>`).join('');
 }
 
@@ -456,6 +535,11 @@ export function openDoctorModal(doctorId = null) {
   }
   const periodsContainer = el('unavail-periods');
   periodsContainer.innerHTML = '';
+  modalUnavail = doctorId
+    ? (getDoctorById(state.doctors, doctorId).unavailPeriods || []).map(p => ({ from: p.from, to: p.to }))
+    : [];
+  unavailCalView = { year: state.calYear, month: state.calMonth };
+  renderUnavailCalendar();
   if (doctorId) {
     const doc = getDoctorById(state.doctors, doctorId);
     if (doc.unavailPeriods) doc.unavailPeriods.forEach(p => addUnavailPeriodRow(p.from, p.to));
@@ -544,7 +628,7 @@ export function saveDoctorFromModal() {
     if (!availability[day]) availability[day] = {};
     availability[day][slot] = cb.checked;
   });
-  const unavailPeriods = [];
+  const unavailPeriods = modalUnavail.slice();
   document.querySelectorAll('.unavail-period-row').forEach(row => {
     const from = row.querySelector('.unavail-from').value;
     const to = row.querySelector('.unavail-to').value;

@@ -30,7 +30,8 @@ import {
   exportExcel, exportPDF, exportPNG,
   copyWeekFromCurrentView, pasteWeekToCurrentView,
   toggleMonthlyStats, toggleHideZeroDocs,
-  startWizard, restartWizard, wizardGoBack, wizardGoNext
+  startWizard, restartWizard, wizardGoBack, wizardGoNext,
+  unavailCalNav, unavailCalToday
 } from './renderers.js';
 
 import { autoAssign, generateNextMonth } from './engine.js';
@@ -124,6 +125,9 @@ el('modal-patients')?.addEventListener('input', (e) => {
   el('modal-hours').value = hours;
 });
 el('btn-add-period')?.addEventListener('click', () => { addUnavailPeriodRow('', ''); });
+el('unavail-cal-prev')?.addEventListener('click', () => unavailCalNav(-1));
+el('unavail-cal-next')?.addEventListener('click', () => unavailCalNav(1));
+el('btn-unavail-today')?.addEventListener('click', unavailCalToday);
 
 // --- Color swatch selection ---
 document.addEventListener('click', (e) => {

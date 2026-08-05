@@ -43,9 +43,12 @@ When the user provides a RUAP JSON export (e.g. `agosto.json`) to set as default
 9. **HTML→JS button wiring** — Every `<button id>` must have an `el('id')` listener in `events.js` or `onclick` referencing a `window.*` function.
 10. **`pointer-events-none` on toast** — `#toast-container` has `pointer-events-none`. Confirmation toasts need `pointer-events-auto`.
 11. **Allocation skips doctors with no preferredPlace** — If a doctor has `preferredPlace: null` and gets no shifts, check `pickDoctorForSlot()` priority grouping.
+12. **Availability table defaults to checked** — `renderAvailabilityTable()` must render checkboxes as checked when the doctor has no `availability` (new doctor); an unchecked save produces a doctor that can never be assigned.
+13. **Single-day unavailability** — Mini month calendar in the doctor modal (`#unavail-calendar`, `renderUnavailCalendar()`) toggles single days; stored as `{from, to}` with `from === to` in `doctor.unavailPeriods`, merged with range rows in `saveDoctorFromModal()`. Unavailable doctors appear in the dropdown's "eccezioni" list with a `fa-ban` icon (revealed by `assign-exception-btn`).
 
 ## CDN dependencies
 - jsPDF, html2canvas, XLSX (SheetJS) loaded from CDN in `RUAP/index.html`. Not vendored. If CDN fails, features show a toast error.
 
 ## Other instruction files
 - **`CLAUDE.md`** in this directory — RUAP data schema, budget system, import/export format, generate algorithm
+
